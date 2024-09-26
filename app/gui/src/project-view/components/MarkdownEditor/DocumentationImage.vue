@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import {
-  injectLexicalImageUrlTransformer,
-  type TransformUrlResult,
+  injectDocumentationImageUrlTransformer,
+  TransformUrlResult,
 } from '@/components/MarkdownEditor/imageUrlTransformer'
 import { computedAsync } from '@vueuse/core'
-import { computed, onUnmounted, type Ref } from 'vue'
+import { computed, onUnmounted, ref, Ref } from 'vue'
 import { Ok } from 'ydoc-shared/util/data/result'
 
 const DEFAULT_ALT_TEXT = 'Image'
@@ -14,10 +14,10 @@ const props = defineProps<{
   alt: string
 }>()
 
-const urlTransformer = injectLexicalImageUrlTransformer(true)
+const urlTransformer = injectDocumentationImageUrlTransformer(true)
 
-// NOTE: Garbage-collecting image data when the `src` changes is not implemented. Current users of `LexicalImage` don't
-// change the `src` after creating an image.
+// NOTE: Garbage-collecting image data when the `src` changes is not implemented. Current users of `DocumentationImage`
+// don't change the `src` after creating an image.
 const data: Ref<TransformUrlResult | undefined> =
   urlTransformer ?
     computedAsync(() => urlTransformer.transformUrl(props.src), undefined, {
@@ -37,8 +37,10 @@ const alt = props.alt ? props.alt : DEFAULT_ALT_TEXT
 onUnmounted(() => {
   if (data.value?.ok) data.value.value.dispose?.()
 })
+
+const imgElement = ref<HTMLImageElement>()
 </script>
 
 <template>
-  <img :src="data?.ok ? data.value.url : ''" :alt="alt" :title="title" />
+  <img ref="imgElement" :src="data?.ok ? data.value.url : ''" :alt="alt" :title="title" />
 </template>

@@ -66,6 +66,9 @@ import type {
   RowHeightParams,
   SortChangedEvent,
 } from 'ag-grid-enterprise'
+import { intoCount, reduce } from 'enso-common/src/utilities/data/iterator'
+import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
+import { mapIterator } from 'lib0/iterator'
 import { type ComponentInstance, reactive, ref, shallowRef, watch } from 'vue'
 
 const DEFAULT_ROW_HEIGHT = 22
@@ -114,14 +117,11 @@ function getRowHeight(params: RowHeightParams): number {
     return DEFAULT_ROW_HEIGHT
   }
 
-  const returnCharsCount = textValues.map((text: string) => {
-    const crlfCount = (text.match(/\r\n/g) || []).length
-    const crCount = (text.match(/\r/g) || []).length
-    const lfCount = (text.match(/\n/g) || []).length
-    return crCount + lfCount - crlfCount
-  })
+  const returnCharsCount = mapIterator(textValues[Symbol.iterator](), (text) =>
+    intoCount(text.matchAll(LINE_BOUNDARIES)),
+  )
 
-  const maxReturnCharsCount = Math.max(...returnCharsCount)
+  const maxReturnCharsCount = reduce(returnCharsCount, Math.max, 0)
   return (maxReturnCharsCount + 1) * DEFAULT_ROW_HEIGHT
 }
 

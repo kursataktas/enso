@@ -222,7 +222,7 @@ export function performCollapseImpl(
   const collapsedBody = Ast.BodyBlock.new(extractedLines, edit)
   const outputAst = Ast.Ident.new(edit, outputIdentifier)
   collapsedBody.push(outputAst)
-  const collapsedFunction = Ast.Function.new(collapsedName, info.args, collapsedBody, {
+  const collapsedFunction = Ast.FunctionDef.new(collapsedName, info.args, collapsedBody, {
     edit,
     documentation: 'ICON group',
   })

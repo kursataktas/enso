@@ -77,6 +77,7 @@ import {
 import { encodeMethodPointer } from 'ydoc-shared/languageServerTypes'
 import * as iterable from 'ydoc-shared/util/data/iterable'
 import { isDevMode } from 'ydoc-shared/util/detect'
+import * as Y from 'yjs'
 
 const rootNode = ref<HTMLElement>()
 
@@ -433,6 +434,7 @@ const documentationEditorHandler = documentationEditorBindings.handler({
 const { documentation } = useAstDocumentation(graphStore, () =>
   unwrapOr(graphStore.methodAst, undefined),
 )
+const mainMarkdownDocs = new Y.Doc().getText() // TODO
 
 // === Component Browser ===
 
@@ -785,9 +787,9 @@ const documentationEditorFullscreen = ref(false)
     >
       <template #docs>
         <DocumentationEditor
+          v-if="mainMarkdownDocs"
           ref="docEditor"
-          :modelValue="documentation.state.value"
-          @update:modelValue="documentation.set"
+          :yText="mainMarkdownDocs"
           @update:fullscreen="documentationEditorFullscreen = $event"
         />
       </template>

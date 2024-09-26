@@ -29,9 +29,13 @@ defineExpose({ root })
 const computedSize = useResizeObserver(slideInPanel)
 const computedBounds = computed(() => new Rect(Vec2.Zero, computedSize.value))
 
-const style = computed(() => ({
-  '--dock-panel-width': size.value != null ? `${size.value}px` : 'var(--right-dock-default-width)',
-}))
+const style = computed(() =>
+  size.value != null ?
+    {
+      '--dock-panel-width': `${size.value}px`,
+    }
+  : undefined,
+)
 
 const tabStyle = {
   clipPath: tabClipPath(TAB_SIZE_PX, TAB_RADIUS_PX, 'right'),
@@ -52,13 +56,7 @@ const tabStyle = {
       :class="{ aboveFullscreen: contentFullscreen }"
     />
     <SizeTransition width :duration="100">
-      <div
-        v-if="show"
-        ref="slideInPanel"
-        :style="style"
-        class="panelOuter"
-        data-testid="rightDock"
-      >
+      <div v-if="show" ref="slideInPanel" :style="style" class="panelOuter" data-testid="rightDock">
         <div class="panelInner">
           <div class="content">
             <slot v-if="tab == 'docs'" name="docs" />
@@ -67,22 +65,26 @@ const tabStyle = {
           <div class="tabBar">
             <div class="tab" :style="tabStyle">
               <ToggleIcon
-                  :modelValue="tab == 'docs'"
-                  title="Documentation Editor"
-                  icon="text"
-                  @update:modelValue="tab = 'docs'"
+                :modelValue="tab == 'docs'"
+                title="Documentation Editor"
+                icon="text"
+                @update:modelValue="tab = 'docs'"
               />
             </div>
             <div class="tab" :style="tabStyle">
               <ToggleIcon
-                  :modelValue="tab == 'help'"
-                  title="Component Help"
-                  icon="help"
-                  @update:modelValue="tab = 'help'"
+                :modelValue="tab == 'help'"
+                title="Component Help"
+                icon="help"
+                @update:modelValue="tab = 'help'"
               />
             </div>
           </div>
-          <ResizeHandles left :modelValue="computedBounds" @update:modelValue="size = $event.width" />
+          <ResizeHandles
+            left
+            :modelValue="computedBounds"
+            @update:modelValue="size = $event.width"
+          />
         </div>
       </div>
     </SizeTransition>
@@ -101,12 +103,13 @@ const tabStyle = {
  */
 .panelOuter {
   min-width: var(--dock-panel-min-width);
-  width: var(--dock-panel-width);
+  width: var(--dock-panel-width, var(--right-dock-default-width));
 }
 
 .panelInner {
   min-width: var(--dock-panel-min-width);
-  width: var(--dock-panel-width);
+  /* FIXME: Need a fixed size when `dock-panel-width` is not set, so that animation works for default-sized panels. */
+  width: var(--dock-panel-width, 100%);
   height: 100%;
   position: relative;
   --icon-margin: 16px; /* `--icon-margin` in `.toggleDock` must match this value. */
@@ -117,6 +120,7 @@ const tabStyle = {
 }
 
 .content {
+  width: 100%;
   background-color: #fff;
   min-width: 0;
 }

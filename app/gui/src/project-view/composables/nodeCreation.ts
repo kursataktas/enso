@@ -278,7 +278,10 @@ export function insertNodeStatements(
   const lines = bodyBlock.lines
   const lastStatement = lines[lines.length - 1]?.statement?.node
   const index =
-    lastStatement instanceof Ast.MutableAssignment || lastStatement instanceof Ast.MutableFunction ?
+    (
+      lastStatement instanceof Ast.MutableAssignment ||
+      lastStatement instanceof Ast.MutableFunctionDef
+    ) ?
       lines.length
     : lines.length - 1
   bodyBlock.insert(index, ...statements)

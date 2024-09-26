@@ -47,7 +47,7 @@ export class BindingsDb {
 
   /** TODO: Add docs */
   readFunctionAst(
-    func: Ast.Function,
+    func: Ast.FunctionDef,
     rawFunc: RawAst.Tree.Function | undefined,
     moduleCode: string,
     getSpan: (id: AstId) => SourceRange | undefined,
@@ -346,7 +346,7 @@ export class GraphDb {
    * expression changes.
    */
   updateNodes(
-    functionAst_: Ast.Function,
+    functionAst_: Ast.FunctionDef,
     { watchEffect }: { watchEffect: (f: () => void) => WatchStopHandle },
   ) {
     const currentNodeIds = new Set<NodeId>()
@@ -468,7 +468,7 @@ export class GraphDb {
 
   /** Deeply scan the function to perform alias-analysis. */
   updateBindings(
-    functionAst_: Ast.Function,
+    functionAst_: Ast.FunctionDef,
     rawFunction: RawAst.Tree.Function | undefined,
     moduleCode: string,
     getSpan: (id: AstId) => SourceRange | undefined,

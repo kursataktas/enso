@@ -1,80 +1,169 @@
 <script setup lang="ts">
-import FloatingSelectionMenu from '@/components/FloatingSelectionMenu.vue'
-import FormattingToolbar from '@/components/MarkdownEditor/FormattingToolbar.vue'
-import { imagePlugin } from '@/components/MarkdownEditor/ImagePlugin'
-import SelectionFormattingToolbar from '@/components/MarkdownEditor/SelectionFormattingToolbar.vue'
-import { lexicalRichTextTheme, useFormatting } from '@/components/MarkdownEditor/formatting'
+import EditorRoot from '@/components/MarkdownEditor/EditorRoot.vue'
+import { highlightStyle } from '@/components/MarkdownEditor/highlight'
 import {
-  provideLexicalImageUrlTransformer,
-  type UrlTransformer,
+  provideDocumentationImageUrlTransformer,
+  UrlTransformer,
 } from '@/components/MarkdownEditor/imageUrlTransformer'
-import { listPlugin } from '@/components/MarkdownEditor/listPlugin'
-import { markdownPlugin } from '@/components/MarkdownEditor/markdown'
-import { useLexical } from '@/components/lexical'
-import LexicalContent from '@/components/lexical/LexicalContent.vue'
-import LexicalDecorators from '@/components/lexical/LexicalDecorators.vue'
-import { autoLinkPlugin, linkPlugin, useLinkNode } from '@/components/lexical/LinkPlugin'
-import LinkToolbar from '@/components/lexical/LinkToolbar.vue'
-import { shallowRef, toRef, useCssModule, type ComponentInstance } from 'vue'
+import { ensoMarkdown } from '@/components/MarkdownEditor/markdown'
+import { TeleportationRegistry } from '@/components/MarkdownEditor/markdown/decoration'
+import { EditorState } from '@codemirror/state'
+import { EditorView } from '@codemirror/view'
+import { minimalSetup } from 'codemirror'
+import { useObjectId } from 'enso-common/src/utilities/data/object'
+import {
+  type Component,
+  ComponentInstance,
+  onMounted,
+  reactive,
+  ref,
+  toRef,
+  useCssModule,
+  watch,
+} from 'vue'
+import { yCollab } from 'y-codemirror.next'
+import * as awarenessProtocol from 'y-protocols/awareness.js'
+import * as Y from 'yjs'
 
-const markdown = defineModel<string>({ required: true })
+const editorRoot = ref<ComponentInstance<typeof EditorRoot>>()
+
 const props = defineProps<{
+  yText: Y.Text
   transformImageUrl?: UrlTransformer | undefined
   toolbarContainer: HTMLElement | undefined
 }>()
 
-const contentElement = shallowRef<ComponentInstance<typeof LexicalContent>>()
+provideDocumentationImageUrlTransformer(toRef(props, 'transformImageUrl'))
 
-provideLexicalImageUrlTransformer(toRef(props, 'transformImageUrl'))
+const awareness = new awarenessProtocol.Awareness(new Y.Doc())
 
-const theme = lexicalRichTextTheme(useCssModule('lexicalTheme'))
-const { editor } = useLexical(contentElement, 'MarkdownEditor', theme, [
-  ...markdownPlugin(markdown, [listPlugin, imagePlugin, linkPlugin]),
-  autoLinkPlugin,
-])
-const formatting = useFormatting(editor)
+const editorView = new EditorView()
 
-const { urlUnderCursor } = useLinkNode(editor)
+watch(
+  () => props.yText,
+  () => console.error('new yText?!?'),
+)
+
+interface Teleportation {
+  component: Component
+  props: object
+}
+
+const decorationContext = reactive(new Map<HTMLElement, Teleportation>())
+
+const teleporter: TeleportationRegistry = {
+  register: decorationContext.set.bind(decorationContext),
+  unregister: decorationContext.delete.bind(decorationContext),
+}
+
+onMounted(() => {
+  editorView.setState(
+    EditorState.create({
+      doc: props.yText.toString(),
+      extensions: [
+        minimalSetup,
+        yCollab(props.yText, awareness),
+        ensoMarkdown({ teleporter }),
+        highlightStyle(useCssModule()),
+        EditorView.lineWrapping,
+      ],
+    }),
+  )
+  const content = editorView.dom.getElementsByClassName('cm-content')[0]!
+  content.addEventListener('focusin', () => (editing.value = true))
+  editorRoot.value?.rootElement?.prepend(editorView.dom)
+})
+
+const editing = ref(false)
+
+const { objectId } = useObjectId()
 </script>
 
 <template>
-  <div class="MarkdownEditor fullHeight">
-    <Teleport :to="toolbarContainer">
-      <FormattingToolbar :formatting="formatting" @pointerdown.prevent />
+  <EditorRoot
+    ref="editorRoot"
+    class="MarkdownEditor"
+    :class="{ editing }"
+    @focusout="editing = false"
+  />
+  <template
+    v-for="[slot, { component, props: componentProps }] in decorationContext.entries()"
+    :key="objectId(componentProps)"
+  >
+    <Teleport :to="slot">
+      <component :is="component" v-bind="componentProps" />
     </Teleport>
-    <LexicalContent ref="contentElement" @wheel.stop.passive @contextmenu.stop @pointerdown.stop />
-    <FloatingSelectionMenu :selectionElement="contentElement">
-      <template #default="{ collapsed }">
-        <SelectionFormattingToolbar v-if="!collapsed" :formatting="formatting" />
-        <LinkToolbar v-else-if="urlUnderCursor" :url="urlUnderCursor" />
-      </template>
-    </FloatingSelectionMenu>
-    <LexicalDecorators :editor="editor" />
-  </div>
+  </template>
 </template>
 
-<style scoped>
-.fullHeight {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+<!--suppress CssUnusedSymbol -->
+<style module>
+/* === Syntax styles === */
+
+.heading1 {
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 1.75;
+}
+.heading2 {
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 1.75;
+}
+.heading3,
+.heading4,
+.heading5,
+.heading6 {
+  font-size: 14px;
+  line-height: 2;
+}
+.processingInstruction {
+  opacity: 20%;
+}
+.emphasis:not(.processingInstruction) {
+  font-style: italic;
+}
+.strong:not(.processingInstruction) {
+  font-weight: bold;
+}
+.strikethrough:not(.processingInstruction) {
+  text-decoration: line-through;
+}
+.monospace {
+  /*noinspection CssNoGenericFontName*/
+  font-family: var(--font-mono);
 }
 
-:deep(.toggledOn) {
-  color: black;
-  opacity: 0.6;
-}
-:deep(.toggledOff) {
-  color: black;
-  opacity: 0.3;
-}
-:deep(.DropdownMenuButton) {
-  color: inherit;
-  opacity: inherit;
-}
-:deep(.DropdownMenuContent .MenuButton) {
-  justify-content: unset;
+/* === Editing-mode === */
+
+/* There are currently no style overrides for editing mode, so this is commented out to appease the Vue linter. */
+/* :global(.MarkdownEditor):global(.editing) :global(.cm-line):global(.cm-has-cursor) {} */
+
+/* === View-mode === */
+
+:global(.MarkdownEditor):not(:global(.editing)) :global(.cm-line),
+:global(.cm-line):not(:global(.cm-has-cursor)) {
+  :global(.cm-image-markup) {
+    display: none;
+  }
+  .processingInstruction {
+    display: none;
+  }
+  .url {
+    display: none;
+  }
+  a > .link {
+    display: inline;
+    cursor: pointer;
+    color: #555;
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+  &:has(.list.processingInstruction) {
+    display: list-item;
+    list-style-type: disc;
+    list-style-position: inside;
+  }
 }
 </style>
-
-<style module="lexicalTheme" src="@/components/MarkdownEditor/theme.css" />

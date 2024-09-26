@@ -1,28 +1,27 @@
 import * as random from 'lib0/random'
 import * as Y from 'yjs'
-import {
-  AstId,
-  MutableBodyBlock,
-  NodeChild,
-  Owned,
-  RawNodeChild,
-  SyncTokenId,
-  Token,
-  asOwned,
-  isTokenId,
-  newExternalId,
-  parseModule,
-  subtreeRoots,
-} from '.'
+import { subtreeRoots } from '.'
 import { assert, assertDefined } from '../util/assert'
 import type { SourceRangeEdit } from '../util/data/text'
 import { defaultLocalOrigin, tryAsOrigin, type ExternalId, type Origin } from '../yjsModel'
-import type { AstFields, FixedMap, Mutable } from './tree'
+import { newExternalId } from './idMap'
+import { parseModule } from './parse'
+import { SyncTokenId, Token, isTokenId } from './token'
 import {
   Ast,
+  AstFields,
+  AstId,
+  BodyBlock,
+  FixedMap,
+  Mutable,
   MutableAst,
+  MutableBodyBlock,
   MutableInvalid,
+  NodeChild,
+  Owned,
+  RawNodeChild,
   Wildcard,
+  asOwned,
   composeFieldData,
   invalidFields,
   materializeMutable,
@@ -31,7 +30,7 @@ import {
 
 export interface Module {
   edit(): MutableModule
-  root(): Ast | undefined
+  root(): BodyBlock | undefined
   tryGet(id: AstId | undefined): Ast | undefined
 
   /////////////////////////////////
@@ -98,8 +97,8 @@ export class MutableModule implements Module {
   }
 
   /** Return the top-level block of the module. */
-  root(): MutableAst | undefined {
-    return this.rootPointer()?.expression
+  root(): MutableBodyBlock | undefined {
+    return this.rootPointer()?.expression as MutableBodyBlock | undefined
   }
 
   /** Set the given block to be the top-level block of the module. */
@@ -272,23 +271,28 @@ export class MutableModule implements Module {
         ])
         updateBuilder.updateFields(id, changes)
       } else if (event.target.parent.parent === this.nodes) {
-        // Updates to fields of a metadata object within a node.
+        // Updates to fields of an object within a node.
         const id = event.target.parent.get('id')
         DEV: assertAstId(id)
         const node = this.nodes.get(id)
         if (!node) continue
         const metadata = node.get('metadata') as unknown as Map<string, unknown>
-        const changes: (readonly [string, unknown])[] = Array.from(event.changes.keys, ([key]) => [
-          key,
-          metadata.get(key as any),
-        ])
-        updateBuilder.updateMetadata(id, changes)
-      } else if (event.target.parent.parent.parent === this.nodes) {
-        // Updates to some specific widget's metadata
-        const id = event.target.parent.parent.get('id')
-        assertAstId(id)
-        if (!this.nodes.get(id)) continue
-        updateBuilder.updateWidgets(id)
+        if (event.target === metadata) {
+          const changes: (readonly [string, unknown])[] = Array.from(
+            event.changes.keys,
+            ([key]) => [key, metadata.get(key as any)],
+          )
+          updateBuilder.updateMetadata(id, changes)
+        } else if (event.target.parent === metadata) {
+          // Updates to some specific widget's metadata
+          const id = event.target.parent.parent.get('id')
+          assertAstId(id)
+          if (!this.nodes.get(id)) continue
+          updateBuilder.updateWidgets(id)
+        } else {
+          // `AbstractType` in node fields.
+          updateBuilder.nodesUpdated.add(id)
+        }
       }
     }
     return updateBuilder.finish()
@@ -475,7 +479,6 @@ class UpdateBuilder {
         assert(value instanceof Y.Map)
         metadataChanges = new Map<string, unknown>(value.entries())
       } else {
-        assert(!(value instanceof Y.AbstractType))
         fieldsChanged = true
       }
     }

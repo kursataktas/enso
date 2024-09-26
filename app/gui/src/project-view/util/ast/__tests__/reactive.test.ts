@@ -68,7 +68,7 @@ test('Module reactivity: Tracking access to ancestors', async () => {
 
   const block = module.root() as any as Ast.BodyBlock
 
-  const [func, otherFunc] = block.statements() as [Ast.Function, Ast.Function]
+  const [func, otherFunc] = block.statements() as [Ast.FunctionDef, Ast.FunctionDef]
   expect(func.name.code()).toBe('main')
   expect(otherFunc.name.code()).toBe('other')
   const expression = Array.from(func.bodyExpressions())[0]!

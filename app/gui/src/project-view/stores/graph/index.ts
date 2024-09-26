@@ -146,7 +146,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       },
     )
 
-    const methodAst = computed<Result<Ast.Function>>(() =>
+    const methodAst = computed<Result<Ast.FunctionDef>>(() =>
       syncModule.value ? getExecutedMethodAst(syncModule.value) : Err('AST not yet initialized'),
     )
 
@@ -188,7 +188,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       db.updateBindings(method, rawFunc, moduleSource.text, getSpan)
     })
 
-    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.Function> {
+    function getExecutedMethodAst(module?: Ast.Module): Result<Ast.FunctionDef> {
       const executionStackTop = proj.executionContext.getStackTop()
       switch (executionStackTop.type) {
         case 'ExplicitCall': {
@@ -204,7 +204,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
       }
     }
 
-    function getMethodAst(ptr: MethodPointer, edit?: Ast.Module): Result<Ast.Function> {
+    function getMethodAst(ptr: MethodPointer, edit?: Ast.Module): Result<Ast.FunctionDef> {
       const topLevel = (edit ?? syncModule.value)?.root()
       if (!topLevel) return Err('Module unavailable')
       assert(topLevel instanceof Ast.BodyBlock)
