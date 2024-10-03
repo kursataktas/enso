@@ -56,32 +56,34 @@ const tabStyle = {
         v-if="show"
         ref="slideInPanel"
         :style="style"
-        class="DockPanelContent"
+        class="panelOuter"
         data-testid="rightDock"
       >
-        <div class="content">
-          <slot v-if="tab == 'docs'" name="docs" />
-          <slot v-else-if="tab == 'help'" name="help" />
-        </div>
-        <div class="tabBar">
-          <div class="tab" :style="tabStyle">
-            <ToggleIcon
-              :modelValue="tab == 'docs'"
-              title="Documentation Editor"
-              icon="text"
-              @update:modelValue="tab = 'docs'"
-            />
+        <div class="panelInner">
+          <div class="content">
+            <slot v-if="tab == 'docs'" name="docs" />
+            <slot v-else-if="tab == 'help'" name="help" />
           </div>
-          <div class="tab" :style="tabStyle">
-            <ToggleIcon
-              :modelValue="tab == 'help'"
-              title="Component Help"
-              icon="help"
-              @update:modelValue="tab = 'help'"
-            />
+          <div class="tabBar">
+            <div class="tab" :style="tabStyle">
+              <ToggleIcon
+                  :modelValue="tab == 'docs'"
+                  title="Documentation Editor"
+                  icon="text"
+                  @update:modelValue="tab = 'docs'"
+              />
+            </div>
+            <div class="tab" :style="tabStyle">
+              <ToggleIcon
+                  :modelValue="tab == 'help'"
+                  title="Component Help"
+                  icon="help"
+                  @update:modelValue="tab = 'help'"
+              />
+            </div>
           </div>
+          <ResizeHandles left :modelValue="computedBounds" @update:modelValue="size = $event.width" />
         </div>
-        <ResizeHandles left :modelValue="computedBounds" @update:modelValue="size = $event.width" />
       </div>
     </SizeTransition>
   </div>
@@ -90,11 +92,22 @@ const tabStyle = {
 <style scoped>
 .DockPanel {
   display: contents;
+  --dock-panel-min-width: 258px;
 }
 
-.DockPanelContent {
-  min-width: 258px;
+/* Outer panel container; this element's visible width will be overwritten by the size transition, but the inner panel's
+ * will not, preventing content reflow. Content reflow is disruptive to the appearance of the transition, and can affect
+ * the framerate drastically.
+ */
+.panelOuter {
+  min-width: var(--dock-panel-min-width);
   width: var(--dock-panel-width);
+}
+
+.panelInner {
+  min-width: var(--dock-panel-min-width);
+  width: var(--dock-panel-width);
+  height: 100%;
   position: relative;
   --icon-margin: 16px; /* `--icon-margin` in `.toggleDock` must match this value. */
   --icon-size: 16px;
@@ -104,8 +117,6 @@ const tabStyle = {
 }
 
 .content {
-  width: 100%;
-  height: 100%;
   background-color: #fff;
   min-width: 0;
 }
