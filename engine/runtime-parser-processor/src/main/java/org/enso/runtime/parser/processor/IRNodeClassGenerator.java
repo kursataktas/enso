@@ -154,7 +154,8 @@ final class IRNodeClassGenerator {
 
           @Override
           public Void visitExecutable(ExecutableElement e, Void unused) {
-            if (e.getParameters().isEmpty()) {
+            if (e.getParameters().isEmpty()
+                && !Utils.hasDefaultImplementation(e, irNodeInterface, processingEnv)) {
               var retType = e.getReturnType();
               var name = e.getSimpleName().toString();
 

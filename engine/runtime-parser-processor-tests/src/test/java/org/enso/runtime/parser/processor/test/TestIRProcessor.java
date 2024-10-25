@@ -289,4 +289,37 @@ public class TestIRProcessor {
     srcSubject.contains("public final class JNameGen");
     srcSubject.contains("List<IR> expressions");
   }
+
+  @Test
+  public void processorDoesNotGenerateOverridenMethods() {
+    var src =
+        JavaFileObjects.forSourceString(
+            "JName",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.compiler.core.IR;
+
+        @IRNode
+        public interface JName extends IR {
+          String name();
+        
+          interface JQualified extends JName {
+            @Override
+            default String name() {
+              return null;
+            }
+          }
+        }
+        """);
+    var compiler = Compiler.javac().withProcessors(new IRProcessor());
+    var compilation = compiler.compile(src);
+    CompilationSubject.assertThat(compilation).succeeded();
+    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
+    var srcSubject =
+        CompilationSubject.assertThat(compilation)
+            .generatedSourceFile("JNameGen")
+            .contentsAsUtf8String();
+    srcSubject.contains("public final class JNameGen");
+    srcSubject.doesNotContain("String name()");
+  }
 }
