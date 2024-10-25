@@ -30,7 +30,7 @@ final class ReferenceField implements Field {
 
   @Override
   public String getSimpleTypeName() {
-    return type.toString();
+    return type.getSimpleName().toString();
   }
 
   @Override
