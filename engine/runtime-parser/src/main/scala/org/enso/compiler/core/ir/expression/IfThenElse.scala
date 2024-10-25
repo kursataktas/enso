@@ -19,10 +19,16 @@ case class IfThenElse(
     with LazyDiagnosticStorage
     with LazyId {
 
+  // checks for non-null
   cond.getClass()
   trueBranch.getClass()
 
-  def falseBranch(): Option[Expression] = Option(falseBranchOrNull)
+  /** Represents the "false branch" is an option to allow Scala
+    * like manipulation with `None` or `Some`.
+    *
+    * @return option derived from value of `falseBranchOrNull`
+    */
+  def falseBranch: Option[Expression] = Option(falseBranchOrNull)
 
   /** Creates a copy of `this`.
     *
@@ -125,7 +131,7 @@ case class IfThenElse(
          |IfThenElse(
          |cond = $cond,
          |trueBranch = $trueBranch,
-         |falseBranch = ${falseBranch()},
+         |falseBranch = ${falseBranch},
          |location = $location,
          |passData = ${this.showPassData},
          |diagnostics = $diagnostics,
@@ -135,7 +141,7 @@ case class IfThenElse(
 
   /** @inheritdoc */
   override def children: List[IR] =
-    List(cond, trueBranch) ++ falseBranch().toList
+    List(cond, trueBranch) ++ falseBranch.toList
 
   /** @inheritdoc */
   override def showCode(indent: Int): String = {
