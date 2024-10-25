@@ -3134,6 +3134,7 @@ lazy val `runtime-parser-dsl` =
 lazy val `runtime-parser-processor-tests` =
   (project in file("engine/runtime-parser-processor-tests"))
     .settings(
+      inConfig(Compile)(truffleRunOptionsSettings),
       frgaalJavaCompilerSetting,
       commands += WithDebugCommand.withDebug,
       Test / fork := true,
