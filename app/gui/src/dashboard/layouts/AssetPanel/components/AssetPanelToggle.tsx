@@ -5,13 +5,7 @@
 import RightPanelIcon from '#/assets/right_panel.svg'
 import { Button } from '#/components/AriaComponents'
 
-import {
-  useIsAssetPanelExpanded,
-  useIsAssetPanelHidden,
-  useIsAssetPanelVisible,
-  useSetIsAssetPanelExpanded,
-  useSetIsAssetPanelHidden,
-} from '#/providers/DriveProvider'
+import { useIsAssetPanelHidden, useSetIsAssetPanelHidden } from '#/providers/DriveProvider'
 import { useText } from '#/providers/TextProvider'
 import { AnimatePresence, motion, Spring } from 'framer-motion'
 import { useId } from 'react'
