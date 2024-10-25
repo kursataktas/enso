@@ -17,4 +17,4 @@ type Any
 type Default_Comparator
 
     ## PRIVATE
-    private less_than_builtin left right = @Builtin_Method "Default_Comparator.less_than_builtin"
+    less_than_builtin left right = @Builtin_Method "Default_Comparator.less_than_builtin"
