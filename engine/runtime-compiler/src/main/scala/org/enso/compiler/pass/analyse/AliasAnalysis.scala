@@ -810,11 +810,14 @@ case object AliasAnalysis extends IRPass {
     graph: Graph,
     parentScope: Scope
   ): IfThenElse = {
+    val condScope  = parentScope.addChild(flattenToParent = true)
+    val trueScope  = parentScope.addChild(flattenToParent = true)
+    val falseScope = parentScope.addChild(flattenToParent = true)
     ir.copy(
-      cond       = analyseExpression(ir.cond, graph, parentScope),
-      trueBranch = analyseExpression(ir.trueBranch, graph, parentScope),
+      cond       = analyseExpression(ir.cond, graph, condScope),
+      trueBranch = analyseExpression(ir.trueBranch, graph, trueScope),
       falseBranchOrNull =
-        ir.falseBranch.map(analyseExpression(_, graph, parentScope)).orNull
+        ir.falseBranch.map(analyseExpression(_, graph, falseScope)).orNull
     )
   }
 

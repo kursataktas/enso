@@ -359,6 +359,7 @@ object Graph {
     *                       Note that there may not be a link for all these definitions.
     */
   sealed class Scope(
+    val flattenToParent: Boolean                  = false,
     var childScopes: List[Scope]                  = List(),
     var occurrences: Map[Id, GraphOccurrence]     = HashMap(),
     var allDefinitions: List[GraphOccurrence.Def] = List()
@@ -405,7 +406,12 @@ object Graph {
             childScopeCopies += scope.deepCopy(mapping)
           )
           val newScope =
-            new Scope(childScopeCopies.toList, occurrences, allDefinitions)
+            new Scope(
+              this.flattenToParent,
+              childScopeCopies.toList,
+              occurrences,
+              allDefinitions
+            )
           mapping.put(this, newScope)
           newScope
       }
@@ -433,10 +439,11 @@ object Graph {
 
     /** Creates and returns a scope that is a child of this one.
       *
+      * @param is this scope "just virtual" and will be flatten to parent at the end?
       * @return a scope that is a child of `this`
       */
-    def addChild(): Scope = {
-      val scope = new Scope()
+    def addChild(flattenToParent: Boolean = false): Scope = {
+      val scope = new Scope(flattenToParent)
       scope.parent = Some(this)
       childScopes ::= scope
 

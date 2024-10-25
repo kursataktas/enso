@@ -15,12 +15,12 @@ import org.enso.test.utils.ContextUtils;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.Matchers;
 import org.hamcrest.core.AllOf;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class IfThenElseTest {
@@ -97,6 +97,43 @@ public class IfThenElseTest {
   }
 
   @Test
+  public void variableInMultipleIfBranches() throws Exception {
+    var code =
+        """
+    check x =
+        if x then
+            xt = "Yes"
+        if x.not then
+            xt = "No"
+        "Hooo"
+    """;
+    var check = ContextUtils.getMethodFromModule(ctx, code, "check");
+
+    assertEquals("Hooo", check.execute(true).asString());
+    assertEquals("Hooo", check.execute(false).asString());
+  }
+
+  @Test
+  public void variableNotVisibleAfterBranches() throws Exception {
+    var code =
+        """
+    check x =
+        if x then
+            xt = "Yes"
+        if x.not then
+            xt = "No"
+        xt
+    """;
+    try {
+      var check = ContextUtils.getMethodFromModule(ctx, code, "check");
+      fail("The code should not compile, but returned: " + check);
+    } catch (PolyglotException ex) {
+      MatcherAssert.assertThat(
+          ex.getMessage(), Matchers.containsString("name `xt` could not be found"));
+    }
+  }
+
+  @Test
   public void variableUsedAfterTheBranch() throws Exception {
     try {
       var code =
@@ -160,7 +197,6 @@ public class IfThenElseTest {
     assertEquals("No", check.execute("Ne").asString());
   }
 
-  @Ignore
   @Test
   public void truffleObjectConvertibleToBooleanIsSupported() throws Exception {
     var code =

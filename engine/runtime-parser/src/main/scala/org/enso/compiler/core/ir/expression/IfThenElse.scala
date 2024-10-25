@@ -9,9 +9,9 @@ import java.util.UUID
 
 /** The Enso case expression. */
 case class IfThenElse(
-  cond: Expression,
-  trueBranch: Expression,
-  private val falseBranchOrNull: Expression,
+  val cond: Expression,
+  val trueBranch: Expression,
+  val falseBranchOrNull: Expression,
   override val identifiedLocation: IdentifiedLocation,
   override val passData: MetadataStorage = new MetadataStorage()
 ) extends Expression

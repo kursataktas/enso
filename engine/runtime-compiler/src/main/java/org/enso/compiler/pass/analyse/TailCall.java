@@ -18,6 +18,7 @@ import org.enso.compiler.core.ir.Warning;
 import org.enso.compiler.core.ir.expression.Application;
 import org.enso.compiler.core.ir.expression.Case;
 import org.enso.compiler.core.ir.expression.Comment;
+import org.enso.compiler.core.ir.expression.IfThenElse;
 import org.enso.compiler.core.ir.module.scope.Definition;
 import org.enso.compiler.core.ir.module.scope.definition.*;
 import org.enso.compiler.pass.IRPass;
@@ -206,6 +207,16 @@ public final class TailCall implements MiniPassFactory {
           // Note [Call Argument Tail Position]
           p.arguments().foreach(a -> markAsTail(a));
         }
+        case IfThenElse ite -> {
+          if (isInTailPos) {
+            markAsTail(ite);
+            // Note [Analysing Branches in Case Expressions]
+            markAsTail(ite.trueBranch());
+            if (ite.falseBranchOrNull() != null) {
+              markAsTail(ite.falseBranchOrNull());
+            }
+          }
+        }
         case Case.Expr e -> {
           if (isInTailPos) {
             markAsTail(ir);
@@ -246,6 +257,15 @@ public final class TailCall implements MiniPassFactory {
         Expression expression, java.util.Map<IR, Boolean> tailCandidates) {
       switch (expression) {
         case Function function -> collectTailCandicateFunction(function, tailCandidates);
+        case IfThenElse ite -> {
+          if (isInTailPos) {
+            // Note [Analysing Branches in Case Expressions]
+            tailCandidates.put(ite.trueBranch(), true);
+            if (ite.falseBranchOrNull() != null) {
+              tailCandidates.put(ite.falseBranchOrNull(), true);
+            }
+          }
+        }
         case Case caseExpr -> collectTailCandidatesCase(caseExpr, tailCandidates);
         case Application app -> collectTailCandidatesApplication(app, tailCandidates);
         case Name name -> collectTailCandidatesName(name, tailCandidates);

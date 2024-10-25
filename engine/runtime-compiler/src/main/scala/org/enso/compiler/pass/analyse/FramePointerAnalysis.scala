@@ -376,8 +376,10 @@ case object FramePointerAnalysis extends IRPass {
     var currScope: Option[Graph.Scope] = Some(childScope)
     var scopeDistance                  = 0
     while (currScope.isDefined && currScope.get != parentScope) {
+      if (!currScope.get.flattenToParent) {
+        scopeDistance += 1
+      }
       currScope = currScope.get.parent
-      scopeDistance += 1
     }
     scopeDistance
   }
