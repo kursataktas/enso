@@ -1,5 +1,6 @@
 package org.enso.runtime.parser.processor;
 
+import java.util.List;
 import java.util.function.Function;
 import org.enso.runtime.parser.dsl.IRChild;
 
@@ -12,11 +13,24 @@ interface Field {
   /** Name (identifier) of the field. */
   String getName();
 
-  /** Does not return null. */
+  /**
+   * Does not return null. If the type is generic, the type parameter is included in the name.
+   * Returns non-qualified name.
+   */
   String getSimpleTypeName();
 
-  /** May return null if the type is primitive. */
-  String getQualifiedTypeName();
+  /**
+   * Returns list of (fully-qualified) types that are necessary to import in order to use simple
+   * type names.
+   */
+  default List<String> getImportedTypes() {
+    return List.of();
+  }
+
+  /** Returns true if this field is a scala immutable list. */
+  default boolean isList() {
+    return false;
+  }
 
   /**
    * Returns true if this field is annotated with {@link org.enso.runtime.parser.dsl.IRChild}.

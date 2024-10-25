@@ -12,6 +12,7 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.SimpleElementVisitor14;
 import org.enso.runtime.parser.dsl.IRChild;
@@ -42,19 +43,18 @@ final class IRNodeClassGenerator {
   /** User defined fields - all the abstract parameterless methods, including the inherited ones. */
   private final List<Field> fields;
 
-  private static final Set<String> defaultImports =
+  private static final Set<String> defaultImportedTypes =
       Set.of(
-          "import java.util.UUID;",
-          "import java.util.ArrayList;",
-          "import java.util.function.Function;",
-          "import org.enso.compiler.core.Identifier;",
-          "import org.enso.compiler.core.IR;",
-          "import org.enso.compiler.core.ir.DiagnosticStorage;",
-          "import org.enso.compiler.core.ir.Expression;",
-          "import org.enso.compiler.core.ir.IdentifiedLocation;",
-          "import org.enso.compiler.core.ir.MetadataStorage;",
-          "import scala.Option;",
-          "import scala.collection.immutable.List;");
+          "java.util.UUID",
+          "java.util.ArrayList",
+          "java.util.function.Function",
+          "org.enso.compiler.core.Identifier",
+          "org.enso.compiler.core.IR",
+          "org.enso.compiler.core.ir.DiagnosticStorage",
+          "org.enso.compiler.core.ir.Expression",
+          "org.enso.compiler.core.ir.IdentifiedLocation",
+          "org.enso.compiler.core.ir.MetadataStorage",
+          "scala.Option");
 
   /**
    * @param interfaceType Type of the interface for which we are generating code. It is expected
@@ -95,13 +95,14 @@ final class IRNodeClassGenerator {
   Set<String> imports() {
     var importsForFields =
         fields.stream()
-            .filter(field -> !field.isPrimitive())
-            .map(field -> "import " + field.getQualifiedTypeName() + ";")
+            .flatMap(field -> field.getImportedTypes().stream())
             .collect(Collectors.toUnmodifiableSet());
     var allImports = new HashSet<String>();
-    allImports.addAll(defaultImports);
+    allImports.addAll(defaultImportedTypes);
     allImports.addAll(importsForFields);
-    return allImports;
+    return allImports.stream()
+        .map(importedType -> "import " + importedType + ";")
+        .collect(Collectors.toUnmodifiableSet());
   }
 
   /** Generates the body of the class - fields, field setters, method overrides, builder, etc. */
@@ -156,24 +157,39 @@ final class IRNodeClassGenerator {
             if (e.getParameters().isEmpty()) {
               var retType = e.getReturnType();
               var name = e.getSimpleName().toString();
+
               if (retType.getKind().isPrimitive()) {
                 var primField = new PrimitiveField(retType, name);
                 fields.put(name, primField);
-              } else {
-                var retTypeElem = (TypeElement) processingEnv.getTypeUtils().asElement(retType);
-                assert retTypeElem != null;
-                var childAnnot = e.getAnnotation(IRChild.class);
-                boolean isChild = false;
-                boolean isNullable = false;
-                if (childAnnot != null) {
-                  ensureIsSubtypeOfIR(retTypeElem);
-                  isChild = true;
-                  isNullable = !childAnnot.required();
-                }
-                var refField =
-                    new ReferenceField(processingEnv, retTypeElem, name, isNullable, isChild);
-                fields.put(name, refField);
+                return super.visitExecutable(e, unused);
               }
+
+              var retTypeElem = (TypeElement) processingEnv.getTypeUtils().asElement(retType);
+              assert retTypeElem != null;
+              var childAnnot = e.getAnnotation(IRChild.class);
+              if (childAnnot == null) {
+                var refField = new ReferenceField(processingEnv, retTypeElem, name, false, false);
+                fields.put(name, refField);
+                return super.visitExecutable(e, unused);
+              }
+
+              assert childAnnot != null;
+              if (Utils.isScalaList(retTypeElem, processingEnv)) {
+                assert retType instanceof DeclaredType;
+                var declaredRetType = (DeclaredType) retType;
+                assert declaredRetType.getTypeArguments().size() == 1;
+                var typeArg = declaredRetType.getTypeArguments().get(0);
+                var typeArgElem = (TypeElement) processingEnv.getTypeUtils().asElement(typeArg);
+                ensureIsSubtypeOfIR(typeArgElem);
+                var listField = new ListField(name, typeArgElem);
+                fields.put(name, listField);
+                return super.visitExecutable(e, unused);
+              }
+
+              boolean isNullable = !childAnnot.required();
+              ensureIsSubtypeOfIR(retTypeElem);
+              var field = new ReferenceField(processingEnv, retTypeElem, name, isNullable, true);
+              fields.put(name, field);
             }
             return super.visitExecutable(e, unused);
           }
@@ -259,21 +275,28 @@ final class IRNodeClassGenerator {
         .filter(Field::isChild)
         .forEach(
             childField -> {
+              String addToListCode;
+              if (!childField.isList()) {
+                addToListCode = "list.add(" + childField.getName() + ");";
+              } else {
+                addToListCode =
+                    """
+                    $childName.foreach(list::add);
+                    """
+                        .replace("$childName", childField.getName());
+              }
               var childName = childField.getName();
               if (childField.isNullable()) {
                 sb.append(
                     """
                 if ($childName != null) {
-                  list.add($childName);
+                  $addToListCode
                 }
                 """
-                        .replace("$childName", childName));
+                        .replace("$childName", childName)
+                        .replace("$addToListCode", addToListCode));
               } else {
-                sb.append(
-                    """
-                list.add($childName);
-                """
-                        .replace("$childName", childName));
+                sb.append(addToListCode);
               }
             });
     sb.append("return scala.jdk.javaapi.CollectionConverters.asScala(list).toList();").append(nl);
@@ -309,7 +332,7 @@ final class IRNodeClassGenerator {
         }
 
         @Override
-        public List<IR> children() {
+        public scala.collection.immutable.List<IR> children() {
         $childrenMethodBody
         }
 

@@ -1,5 +1,6 @@
 package org.enso.runtime.parser.processor;
 
+import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 
@@ -34,8 +35,8 @@ final class ReferenceField implements Field {
   }
 
   @Override
-  public String getQualifiedTypeName() {
-    return type.getQualifiedName().toString();
+  public List<String> getImportedTypes() {
+    return List.of(type.getQualifiedName().toString());
   }
 
   @Override

@@ -23,11 +23,6 @@ final class PrimitiveField implements Field {
   }
 
   @Override
-  public String getQualifiedTypeName() {
-    return null;
-  }
-
-  @Override
   public boolean isChild() {
     return false;
   }

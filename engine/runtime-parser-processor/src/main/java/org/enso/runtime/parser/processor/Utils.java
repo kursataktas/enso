@@ -61,4 +61,9 @@ final class Utils {
         .map(line -> " ".repeat(indentation) + line)
         .collect(Collectors.joining(System.lineSeparator()));
   }
+
+  static boolean isScalaList(TypeElement type, ProcessingEnvironment procEnv) {
+    var scalaListType = procEnv.getElementUtils().getTypeElement("scala.collection.immutable.List");
+    return procEnv.getTypeUtils().isAssignable(type.asType(), scalaListType.asType());
+  }
 }
