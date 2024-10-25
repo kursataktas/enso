@@ -1,7 +1,8 @@
-package org.enso.compiler.context;
+package org.enso.compiler.common_logic;
 
 import java.util.List;
 import java.util.stream.Stream;
+import org.enso.compiler.context.CommonModuleScopeShape;
 
 /**
  * Encapsulates the logic for resolving a method call on a type/module.

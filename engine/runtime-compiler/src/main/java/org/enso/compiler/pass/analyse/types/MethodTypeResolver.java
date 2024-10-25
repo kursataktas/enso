@@ -1,7 +1,7 @@
 package org.enso.compiler.pass.analyse.types;
 
 import java.util.List;
-import org.enso.compiler.context.MethodResolutionAlgorithm;
+import org.enso.compiler.common_logic.MethodResolutionAlgorithm;
 import org.enso.compiler.pass.analyse.types.scope.BuiltinsFallbackScope;
 import org.enso.compiler.pass.analyse.types.scope.ModuleResolver;
 import org.enso.compiler.pass.analyse.types.scope.StaticImportExportScope;

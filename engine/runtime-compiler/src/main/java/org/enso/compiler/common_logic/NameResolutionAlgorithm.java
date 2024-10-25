@@ -1,4 +1,4 @@
-package org.enso.compiler.context;
+package org.enso.compiler.common_logic;
 
 import org.enso.compiler.MetadataInteropHelpers;
 import org.enso.compiler.core.ConstantsNames;

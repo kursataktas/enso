@@ -3,12 +3,12 @@ package org.enso.interpreter.runtime
 import java.util.logging.Level
 import com.oracle.truffle.api.source.{Source, SourceSection}
 import com.oracle.truffle.api.interop.InteropLibrary
+import org.enso.compiler.common_logic.NameResolutionAlgorithm
 import org.enso.compiler.pass.analyse.FramePointer
 import org.enso.compiler.pass.analyse.FrameVariableNames
 import org.enso.compiler.context.{
   CompilerContext,
-  LocalScope,
-  NameResolutionAlgorithm
+  LocalScope
 }
 import org.enso.compiler.core.CompilerError
 import org.enso.compiler.core.ConstantsNames
