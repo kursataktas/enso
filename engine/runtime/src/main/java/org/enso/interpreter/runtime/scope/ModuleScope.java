@@ -312,7 +312,8 @@ public final class ModuleScope
     return "Scope" + module;
   }
 
-  public static class Builder {
+  public static class Builder
+      implements CommonModuleScopeShape.Builder<Function, Type, ImportExportScope, ModuleScope> {
 
     @CompilerDirectives.CompilationFinal private ModuleScope moduleScope = null;
     private final Module module;
@@ -519,6 +520,11 @@ public final class ModuleScope
                 Collections.unmodifiableSet(exports));
       }
       return moduleScope;
+    }
+
+    @Override
+    public Type getAssociatedType() {
+      return associatedType;
     }
 
     public static ModuleScope.Builder fromCompilerModuleScopeBuilder(

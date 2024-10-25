@@ -29,9 +29,6 @@ import org.enso.compiler.core.ir.{
   Type => Tpe
 }
 import org.enso.compiler.core.ir.module.scope.Definition
-import org.enso.compiler.core.ir.module.scope.definition
-import org.enso.compiler.core.ir.module.scope.Import
-import org.enso.compiler.core.ir.module.scope.imports
 import org.enso.compiler.core.ir.Name.Special
 import org.enso.compiler.core.ir.expression.{
   errors,
@@ -203,8 +200,9 @@ class IrToTruffle(
         RuntimeFunction,
         Type,
         ImportExportScope,
-        ModuleScope
-      ] {
+        ModuleScope,
+        ModuleScope.Builder
+      ](scopeBuilder) {
     override protected def processPolyglotJavaImport(
       visibleName: String,
       javaClassName: String

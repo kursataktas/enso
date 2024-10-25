@@ -54,7 +54,9 @@ public final class StaticModuleScope
     this.methods = methods;
   }
 
-  static final class Builder {
+  static final class Builder
+      implements CommonModuleScopeShape.Builder<
+          TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope> {
     private final QualifiedName moduleName;
     private final TypeScopeReference associatedType;
     private final List<StaticImportExportScope> imports = new ArrayList<>();
@@ -68,7 +70,7 @@ public final class StaticModuleScope
       this.associatedType = TypeScopeReference.moduleAssociatedType(moduleName);
     }
 
-    StaticModuleScope build() {
+    public StaticModuleScope build() {
       return new StaticModuleScope(
           moduleName,
           associatedType,
@@ -82,7 +84,8 @@ public final class StaticModuleScope
       return moduleName;
     }
 
-    TypeScopeReference getAssociatedType() {
+    @Override
+    public TypeScopeReference getAssociatedType() {
       return associatedType;
     }
 
@@ -98,11 +101,13 @@ public final class StaticModuleScope
       typeMethods.put(name, type);
     }
 
-    void registerModuleImport(StaticImportExportScope importScope) {
+    @Override
+    public void addImport(StaticImportExportScope importScope) {
       imports.add(importScope);
     }
 
-    void registerModuleExport(StaticImportExportScope exportScope) {
+    @Override
+    public void addExport(StaticImportExportScope exportScope) {
       exports.add(exportScope);
     }
   }

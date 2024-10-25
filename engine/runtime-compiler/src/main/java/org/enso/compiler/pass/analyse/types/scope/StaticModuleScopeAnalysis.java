@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import org.enso.compiler.MetadataInteropHelpers;
+import org.enso.compiler.common_logic.BuildScopeFromModuleAlgorithm;
 import org.enso.compiler.context.InlineContext;
 import org.enso.compiler.context.ModuleContext;
 import org.enso.compiler.core.IR;
@@ -80,6 +81,74 @@ public class StaticModuleScopeAnalysis implements IRPass {
     return ir;
   }
 
+  private final class BuildStaticModuleScope
+      extends BuildScopeFromModuleAlgorithm<
+          TypeRepresentation,
+          TypeScopeReference,
+          StaticImportExportScope,
+          StaticModuleScope,
+          StaticModuleScope.Builder> {
+    private BuildStaticModuleScope(StaticModuleScope.Builder scope) {
+      super(scope);
+    }
+
+    @Override
+    protected void processPolyglotJavaImport(String visibleName, String javaClassName) {
+      // Currently nothing to do here, as we don't resolve methods on Java types. Asssinging them
+      // with Any should be good enough.
+      // TODO: we may want a test making sure that we don't do any false positive warnings
+    }
+
+    @Override
+    protected void processConversion(Method.Conversion conversion) {
+      // TODO conversion handling is not implemented yet in the type checker
+    }
+
+    @Override
+    protected void processMethodDefinition(Method.Explicit method) {
+      var typeScope = getTypeAssociatedWithMethod(method);
+      if (typeScope == null) {
+        System.out.println(
+            "Failed to process method "
+                + method.methodReference().showCode()
+                + ", because its type scope could not be resolved.");
+        return;
+      }
+      var typeFromSignature =
+          MetadataInteropHelpers.getMetadataOrNull(
+              method, TypeInferenceSignatures.INSTANCE, InferredType.class);
+      var type = typeFromSignature != null ? typeFromSignature.type() : TypeRepresentation.UNKNOWN;
+      var name = method.methodReference().methodName().name();
+      scopeBuilder.registerMethod(typeScope, name, type);
+    }
+
+    @Override
+    protected void processTypeDefinition(Definition.Type typ) {}
+
+    @Override
+    protected TypeScopeReference associatedTypeFromResolvedModule(
+        BindingsMap.ResolvedModule module) {
+      return null;
+    }
+
+    @Override
+    protected TypeScopeReference associatedTypeFromResolvedType(
+        BindingsMap.ResolvedType type, boolean isStatic) {
+      return null;
+    }
+
+    @Override
+    protected StaticImportExportScope buildExportScope(BindingsMap.ExportedModule exportedModule) {
+      return null;
+    }
+
+    @Override
+    protected StaticImportExportScope buildImportScope(
+        BindingsMap.ResolvedImport resolvedImport, BindingsMap.ResolvedModule resolvedModule) {
+      return null;
+    }
+  }
+
   /**
    * Analogous to {@link
    * org.enso.interpreter.runtime.IrToTruffle#registerModuleImports(BindingsMap)}}
@@ -98,7 +167,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
                         if (target instanceof BindingsMap.ResolvedModule resolvedModule) {
                           var importScope =
                               new StaticImportExportScope(resolvedModule.qualifiedName());
-                          scope.registerModuleImport(importScope);
+                          scope.addImport(importScope);
                         }
                         // TODO do other kinds of targets need handling? e.g. ResolvedType?
                         return null;
@@ -118,7 +187,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
         .foreach(
             (exportedMod) -> {
               var exportScope = new StaticImportExportScope(exportedMod.module().qualifiedName());
-              scope.registerModuleExport(exportScope);
+              scope.addExport(exportScope);
               return null;
             });
   }
@@ -195,20 +264,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
   }
 
   private void processMethod(StaticModuleScope.Builder scope, Method.Explicit method) {
-    var typeScope = getTypeAssociatedWithMethod(method, scope.getAssociatedType());
-    if (typeScope == null) {
-      System.out.println(
-          "Failed to process method "
-              + method.methodReference().showCode()
-              + ", because its type scope could not be resolved.");
-      return;
-    }
-    var typeFromSignature =
-        MetadataInteropHelpers.getMetadataOrNull(
-            method, TypeInferenceSignatures.INSTANCE, InferredType.class);
-    var type = typeFromSignature != null ? typeFromSignature.type() : TypeRepresentation.UNKNOWN;
-    var name = method.methodReference().methodName().name();
-    scope.registerMethod(typeScope, name, type);
+    // TODO remove
   }
 
   /**

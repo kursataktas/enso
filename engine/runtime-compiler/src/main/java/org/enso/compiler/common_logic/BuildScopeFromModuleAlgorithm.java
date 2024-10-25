@@ -24,11 +24,15 @@ public abstract class BuildScopeFromModuleAlgorithm<
     TypeScopeReferenceType,
     ImportExportScopeType,
     ModuleScopeType extends
-        CommonModuleScopeShape<FunctionType, TypeScopeReferenceType, ImportExportScopeType>> {
-  // TODO how do we pass the builder?
-  CommonModuleScopeShape.Builder<
-          FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType>
-      scopeBuilder;
+        CommonModuleScopeShape<FunctionType, TypeScopeReferenceType, ImportExportScopeType>,
+    ModuleScopeBuilderType extends
+        CommonModuleScopeShape.Builder<
+                FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType>> {
+  protected final ModuleScopeBuilderType scopeBuilder;
+
+  protected BuildScopeFromModuleAlgorithm(ModuleScopeBuilderType scopeBuilder) {
+    this.scopeBuilder = scopeBuilder;
+  }
 
   public void processModule(Module moduleIr, BindingsMap bindingsMap) {
     // TODO common logic for generateReexportBindings?
