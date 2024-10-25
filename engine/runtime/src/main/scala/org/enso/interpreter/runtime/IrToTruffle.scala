@@ -191,8 +191,8 @@ class IrToTruffle(
           BindingAnalysis,
     "No binding analysis at the point of codegen."
       )
-
     generateReExportBindings(module)
+
     registerModuleExports(bindingsMap)
     registerModuleImports(bindingsMap)
     registerPolyglotImports(module)

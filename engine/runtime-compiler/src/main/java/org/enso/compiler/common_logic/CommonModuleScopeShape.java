@@ -8,10 +8,18 @@ public interface CommonModuleScopeShape<
 
   Collection<ImportExportScopeType> getImports();
 
-  interface Builder<FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType extends CommonModuleScopeShape<FunctionType, TypeScopeReferenceType, ImportExportScopeType>> {
+  interface Builder<
+      FunctionType,
+      TypeScopeReferenceType,
+      ImportExportScopeType,
+      ModuleScopeType extends
+          CommonModuleScopeShape<FunctionType, TypeScopeReferenceType, ImportExportScopeType>> {
     ModuleScopeType build();
 
+    TypeScopeReferenceType getAssociatedType();
+
     void addExport(ImportExportScopeType exportScope);
+
     void addImport(ImportExportScopeType importScope);
   }
 }
