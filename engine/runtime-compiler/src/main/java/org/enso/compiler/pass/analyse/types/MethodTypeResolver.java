@@ -1,7 +1,7 @@
 package org.enso.compiler.pass.analyse.types;
 
 import java.util.List;
-import java.util.stream.Stream;
+import org.enso.compiler.context.MethodResolutionAlgorithm;
 import org.enso.compiler.pass.analyse.types.scope.BuiltinsFallbackScope;
 import org.enso.compiler.pass.analyse.types.scope.ModuleResolver;
 import org.enso.compiler.pass.analyse.types.scope.StaticImportExportScope;
@@ -17,6 +17,7 @@ class MethodTypeResolver {
   private final TypeHierarchy typeHierarchy = new TypeHierarchy();
   private final StaticModuleScope currentModuleScope;
   private final BuiltinsFallbackScope builtinsFallbackScope;
+  private final StaticMethodResolution methodResolutionAlgorithm = new StaticMethodResolution();
 
   MethodTypeResolver(
       ModuleResolver moduleResolver,
@@ -28,7 +29,7 @@ class MethodTypeResolver {
   }
 
   TypeRepresentation resolveMethod(TypeScopeReference type, String methodName) {
-    var definition = lookupMethodDefinition(type, methodName);
+    var definition = methodResolutionAlgorithm.lookupMethodDefinition(type, methodName);
     if (definition != null) {
       return definition;
     }
@@ -42,81 +43,68 @@ class MethodTypeResolver {
     return resolveMethod(parent, methodName);
   }
 
-  /**
-   * Looks up a method definition as seen from the current module.
-   *
-   * <p>The logic should be aligned with {@link
-   * org.enso.interpreter.runtime.scope.ModuleScope#lookupMethodDefinition}.
-   */
-  private TypeRepresentation lookupMethodDefinition(TypeScopeReference type, String methodName) {
-    var definitionScope = findDefinitionScope(type);
-    if (definitionScope != null) {
-      var definedWithAtom = definitionScope.getMethodForType(type, methodName);
-      if (definedWithAtom != null) {
-        return definedWithAtom;
+  private class StaticMethodResolution
+      extends MethodResolutionAlgorithm<
+          TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope> {
+    @Override
+    protected StaticModuleScope findDefinitionScope(TypeScopeReference typeScopeReference) {
+      var definitionModule = moduleResolver.findContainingModule(typeScopeReference);
+      if (definitionModule != null) {
+        return StaticModuleScope.forIR(definitionModule);
+      } else {
+        if (typeScopeReference.equals(TypeScopeReference.ANY)) {
+          // We have special handling for ANY: it points to Standard.Base.Any.Any, but that may not
+          // always be imported.
+          // The runtime falls back to Standard.Builtins.Main, but that modules does not contain any
+          // type information, so it is not useful for us.
+          // Instead we fall back to the hardcoded definitions of the 5 builtins of Any.
+          return builtinsFallbackScope.fallbackAnyScope();
+        } else {
+          logger.error("Could not find declaration module of type: {}", typeScopeReference);
+          return null;
+        }
       }
     }
 
-    var definedHere = currentModuleScope.getMethodForType(type, methodName);
-    if (definedHere != null) {
-      return definedHere;
+    @Override
+    protected StaticModuleScope getCurrentModuleScope() {
+      return currentModuleScope;
     }
 
-    var foundInImports = findInImports(type, methodName);
-    if (foundInImports.size() == 1) {
-      return foundInImports.get(0).resolvedType();
-    } else if (foundInImports.size() > 1) {
-      var foundImportNames = foundInImports.stream().map(MethodFromImport::origin);
-      logger.debug("Method {} is coming from multiple imports: {}", methodName, foundImportNames);
-      var foundTypes = foundInImports.stream().distinct();
-      if (foundTypes.count() > 1) {
+    @Override
+    protected TypeRepresentation findExportedMethodInImportScope(
+        StaticImportExportScope importExportScope,
+        TypeScopeReference typeScopeReference,
+        String methodName) {
+      var materialized = importExportScope.materialize(moduleResolver);
+      return materialized.getExportedMethod(typeScopeReference, methodName);
+    }
+
+    @Override
+    protected TypeRepresentation onMultipleDefinitionsFromImports(
+        String methodName,
+        List<MethodFromImport<TypeRepresentation, StaticImportExportScope>> methodFromImports) {
+      if (logger.isDebugEnabled()) {
+        var foundImportNames = methodFromImports.stream().map(MethodFromImport::origin);
+        logger.debug("Method {} is coming from multiple imports: {}", methodName, foundImportNames);
+      }
+
+      long foundTypesCount =
+          methodFromImports.stream().map(MethodFromImport::resolvedType).distinct().count();
+      if (foundTypesCount > 1) {
+        List<String> foundTypesWithOrigins =
+            methodFromImports.stream()
+                .distinct()
+                .map(m -> m.resolvedType() + " from " + m.origin())
+                .toList();
         logger.error(
             "Method {} is coming from multiple imports with different types: {}",
             methodName,
-            foundTypes);
+            foundTypesWithOrigins);
         return null;
       } else {
         // If all types are the same, just return the first one
-        return foundInImports.get(0).resolvedType();
-      }
-    }
-
-    return null;
-  }
-
-  private List<MethodFromImport> findInImports(TypeScopeReference type, String methodName) {
-    return currentModuleScope.getImports().stream()
-        .flatMap(
-            staticImportExportScope -> {
-              var materialized = staticImportExportScope.materialize(moduleResolver);
-              var found = materialized.getExportedMethod(type, methodName);
-              if (found != null) {
-                return Stream.of(new MethodFromImport(found, staticImportExportScope));
-              } else {
-                return Stream.of();
-              }
-            })
-        .toList();
-  }
-
-  private record MethodFromImport(
-      TypeRepresentation resolvedType, StaticImportExportScope origin) {}
-
-  private StaticModuleScope findDefinitionScope(TypeScopeReference type) {
-    var definitionModule = moduleResolver.findContainingModule(type);
-    if (definitionModule != null) {
-      return StaticModuleScope.forIR(definitionModule);
-    } else {
-      if (type.equals(TypeScopeReference.ANY)) {
-        // We have special handling for ANY: it points to Standard.Base.Any.Any, but that may not
-        // always be imported.
-        // The runtime falls back to Standard.Builtins.Main, but that modules does not contain any
-        // type information, so it is not useful for us.
-        // Instead we fall back to the hardcoded definitions of the 5 builtins of Any.
-        return builtinsFallbackScope.fallbackAnyScope();
-      } else {
-        logger.error("Could not find declaration module of type: {}", type);
-        return null;
+        return methodFromImports.get(0).resolvedType();
       }
     }
   }

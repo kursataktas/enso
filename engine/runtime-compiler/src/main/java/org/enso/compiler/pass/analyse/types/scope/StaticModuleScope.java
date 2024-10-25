@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import org.enso.compiler.MetadataInteropHelpers;
+import org.enso.compiler.context.CommonModuleScopeShape;
 import org.enso.compiler.core.CompilerStub;
 import org.enso.compiler.core.ir.Module;
 import org.enso.compiler.core.ir.ProcessingPass;
@@ -28,7 +29,9 @@ import scala.Option;
  * separate for now as it is easier to create a prototype that way. If later we find out they have
  * enough of similarity, we should merge them.
  */
-public final class StaticModuleScope implements ProcessingPass.Metadata {
+public final class StaticModuleScope
+    implements ProcessingPass.Metadata,
+        CommonModuleScopeShape<TypeRepresentation, TypeScopeReference, StaticImportExportScope> {
   private final QualifiedName moduleName;
   private final TypeScopeReference associatedType;
   private final List<StaticImportExportScope> imports;

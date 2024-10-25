@@ -59,4 +59,19 @@ public class StaticImportExportScope {
   public String toString() {
     return "StaticImportExportScope{" + referredModuleName + "}";
   }
+
+  @Override
+  public int hashCode() {
+    return referredModuleName.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof StaticImportExportScope other)) {
+      return false;
+    }
+
+    // TODO once hiding is added, these filters need to be added too
+    return referredModuleName.equals(other.referredModuleName);
+  }
 }

@@ -1,6 +1,5 @@
 package org.enso.compiler.context;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -27,13 +26,7 @@ public abstract class MethodResolutionAlgorithm<
     TypeScopeReferenceType,
     ImportExportScopeType,
     ModuleScopeType extends
-        MethodResolutionAlgorithm.CommonModuleScope<
-                FunctionType, TypeScopeReferenceType, ImportExportScopeType>> {
-  interface CommonModuleScope<FunctionType, TypeScopeReferenceType, ImportExportScopeType> {
-    FunctionType getMethodForType(TypeScopeReferenceType type, String methodName);
-
-    Collection<ImportExportScopeType> getImports();
-  }
+        CommonModuleScopeShape<FunctionType, TypeScopeReferenceType, ImportExportScopeType>> {
 
   public FunctionType lookupMethodDefinition(TypeScopeReferenceType type, String methodName) {
     var definitionScope = findDefinitionScope(type);
@@ -70,7 +63,7 @@ public abstract class MethodResolutionAlgorithm<
     if (found.size() == 1) {
       return found.get(0).resolvedType;
     } else if (found.size() > 1) {
-      return onMultipleDefinitionsFromImports(found);
+      return onMultipleDefinitionsFromImports(methodName, found);
     } else {
       return null;
     }
@@ -84,7 +77,7 @@ public abstract class MethodResolutionAlgorithm<
       ImportExportScopeType importExportScope, TypeScopeReferenceType type, String methodName);
 
   protected abstract FunctionType onMultipleDefinitionsFromImports(
-      List<MethodFromImport<FunctionType, ImportExportScopeType>> imports);
+      String methodName, List<MethodFromImport<FunctionType, ImportExportScopeType>> imports);
 
   protected record MethodFromImport<FunctionType, ImportExportScopeType>(
       FunctionType resolvedType, ImportExportScopeType origin) {}
