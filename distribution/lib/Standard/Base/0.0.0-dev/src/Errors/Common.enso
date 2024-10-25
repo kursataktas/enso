@@ -1,3 +1,4 @@
+import project.Data.Numbers.Float
 import project.Data.Numbers.Integer
 import project.Data.Text.Extensions
 import project.Data.Text.Text
@@ -551,5 +552,21 @@ type Out_Of_Range
     ## PRIVATE
     to_text : Text
     to_text self =
-        extra = if self.message.is_nothing then "" else ": "+self.message.to_text
+        extra = if self.message.is_nothing then "" else " (message = "+self.message.to_text+")"
         "(Out_Of_Range (value = "+self.value.to_text+")" + extra + ")"
+
+## Indicates that a Float was used as a Dicionary key.
+type Float_Used_As_Dictionary_Key
+    ## PRIVATE
+    Warning value:Float
+
+    ## PRIVATE
+       Create a human-readable version of the error.
+    to_display_text : Text
+    to_display_text self =
+        "Float used as dictionary key: "+self.value.to_text
+
+    ## PRIVATE
+    to_text : Text
+    to_text self =
+        "(Float_Used_As_Dictionary_Key (value = "+self.value.to_text+"))"
