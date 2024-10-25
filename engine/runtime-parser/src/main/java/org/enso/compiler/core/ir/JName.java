@@ -6,21 +6,19 @@ import org.enso.compiler.core.ir.module.scope.JDefinition;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
 
+@IRNode
 public interface JName extends JExpression {
   String name();
 
   boolean isMethod();
 
-  @IRNode
   interface JBlank extends JName {}
 
-  @IRNode
   interface JLiteral extends JName {
     @IRChild(required = false)
     JName originalName();
   }
 
-  @IRNode
   interface JQualified extends JName {
     @IRChild
     List<JName> parts();
@@ -31,14 +29,12 @@ public interface JName extends JExpression {
     }
   }
 
-  @IRNode
   interface JSelf extends JName {
     boolean synthetic();
   }
 
   interface JAnnotation extends JName, JDefinition {}
 
-  @IRNode
   interface JGenericAnnotation extends JAnnotation {
     @IRChild
     JExpression expression();

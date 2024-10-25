@@ -7,8 +7,8 @@ import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
 
 /** Module-level import statements. */
+@IRNode
 public interface JImport extends JScope {
-  @IRNode
   interface JModule extends JImport {
     @IRChild
     JName.JQualified name();

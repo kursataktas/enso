@@ -5,8 +5,8 @@ import org.enso.compiler.core.IR;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
 
+@IRNode
 public interface JExpression extends IR {
-  @IRNode
   interface JBlock extends JExpression {
     @IRChild
     List<JExpression> expressions();
@@ -23,7 +23,6 @@ public interface JExpression extends IR {
    * <p>To create a binding that binds no available name, set the name of the binding to an
    * [[Name.Blank]] (e.g. _ = foo a b).
    */
-  @IRNode
   interface JBinding extends JExpression {
     @IRChild
     JName name();

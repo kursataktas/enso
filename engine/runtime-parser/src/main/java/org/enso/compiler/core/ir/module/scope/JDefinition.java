@@ -8,8 +8,8 @@ import org.enso.compiler.core.ir.module.JScope;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
 
+@IRNode
 public interface JDefinition extends JScope {
-  @IRNode
   interface JType extends JDefinition {
     @IRChild
     JName name();
@@ -22,7 +22,6 @@ public interface JDefinition extends JScope {
   }
 
   /** The definition of an atom constructor and its associated arguments. */
-  @IRNode
   interface JData extends JDefinition {
     /** The name of the atom */
     @IRChild
@@ -43,7 +42,6 @@ public interface JDefinition extends JScope {
    * The definition of a complex type definition that may contain multiple atom and method
    * definitions.
    */
-  @IRNode
   interface JSugaredType extends JDefinition {
 
     /** The name of the complex type. */

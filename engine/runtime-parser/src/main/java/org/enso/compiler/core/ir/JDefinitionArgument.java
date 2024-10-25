@@ -4,6 +4,7 @@ import org.enso.compiler.core.IR;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
 
+@IRNode
 public interface JDefinitionArgument extends IR {
   @IRChild
   JName name();
@@ -16,6 +17,5 @@ public interface JDefinitionArgument extends IR {
 
   boolean suspended();
 
-  @IRNode
   interface JSpecified extends JDefinitionArgument {}
 }

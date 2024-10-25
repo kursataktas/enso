@@ -6,8 +6,8 @@ import org.enso.compiler.core.ir.module.JScope;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
 
+@IRNode
 public interface JExport extends JScope {
-  @IRNode
   interface JModule extends JExport {
     @IRChild
     JName.JQualified name();
