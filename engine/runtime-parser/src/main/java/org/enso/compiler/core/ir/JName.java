@@ -1,10 +1,9 @@
 package org.enso.compiler.core.ir;
 
-import java.util.List;
-import java.util.stream.Collectors;
 import org.enso.compiler.core.ir.module.scope.JDefinition;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
+import scala.collection.immutable.List;
 
 @IRNode
 public interface JName extends JExpression {
@@ -25,7 +24,7 @@ public interface JName extends JExpression {
 
     @Override
     default String name() {
-      return parts().stream().map(JName::name).collect(Collectors.joining("."));
+      return parts().map(JName::name).mkString(".");
     }
   }
 

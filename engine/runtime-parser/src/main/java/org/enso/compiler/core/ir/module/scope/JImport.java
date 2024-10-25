@@ -1,10 +1,10 @@
 package org.enso.compiler.core.ir.module.scope;
 
-import java.util.List;
 import org.enso.compiler.core.ir.JName;
 import org.enso.compiler.core.ir.module.JScope;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
+import scala.collection.immutable.List;
 
 /** Module-level import statements. */
 @IRNode
@@ -40,10 +40,10 @@ public interface JImport extends JScope {
         return false;
       }
       if (onlyNames() != null) {
-        return onlyNames().stream().anyMatch(n -> n.name().equals(name));
+        return onlyNames().exists(n -> n.name().equals(name));
       }
       if (hiddenNames() != null) {
-        return hiddenNames().stream().noneMatch(n -> n.name().equals(name));
+        return hiddenNames().forall(n -> !n.name().equals(name));
       }
       return true;
     }

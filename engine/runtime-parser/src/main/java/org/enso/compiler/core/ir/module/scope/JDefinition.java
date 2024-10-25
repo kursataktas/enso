@@ -1,12 +1,12 @@
 package org.enso.compiler.core.ir.module.scope;
 
-import java.util.List;
 import org.enso.compiler.core.IR;
 import org.enso.compiler.core.ir.JDefinitionArgument;
 import org.enso.compiler.core.ir.JName;
 import org.enso.compiler.core.ir.module.JScope;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
+import scala.collection.immutable.List;
 
 @IRNode
 public interface JDefinition extends JScope {

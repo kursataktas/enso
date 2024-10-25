@@ -1,10 +1,10 @@
 package org.enso.compiler.core.ir.module.scope;
 
-import java.util.List;
 import org.enso.compiler.core.ir.JName;
 import org.enso.compiler.core.ir.module.JScope;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
+import scala.collection.immutable.List;
 
 @IRNode
 public interface JExport extends JScope {
@@ -30,7 +30,7 @@ public interface JExport extends JScope {
       if (rename() != null) {
         return rename();
       } else {
-        return name().parts().get(name().parts().size() - 1);
+        return name().parts().apply(name().parts().size() - 1);
       }
     }
 
@@ -45,7 +45,7 @@ public interface JExport extends JScope {
      */
     default boolean allowsAccess(String name) {
       if (onlyNames() != null) {
-        return onlyNames().stream().anyMatch(n -> n.name().equalsIgnoreCase(name));
+        return onlyNames().exists(n -> n.name().equalsIgnoreCase(name));
       }
       return true;
     }
