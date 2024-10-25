@@ -78,7 +78,7 @@ public class IRProcessor extends AbstractProcessor {
     String generatedCode;
     if (nestedInterfaces.isEmpty()) {
       var classGenerator = new IRNodeClassGenerator(processingEnv, irNodeTypeElem, newClassName);
-      generatedCode = generateSingleNodeClass(classGenerator);
+      generatedCode = generateSingleNodeClass(classGenerator, pkgName);
     } else {
       var nestedClassGenerators =
           nestedInterfaces.stream()
@@ -89,7 +89,8 @@ public class IRProcessor extends AbstractProcessor {
                   })
               .toList();
       generatedCode =
-          generateMultipleNodeClasses(nestedClassGenerators, newClassName, irNodeInterfaceName);
+          generateMultipleNodeClasses(
+              nestedClassGenerators, pkgName, newClassName, irNodeInterfaceName);
     }
 
     try {
@@ -116,19 +117,25 @@ public class IRProcessor extends AbstractProcessor {
    * Generates code for a single class that implements a single interface annotated with {@link
    * IRNode}.
    *
+   * @param pkgName Package of the current interface annotated with {@link IRNode}.
    * @return The generated code ready to be written to a {@code .java} source.
    */
-  private static String generateSingleNodeClass(IRNodeClassGenerator irNodeClassGen) {
+  private static String generateSingleNodeClass(
+      IRNodeClassGenerator irNodeClassGen, String pkgName) {
     var imports =
         irNodeClassGen.imports().stream().collect(Collectors.joining(System.lineSeparator()));
+    var pkg = pkgName.isEmpty() ? "" : "package " + pkgName + ";";
     var code =
         """
+        $pkg
+
         $imports
 
         public final class $className implements $interfaceName {
           $classBody
         }
         """
+            .replace("$pkg", pkg)
             .replace("$imports", imports)
             .replace("$className", irNodeClassGen.getClassName())
             .replace("$interfaceName", irNodeClassGen.getInterfaceName())
@@ -141,6 +148,7 @@ public class IRProcessor extends AbstractProcessor {
    * {@link IRNode} contains many nested interfaces.
    *
    * @param nestedClassGenerators Class generators for all the nested interfaces.
+   * @param pkgName Package of the outer interface annotated with {@link IRNode}.
    * @param newOuterClassName Name for the newly generate public outer class.
    * @param outerInterfaceName Name of the interface annotated by {@link IRNode}, that is, the outer
    *     interface for which we are generating multiple inner classes.
@@ -148,6 +156,7 @@ public class IRProcessor extends AbstractProcessor {
    */
   private static String generateMultipleNodeClasses(
       List<IRNodeClassGenerator> nestedClassGenerators,
+      String pkgName,
       String newOuterClassName,
       String outerInterfaceName) {
     var imports =
@@ -155,6 +164,9 @@ public class IRProcessor extends AbstractProcessor {
             .flatMap(gen -> gen.imports().stream())
             .collect(Collectors.joining(System.lineSeparator()));
     var sb = new StringBuilder();
+    if (!pkgName.isEmpty()) {
+      sb.append("package ").append(pkgName).append(";").append(System.lineSeparator());
+    }
     sb.append(imports);
     sb.append(System.lineSeparator());
     sb.append(System.lineSeparator());
