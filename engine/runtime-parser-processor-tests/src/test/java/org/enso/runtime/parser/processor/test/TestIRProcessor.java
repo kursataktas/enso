@@ -260,4 +260,33 @@ public class TestIRProcessor {
     srcSubject.contains("public final class JNameGen");
     srcSubject.contains("public static final class JBlankGen implements JName.JBlank");
   }
+
+  @Test
+  public void returnValueCanBeScalaList() {
+    var src =
+        JavaFileObjects.forSourceString(
+            "JName",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.runtime.parser.dsl.IRChild;
+        import org.enso.compiler.core.IR;
+        import scala.collection.immutable.List;
+
+        @IRNode
+        public interface JName extends IR {
+          @IRChild
+          List<IR> expressions();
+        }
+        """);
+    var compiler = Compiler.javac().withProcessors(new IRProcessor());
+    var compilation = compiler.compile(src);
+    CompilationSubject.assertThat(compilation).succeeded();
+    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
+    var srcSubject =
+        CompilationSubject.assertThat(compilation)
+            .generatedSourceFile("JNameGen")
+            .contentsAsUtf8String();
+    srcSubject.contains("public final class JNameGen");
+    srcSubject.contains("List<IR> expressions");
+  }
 }
