@@ -1,0 +1,30 @@
+from Standard.Base import all
+
+from Standard.Test import Bench, Faker
+
+
+type Data
+    Value ~two_nums ~two_nums_regex
+
+    create =
+        faker = Faker.new
+        Data.Value (build_two_nums faker) (Regex.compile "(\d+)(\w+)(\d+)")
+
+count = 10
+
+build_two_nums faker = 0.up_to count . map _->
+    (faker.alpha 2) + (faker.integer 0 100).to_text + (faker.alpha 8) + (faker.integer 0 100).to_text + (faker.alpha 2)
+
+
+options = Bench.options . set_warmup (Bench.phase_conf 1 2) . set_measure (Bench.phase_conf 1 2)
+
+
+collect_benches = Bench.build builder->
+    data = Data.create
+
+    builder.group "Regex" options group_builder->
+        group_builder.specify "match" <|
+            data.two_nums . map  data.two_nums_regex.match
+
+
+main = collect_benches . run_main
