@@ -13,7 +13,7 @@ import {
   useSetIsAssetPanelHidden,
 } from '#/providers/DriveProvider'
 import { useText } from '#/providers/TextProvider'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, Spring } from 'framer-motion'
 import { useId } from 'react'
 
 /**
@@ -22,6 +22,16 @@ import { useId } from 'react'
 export interface AssetPanelToggleProps {
   readonly className?: string
   readonly showWhen?: 'collapsed' | 'expanded'
+}
+
+const DEFAULT_TRANSITION_OPTIONS: Spring = {
+  type: 'spring',
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  stiffness: 200,
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  damping: 30,
+  mass: 1,
+  velocity: 0,
 }
 
 /**
@@ -46,17 +56,10 @@ export function AssetPanelToggle(props: AssetPanelToggleProps) {
           className={className}
           layout
           layoutId={`asset-panel-toggle-${id}`}
-          initial={{
-            opacity: 0,
-            filter: 'blur(8px)',
-            x: showWhen === 'collapsed' ? 16 : -16,
-          }}
+          initial={{ opacity: 0, filter: 'blur(8px)', x: showWhen === 'collapsed' ? 16 : -16 }}
           animate={{ opacity: 1, filter: 'blur(0px)', x: 0 }}
-          exit={{
-            opacity: 0,
-            filter: 'blur(4px)',
-            x: showWhen === 'collapsed' ? 16 : -16,
-          }}
+          exit={{ opacity: 0, filter: 'blur(4px)', x: showWhen === 'collapsed' ? 16 : -16 }}
+          transition={DEFAULT_TRANSITION_OPTIONS}
         >
           <Button
             size="medium"

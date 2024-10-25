@@ -148,43 +148,45 @@ export function AssetPanel(props: AssetPanelProps) {
               })
             }}
           >
-            {isExpanded && (
-              <div
-                className="min-h-full"
-                // We use clipPath to prevent the sidebar from being visible under tabs while expanding.
-                style={{ clipPath: `inset(0 ${ASSET_SIDEBAR_COLLAPSED_WIDTH}px 0 0)` }}
-              >
-                <motion.div
-                  initial={{ x: ASSET_PANEL_WIDTH, filter: 'blur(16px)' }}
-                  animate={{ x: 0, filter: 'blur(0px)' }}
-                  exit={{ x: ASSET_PANEL_WIDTH, filter: 'blur(16px)' }}
-                  transition={DEFAULT_TRANSITION_OPTIONS}
-                  className="absolute left-0 top-0 h-full w-full bg-background"
-                  style={{ width: ASSET_PANEL_WIDTH }}
+            <AnimatePresence mode="sync">
+              {isExpanded && (
+                <div
+                  className="min-h-full"
+                  // We use clipPath to prevent the sidebar from being visible under tabs while expanding.
+                  style={{ clipPath: `inset(0 ${ASSET_SIDEBAR_COLLAPSED_WIDTH}px 0 0)` }}
                 >
-                  <AssetPanelTabs.TabPanel id="settings">
-                    <AssetProperties
-                      backend={backend}
-                      item={item}
-                      isReadonly={isReadonly}
-                      category={category}
-                    />
-                  </AssetPanelTabs.TabPanel>
+                  <motion.div
+                    initial={{ filter: 'blur(8px)' }}
+                    animate={{ filter: 'blur(0px)' }}
+                    exit={{ filter: 'blur(8px)' }}
+                    transition={DEFAULT_TRANSITION_OPTIONS}
+                    className="absolute left-0 top-0 h-full w-full bg-background"
+                    style={{ width: ASSET_PANEL_WIDTH }}
+                  >
+                    <AssetPanelTabs.TabPanel id="settings">
+                      <AssetProperties
+                        backend={backend}
+                        item={item}
+                        isReadonly={isReadonly}
+                        category={category}
+                      />
+                    </AssetPanelTabs.TabPanel>
 
-                  <AssetPanelTabs.TabPanel id="versions">
-                    <AssetVersions backend={backend} item={item} />
-                  </AssetPanelTabs.TabPanel>
+                    <AssetPanelTabs.TabPanel id="versions">
+                      <AssetVersions backend={backend} item={item} />
+                    </AssetPanelTabs.TabPanel>
 
-                  <AssetPanelTabs.TabPanel id="sessions">
-                    <AssetProjectSessions backend={backend} item={item} />
-                  </AssetPanelTabs.TabPanel>
+                    <AssetPanelTabs.TabPanel id="sessions">
+                      <AssetProjectSessions backend={backend} item={item} />
+                    </AssetPanelTabs.TabPanel>
 
-                  <AssetPanelTabs.TabPanel id="docs">
-                    <AssetDocs backend={backend} item={item} />
-                  </AssetPanelTabs.TabPanel>
-                </motion.div>
-              </div>
-            )}
+                    <AssetPanelTabs.TabPanel id="docs">
+                      <AssetDocs backend={backend} item={item} />
+                    </AssetPanelTabs.TabPanel>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
 
             <div
               className="absolute bottom-0 right-0 top-0 pt-2.5"
