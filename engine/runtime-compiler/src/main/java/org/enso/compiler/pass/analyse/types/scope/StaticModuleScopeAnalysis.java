@@ -24,7 +24,6 @@ import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 import org.enso.compiler.pass.analyse.types.TypeResolver;
 import org.enso.compiler.pass.resolve.FullyQualifiedNames$;
 import org.enso.compiler.pass.resolve.GlobalNames$;
-import org.enso.compiler.pass.resolve.MethodDefinitions$;
 import org.enso.compiler.pass.resolve.TypeNames$;
 import scala.collection.immutable.Seq;
 import scala.jdk.javaapi.CollectionConverters;
@@ -66,10 +65,9 @@ public class StaticModuleScopeAnalysis implements IRPass {
     // parts if it will make sense.
     StaticModuleScope.Builder scopeBuilder = new StaticModuleScope.Builder(moduleContext.getName());
     BindingsMap bindingsMap = getMetadata(ir, BindingAnalysis$.MODULE$, BindingsMap.class);
-    processModuleExports(scopeBuilder, ir, bindingsMap);
-    processModuleImports(scopeBuilder, ir, bindingsMap);
-    processPolyglotImports(scopeBuilder, ir);
-    processBindings(scopeBuilder, ir);
+
+    BuildStaticModuleScope buildScopeAlgorithm = new BuildStaticModuleScope(scopeBuilder);
+    buildScopeAlgorithm.processModule(ir, bindingsMap);
     StaticModuleScope scope = scopeBuilder.build();
     ir.passData().update(INSTANCE, scope);
     return ir;
@@ -123,115 +121,49 @@ public class StaticModuleScopeAnalysis implements IRPass {
     }
 
     @Override
-    protected void processTypeDefinition(Definition.Type typ) {}
+    protected void processTypeDefinition(Definition.Type typ) {
+      List<AtomType.Constructor> constructors =
+          CollectionConverters$.MODULE$.asJava(typ.members()).stream()
+              .map(
+                  constructorDef ->
+                      new AtomType.Constructor(
+                          constructorDef.name().name(), constructorDef.isPrivate()))
+              .toList();
+
+      AtomType atomType = new AtomType(typ.name().name(), constructors);
+      var qualifiedName = scopeBuilder.getModuleName().createChild(typ.name().name());
+      var atomTypeScope = TypeScopeReference.atomType(qualifiedName);
+      scopeBuilder.registerType(atomType);
+      registerFieldGetters(scopeBuilder, atomTypeScope, typ);
+    }
 
     @Override
     protected TypeScopeReference associatedTypeFromResolvedModule(
         BindingsMap.ResolvedModule module) {
-      return null;
+      return TypeScopeReference.moduleAssociatedType(module.qualifiedName());
     }
 
     @Override
     protected TypeScopeReference associatedTypeFromResolvedType(
         BindingsMap.ResolvedType type, boolean isStatic) {
-      return null;
+      return TypeScopeReference.atomType(type.qualifiedName(), isStatic);
     }
 
     @Override
     protected StaticImportExportScope buildExportScope(BindingsMap.ExportedModule exportedModule) {
-      return null;
+      return new StaticImportExportScope(exportedModule.module().qualifiedName());
     }
 
     @Override
     protected StaticImportExportScope buildImportScope(
         BindingsMap.ResolvedImport resolvedImport, BindingsMap.ResolvedModule resolvedModule) {
-      return null;
+      return new StaticImportExportScope(resolvedModule.qualifiedName());
     }
-  }
-
-  /**
-   * Analogous to {@link
-   * org.enso.interpreter.runtime.IrToTruffle#registerModuleImports(BindingsMap)}}
-   */
-  private void processModuleImports(
-      StaticModuleScope.Builder scope, Module module, BindingsMap bindingsMap) {
-    bindingsMap
-        .resolvedImports()
-        .foreach(
-            imp -> {
-              imp.targets()
-                  .foreach(
-                      target -> {
-                        // System.out.println("Processing import "+imp.importDef().showCode()+" -
-                        // target: " + target);
-                        if (target instanceof BindingsMap.ResolvedModule resolvedModule) {
-                          var importScope =
-                              new StaticImportExportScope(resolvedModule.qualifiedName());
-                          scope.addImport(importScope);
-                        }
-                        // TODO do other kinds of targets need handling? e.g. ResolvedType?
-                        return null;
-                      });
-              return null;
-            });
-  }
-
-  /**
-   * Analogous to {@link
-   * org.enso.interpreter.runtime.IrToTruffle#registerModuleExports(BindingsMap)}
-   */
-  private void processModuleExports(
-      StaticModuleScope.Builder scope, Module module, BindingsMap bindingsMap) {
-    bindingsMap
-        .getDirectlyExportedModules()
-        .foreach(
-            (exportedMod) -> {
-              var exportScope = new StaticImportExportScope(exportedMod.module().qualifiedName());
-              scope.addExport(exportScope);
-              return null;
-            });
-  }
-
-  private void processPolyglotImports(StaticModuleScope.Builder scope, Module module) {
-    // TODO [RW]: this is for later iterations, currently resolving polyglot types does not give us
-    // much useful info, not better than `Any`
-  }
-
-  private void processBindings(StaticModuleScope.Builder scope, Module module) {
-    module
-        .bindings()
-        .foreach(
-            binding -> {
-              switch (binding) {
-                case Definition.Type typ -> processType(scope, typ);
-                case Method.Explicit method -> processMethod(scope, method);
-                case Method.Conversion conversion -> processConversion(scope, conversion);
-                default -> System.out.println(
-                    "Unexpected binding type: " + binding.getClass().getCanonicalName());
-              }
-              return null;
-            });
   }
 
   @Override
   public <T extends IR> T updateMetadataInDuplicate(T sourceIr, T copyOfIr) {
     return IRPass.super.updateMetadataInDuplicate(sourceIr, copyOfIr);
-  }
-
-  private void processType(StaticModuleScope.Builder scope, Definition.Type type) {
-    List<AtomType.Constructor> constructors =
-        CollectionConverters$.MODULE$.asJava(type.members()).stream()
-            .map(
-                constructorDef ->
-                    new AtomType.Constructor(
-                        constructorDef.name().name(), constructorDef.isPrivate()))
-            .toList();
-
-    AtomType atomType = new AtomType(type.name().name(), constructors);
-    var qualifiedName = scope.getModuleName().createChild(type.name().name());
-    var atomTypeScope = TypeScopeReference.atomType(qualifiedName);
-    scope.registerType(atomType);
-    registerFieldGetters(scope, atomTypeScope, type);
   }
 
   /**
@@ -261,54 +193,5 @@ public class StaticModuleScopeAnalysis implements IRPass {
       TypeRepresentation mergedType = TypeRepresentation.buildSimplifiedSumType(entry.getValue());
       scope.registerMethod(typeScope, fieldName, mergedType);
     }
-  }
-
-  private void processMethod(StaticModuleScope.Builder scope, Method.Explicit method) {
-    // TODO remove
-  }
-
-  /**
-   * Resolves the type associated with the given method.
-   *
-   * @param method The method definition to resolve.
-   * @param scopeAsscoiatedType The type associated with the scope in which the method is defined.
-   *     It will be used as a fallback if the method is deemed to be a module-method.
-   * @return the type associated with the method
-   */
-  TypeScopeReference getTypeAssociatedWithMethod(
-      Method.Explicit method, TypeScopeReference scopeAsscoiatedType) {
-    // TODO this should be synchronized with declaredConsOpt of IrToTruffle::processModule -
-    // probably good to extract a common algorithm
-    boolean isStatic = method.isStatic();
-
-    var typePointerOpt = method.methodReference().typePointer();
-    if (typePointerOpt.isEmpty()) {
-      // A method not associated to a type - this is a module method.
-      // TODO should we check isStatic here?
-      return scopeAsscoiatedType;
-    } else {
-      var metadata =
-          MetadataInteropHelpers.getMetadataOrNull(
-              typePointerOpt.get(), MethodDefinitions$.MODULE$, BindingsMap.Resolution.class);
-      if (metadata == null) {
-        throw new IllegalStateException(
-            "Failed to resolve type pointer for method: " + method.methodReference().showCode());
-      }
-
-      return switch (metadata.target()) {
-        case BindingsMap.ResolvedType resolvedType -> TypeScopeReference.atomType(
-            resolvedType.qualifiedName(), isStatic);
-        case BindingsMap.ResolvedModule resolvedModule -> {
-          assert !isStatic;
-          yield TypeScopeReference.moduleAssociatedType(resolvedModule.qualifiedName());
-        }
-        default -> throw new IllegalStateException(
-            "Unexpected target type: " + metadata.target().getClass().getCanonicalName());
-      };
-    }
-  }
-
-  private void processConversion(StaticModuleScope.Builder scope, Method.Conversion conversion) {
-    // TODO later
   }
 }
