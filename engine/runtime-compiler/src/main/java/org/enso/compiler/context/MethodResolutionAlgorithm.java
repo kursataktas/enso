@@ -11,8 +11,7 @@ import java.util.stream.Stream;
  * <ol>
  *   <li>in the runtime ({@link
  *       org.enso.interpreter.runtime.scope.ModuleScope#lookupMethodDefinition}),
- *   <li>in the type checker ({@link
- *       org.enso.compiler.pass.analyse.types.MethodTypeResolver#lookupMethodDefinition}).
+ *   <li>in the type checker ({@link org.enso.compiler.pass.analyse.types.MethodTypeResolver}).
  * </ol>
  *
  * <p>To ensure that all usages stay consistent, they should all rely on the logic implemented in

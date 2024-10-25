@@ -7,7 +7,9 @@ import com.oracle.truffle.api.library.ExportMessage;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.enso.compiler.context.CommonModuleScopeShape;
 import org.enso.compiler.context.CompilerContext;
+import org.enso.compiler.context.MethodResolutionAlgorithm;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.Module;
 import org.enso.interpreter.runtime.callable.function.Function;
@@ -20,7 +22,8 @@ import org.enso.interpreter.runtime.util.CachingSupplier;
 
 /** A representation of Enso's per-file top-level scope. */
 @ExportLibrary(TypesLibrary.class)
-public final class ModuleScope implements EnsoObject {
+public final class ModuleScope
+    implements EnsoObject, CommonModuleScopeShape<Function, Type, ImportExportScope> {
   private final Type associatedType;
   private final Module module;
   private final Map<String, Supplier<TruffleObject>> polyglotSymbols;
@@ -88,21 +91,40 @@ public final class ModuleScope implements EnsoObject {
    */
   @CompilerDirectives.TruffleBoundary
   public Function lookupMethodDefinition(Type type, String name) {
-    var definedWithAtom = type.getDefinitionScope().getMethodForType(type, name);
-    if (definedWithAtom != null) {
-      return definedWithAtom;
+    return methodResolutionAlgorithm.lookupMethodDefinition(type, name);
+  }
+
+  private final RuntimeMethodResolution methodResolutionAlgorithm = new RuntimeMethodResolution();
+
+  private class RuntimeMethodResolution
+      extends MethodResolutionAlgorithm<Function, Type, ImportExportScope, ModuleScope> {
+    @Override
+    protected ModuleScope findDefinitionScope(Type type) {
+      return type.getDefinitionScope();
     }
 
-    var definedHere = getMethodForType(type, name);
-    if (definedHere != null) {
-      return definedHere;
+    @Override
+    protected ModuleScope getCurrentModuleScope() {
+      return ModuleScope.this;
     }
 
-    return imports.stream()
-        .map(scope -> scope.getExportedMethod(type, name))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
+    @Override
+    protected Function findExportedMethodInImportScope(
+        ImportExportScope importExportScope, Type type, String methodName) {
+      return importExportScope.getExportedMethod(type, methodName);
+    }
+
+    @Override
+    protected Function onMultipleDefinitionsFromImports(
+        String methodName, List<MethodFromImport<Function, ImportExportScope>> methodFromImports) {
+      assert !methodFromImports.isEmpty();
+      return methodFromImports.get(0).resolvedType();
+    }
+  }
+
+  @Override
+  public Collection<ImportExportScope> getImports() {
+    return imports;
   }
 
   /**
