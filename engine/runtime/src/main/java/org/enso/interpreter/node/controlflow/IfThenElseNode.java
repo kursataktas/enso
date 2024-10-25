@@ -1,11 +1,13 @@
 package org.enso.interpreter.node.controlflow;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node.Child;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import java.util.Objects;
 import org.enso.interpreter.node.ExpressionNode;
 import org.enso.interpreter.runtime.EnsoContext;
+import org.enso.interpreter.runtime.error.PanicException;
 
 @NodeInfo(
     shortName = "if_then_else",
@@ -27,6 +29,7 @@ public final class IfThenElseNode extends ExpressionNode {
     return new IfThenElseNode(cond, trueBranch, falseBranch);
   }
 
+  @Override
   public Object executeGeneric(VirtualFrame frame) {
     var condResult = cond.executeGeneric(frame);
     var ctx = EnsoContext.get(this);
@@ -41,7 +44,13 @@ public final class IfThenElseNode extends ExpressionNode {
         }
       }
     } else {
-      throw ctx.raiseAssertionPanic(this, "Expecting boolean", null);
+      throw expectingBoolean(ctx, condResult);
     }
+  }
+
+  @CompilerDirectives.TruffleBoundary
+  private PanicException expectingBoolean(EnsoContext ctx, Object condResult)
+      throws PanicException {
+    throw ctx.raiseAssertionPanic(this, "Expecting boolean but got " + condResult, null);
   }
 }

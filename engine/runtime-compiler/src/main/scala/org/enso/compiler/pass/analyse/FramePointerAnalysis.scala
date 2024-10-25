@@ -4,7 +4,7 @@ import org.enso.compiler.pass.analyse.FramePointer
 import org.enso.compiler.context.{InlineContext, LocalScope, ModuleContext}
 import org.enso.compiler.core.ir.Name.GenericAnnotation
 import org.enso.compiler.core.{CompilerError, IR}
-import org.enso.compiler.core.ir.expression.{Application, Case}
+import org.enso.compiler.core.ir.expression.{Application, Case, IfThenElse}
 import org.enso.compiler.core.ir.{
   CallArgument,
   DefinitionArgument,
@@ -159,6 +159,10 @@ case object FramePointerAnalysis extends IRPass {
         processExpression(expr, graph)
         maybeAttachFramePointer(binding, graph)
       case app: Application => processApplication(app, graph)
+      case ife: IfThenElse =>
+        processExpression(ife.cond, graph)
+        processExpression(ife.trueBranch, graph)
+        ife.falseBranch.map(processExpression(_, graph))
       case caseExpr: Case.Expr =>
         processExpression(caseExpr.scrutinee, graph)
         caseExpr.branches.foreach { branch =>

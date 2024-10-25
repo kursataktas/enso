@@ -596,9 +596,15 @@ case object DataflowAnalysis extends IRPass {
     ife: IfThenElse,
     info: DependencyInfo
   ): IfThenElse = {
-    // TBD
-    info.getClass()
+    val ifeDep  = asStatic(ife)
+    val condDep = asStatic(ife.cond)
+    info.dependents.updateAt(condDep, Set(ifeDep))
+    info.dependencies.updateAt(ifeDep, Set(condDep))
     ife
+      .copy(
+        cond = analyseExpression(ife.cond, info)
+      )
+      .updateMetadata(new MetadataPair(this, info))
   }
 
   /** Performs dependency analysis on a case expression.

@@ -10,6 +10,7 @@ import org.enso.compiler.core.ir.expression.{
   Case,
   Comment,
   Error,
+  IfThenElse,
   Operator,
   Section
 }
@@ -386,7 +387,8 @@ case object AliasAnalysis extends IRPass {
           graph,
           parentScope
         )
-      case cse: Case => analyseCase(cse, graph, parentScope)
+      case ife: IfThenElse => analyseIfThenElse(ife, graph, parentScope)
+      case cse: Case       => analyseCase(cse, graph, parentScope)
       case block: Expression.Block =>
         val currentScope =
           if (!block.suspended) parentScope else parentScope.addChild()
@@ -796,6 +798,26 @@ case object AliasAnalysis extends IRPass {
     )
   }
 
+  /** Performs alias analysis on a if then else expression.
+    *
+    * @param ir          the expression to analyse
+    * @param graph       the graph in which the analysis is taking place
+    * @param parentScope the scope in which the expression occurs
+    * @return `ir`, possibly with alias analysis information attached
+    */
+  private def analyseIfThenElse(
+    ir: IfThenElse,
+    graph: Graph,
+    parentScope: Scope
+  ): IfThenElse = {
+    ir.copy(
+      cond       = analyseExpression(ir.cond, graph, parentScope),
+      trueBranch = analyseExpression(ir.trueBranch, graph, parentScope),
+      falseBranchOrNull =
+        ir.falseBranch.map(analyseExpression(_, graph, parentScope)).orNull
+    )
+  }
+
   /** Performs alias analysis on a case expression.
     *
     * @param ir          the case expression to analyse
@@ -803,7 +825,7 @@ case object AliasAnalysis extends IRPass {
     * @param parentScope the scope in which the case expression occurs
     * @return `ir`, possibly with alias analysis information attached
     */
-  def analyseCase(
+  private def analyseCase(
     ir: Case,
     graph: Graph,
     parentScope: Scope
