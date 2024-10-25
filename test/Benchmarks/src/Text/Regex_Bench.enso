@@ -4,16 +4,27 @@ from Standard.Test import Bench, Faker
 
 
 type Data
-    Value ~two_nums ~two_nums_regex
+    Value ~two_nums ~just_two_nums ~double_two_nums ~one_num_regex ~two_nums_regex
 
     create =
         faker = Faker.new
-        Data.Value (build_two_nums faker) (Regex.compile "(\d+)(\w+)(\d+)")
+        Data.Value (build_two_nums faker) (build_just_two_nums faker) (build_double_two_nums faker) (Regex.compile "(\d+)") (Regex.compile "(\d+)[a-z]+(\d+)")
 
 count = 10
 
+# "ab12cdefg634hi"
 build_two_nums faker = 0.up_to count . map _->
     (faker.alpha 2) + (faker.integer 0 100).to_text + (faker.alpha 8) + (faker.integer 0 100).to_text + (faker.alpha 2)
+
+# "12cdefg634"
+build_just_two_nums faker = 0.up_to count . map _->
+    (faker.integer 0 100).to_text + (faker.alpha 8) + (faker.integer 0 100).to_text
+
+# "ab12cdefg634hiab12cdefg634hi"
+build_double_two_nums faker =
+    strings0 = build_two_nums faker
+    strings1 = build_two_nums faker
+    strings0.zip strings1 (_ + _)
 
 
 options = Bench.options . set_warmup (Bench.phase_conf 1 2) . set_measure (Bench.phase_conf 1 2)
@@ -25,6 +36,27 @@ collect_benches = Bench.build builder->
     builder.group "Regex" options group_builder->
         group_builder.specify "match" <|
             data.two_nums . map  data.two_nums_regex.match
+
+        group_builder.specify "match_all" <|
+            data.double_two_nums . map  data.two_nums_regex.match_all
+
+        group_builder.specify "matches" <|
+            data.just_two_nums . map  data.two_nums_regex.matches
+
+        group_builder.specify "find" <|
+            data.two_nums . map  data.two_nums_regex.find
+
+        group_builder.specify "find_all" <|
+            data.double_two_nums . map  data.two_nums_regex.find_all
+
+        group_builder.specify "split" <|
+            data.two_nums . map  data.two_nums_regex.split
+
+        group_builder.specify "tokenize" <|
+            data.two_nums . map  data.two_nums_regex.tokenize
+
+        group_builder.specify "replace" <|
+            data.two_nums . map  (x-> data.two_nums_regex.replace x "NUM")
 
 
 main = collect_benches . run_main
