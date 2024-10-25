@@ -8,7 +8,7 @@ import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import org.enso.compiler.common_logic.MethodResolutionAlgorithm;
-import org.enso.compiler.context.CommonModuleScopeShape;
+import org.enso.compiler.common_logic.CommonModuleScopeShape;
 import org.enso.compiler.context.CompilerContext;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.Module;

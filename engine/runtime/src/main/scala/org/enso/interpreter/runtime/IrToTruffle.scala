@@ -185,14 +185,14 @@ class IrToTruffle(
     * @param module the module for which code should be generated
     */
   private def processModule(module: Module): Unit = {
-    generateReExportBindings(module)
     val bindingsMap =
-      module
-        .unsafeGetMetadata(
+    module
+      .unsafeGetMetadata(
           BindingAnalysis,
-          "No binding analysis at the point of codegen."
-        )
+    "No binding analysis at the point of codegen."
+      )
 
+    generateReExportBindings(module)
     registerModuleExports(bindingsMap)
     registerModuleImports(bindingsMap)
     registerPolyglotImports(module)
