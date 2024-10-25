@@ -77,7 +77,7 @@ public abstract class BuildScopeFromModuleAlgorithm<
   private void processBindings(Module module) {
     for (var binding : CollectionConverters.asJavaCollection(module.bindings())) {
       switch (binding) {
-        case Definition.Type typ -> processType(typ);
+        case Definition.Type typ -> processTypeDefinition(typ);
         case Method.Explicit method -> processMethodDefinition(method);
         case Method.Conversion conversion -> processConversion(conversion);
         default -> System.out.println(
@@ -95,7 +95,7 @@ public abstract class BuildScopeFromModuleAlgorithm<
   // The type registration (registering constructors, getters) is really complex, ideally we'd also
   // like to extract some common logic from it. But the differences are very large, so setting that
   // for later.
-  protected abstract void processType(Definition.Type typ);
+  protected abstract void processTypeDefinition(Definition.Type typ);
 
   protected final TypeScopeReferenceType getTypeAssociatedWithMethod(Method.Explicit method) {
     boolean isStatic = method.isStatic();

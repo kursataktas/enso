@@ -7,8 +7,8 @@ import com.oracle.truffle.api.library.ExportMessage;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import org.enso.compiler.common_logic.MethodResolutionAlgorithm;
 import org.enso.compiler.common_logic.CommonModuleScopeShape;
+import org.enso.compiler.common_logic.MethodResolutionAlgorithm;
 import org.enso.compiler.context.CompilerContext;
 import org.enso.interpreter.runtime.EnsoContext;
 import org.enso.interpreter.runtime.Module;
@@ -96,7 +96,7 @@ public final class ModuleScope
 
   private final RuntimeMethodResolution methodResolutionAlgorithm = new RuntimeMethodResolution();
 
-  private class RuntimeMethodResolution
+  private final class RuntimeMethodResolution
       extends MethodResolutionAlgorithm<Function, Type, ImportExportScope, ModuleScope> {
     @Override
     protected ModuleScope findDefinitionScope(Type type) {

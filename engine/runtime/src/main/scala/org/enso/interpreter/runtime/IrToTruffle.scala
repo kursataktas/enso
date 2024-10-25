@@ -3,13 +3,13 @@ package org.enso.interpreter.runtime
 import java.util.logging.Level
 import com.oracle.truffle.api.source.{Source, SourceSection}
 import com.oracle.truffle.api.interop.InteropLibrary
-import org.enso.compiler.common_logic.NameResolutionAlgorithm
+import org.enso.compiler.common_logic.{
+  BuildScopeFromModuleAlgorithm,
+  NameResolutionAlgorithm
+}
 import org.enso.compiler.pass.analyse.FramePointer
 import org.enso.compiler.pass.analyse.FrameVariableNames
-import org.enso.compiler.context.{
-  CompilerContext,
-  LocalScope
-}
+import org.enso.compiler.context.{CompilerContext, LocalScope}
 import org.enso.compiler.core.CompilerError
 import org.enso.compiler.core.ConstantsNames
 import org.enso.compiler.core.Implicits.AsMetadata
@@ -185,79 +185,212 @@ class IrToTruffle(
     * @param module the module for which code should be generated
     */
   private def processModule(module: Module): Unit = {
-    val bindingsMap =
-    module
-      .unsafeGetMetadata(
-          BindingAnalysis,
-    "No binding analysis at the point of codegen."
-      )
+    val bindingsMap = module.unsafeGetMetadata(
+      BindingAnalysis,
+      "No binding analysis at the point of codegen."
+    )
+
+    // TODO perhaps later this should be moved to builder algorithm as well
     generateReExportBindings(module)
 
-    registerModuleExports(bindingsMap)
-    registerModuleImports(bindingsMap)
-    registerPolyglotImports(module)
-
-    registerTypeDefinitions(module)
-    registerMethodDefinitions(module)
-    registerConversions(module)
-
+    val builderAlgorithm = new BuildModuleScopeFromModule
+    builderAlgorithm.processModule(module, bindingsMap)
     scopeBuilder.build()
   }
 
-  private def registerModuleExports(bindingsMap: BindingsMap): Unit =
-    bindingsMap.getDirectlyExportedModules.foreach { exportedMod =>
-      val exportedRuntimeMod = exportedMod.module.module.unsafeAsModule()
-      scopeBuilder.addExport(
-        new ImportExportScope(exportedRuntimeMod)
+  final private class BuildModuleScopeFromModule
+      extends BuildScopeFromModuleAlgorithm[
+        RuntimeFunction,
+        Type,
+        ImportExportScope,
+        ModuleScope
+      ] {
+    override protected def processPolyglotJavaImport(
+      visibleName: String,
+      javaClassName: String
+    ): Unit =
+      scopeBuilder.registerPolyglotSymbol(
+        visibleName,
+        () => context.lookupJavaClass(javaClassName)
       )
-    }
 
-  private def registerModuleImports(bindingsMap: BindingsMap): Unit =
-    bindingsMap.resolvedImports.foreach { imp =>
-      imp.targets.foreach {
-        case _: BindingsMap.ResolvedType             =>
-        case _: BindingsMap.ResolvedConstructor      =>
-        case _: BindingsMap.ResolvedModuleMethod     =>
-        case _: BindingsMap.ResolvedExtensionMethod  =>
-        case _: BindingsMap.ResolvedConversionMethod =>
-        case ResolvedModule(module) =>
-          val mod = module
-            .unsafeAsModule()
-          val scope: ImportExportScope = imp.importDef.onlyNames
-            .map(only => new ImportExportScope(mod, only.map(_.name).asJava))
-            .getOrElse(new ImportExportScope(mod))
-          scopeBuilder.addImport(scope)
+    override protected def processConversion(
+      conversion: Method.Conversion
+    ): Unit = {
+      lazy val where =
+        s"conversion `${conversion.typeName.map(_.name + ".").getOrElse("")}${conversion.methodName.name}`."
+      val scopeInfo = rootScopeInfo(where, conversion)
+
+      def dataflowInfo() = conversion.unsafeGetMetadata(
+        DataflowAnalysis,
+        "Method definition missing dataflow information."
+      )
+      def frameInfo() = conversion.unsafeGetMetadata(
+        FramePointerAnalysis,
+        "Method definition missing frame information."
+      )
+
+      val toOpt =
+        conversion.methodReference.typePointer match {
+          case Some(tpePointer) =>
+            getTypeResolution(tpePointer)
+          case None =>
+            Some(scopeAssociatedType)
+        }
+      val fromOpt = getTypeResolution(conversion.sourceTypeName)
+      toOpt.zip(fromOpt).foreach { case (toType, fromType) =>
+        val expressionProcessor = new ExpressionProcessor(
+          toType.getName ++ Constants.SCOPE_SEPARATOR ++ conversion.methodName.name,
+          () => scopeInfo().graph,
+          () => scopeInfo().graph.rootScope,
+          dataflowInfo,
+          conversion.methodName.name,
+          frameInfo
+        )
+
+        val function = conversion.body match {
+          case fn: Function =>
+            val bodyBuilder =
+              new expressionProcessor.BuildFunctionBody(
+                conversion.methodName.name,
+                fn.arguments,
+                fn.body,
+                ReadArgumentCheckNode.build(context, "conversion", toType),
+                None,
+                true
+              )
+            val rootNode = MethodRootNode.build(
+              language,
+              expressionProcessor.scope,
+              scopeBuilder.asModuleScope(),
+              () => bodyBuilder.bodyNode(),
+              makeSection(scopeBuilder.getModule, conversion.location),
+              toType,
+              conversion.methodName.name
+            )
+            val callTarget = rootNode.getCallTarget
+            val arguments  = bodyBuilder.args()
+            val funcSchema = FunctionSchema
+              .newBuilder()
+              .argumentDefinitions(arguments: _*)
+              .build()
+            new RuntimeFunction(
+              callTarget,
+              null,
+              funcSchema
+            )
+          case _ =>
+            throw new CompilerError(
+              "Conversion bodies must be functions at the point of codegen."
+            )
+        }
+        scopeBuilder.registerConversionMethod(toType, fromType, function)
       }
     }
 
-  private def registerPolyglotImports(module: Module): Unit =
-    module.imports.foreach {
-      case poly @ imports.Polyglot(i: imports.Polyglot.Java, _, _, _) =>
-        this.scopeBuilder.registerPolyglotSymbol(
-          poly.getVisibleName,
-          () => {
-            val hostSymbol = context.lookupJavaClass(i.getJavaName)
-            hostSymbol
+    override protected def processMethodDefinition(
+      method: Method.Explicit
+    ): Unit = {
+      lazy val where =
+        s"`method ${method.typeName.map(_.name + ".").getOrElse("")}${method.methodName.name}`."
+      val scopeInfo = rootScopeInfo(where, method)
+      def dataflowInfo() = method.unsafeGetMetadata(
+        DataflowAnalysis,
+        "Method definition missing dataflow information."
+      )
+      def frameInfo() = method.unsafeGetMetadata(
+        FramePointerAnalysis,
+        "Method definition missing frame information."
+      )
+
+      @tailrec
+      def getContext(tp: Expression): Option[String] = tp match {
+        case fn: Tpe.Function => getContext(fn.result)
+        case ctx: Tpe.Context =>
+          ctx.context match {
+            case lit: Name.Literal => Some(lit.name)
+            case _                 => None
           }
-        )
-      case _: Import.Module =>
-      case _: Error         =>
+        case _ => None
+      }
+
+      val effectContext = method
+        .getMetadata(TypeSignatures)
+        .flatMap(sig => getContext(sig.signature))
+
+      val cons: Type = getTypeAssociatedWithMethod(method)
+      assert(cons != null)
+      val fullMethodDefName =
+        cons.getName ++ Constants.SCOPE_SEPARATOR ++ method.methodName.name
+      val expressionProcessor = new ExpressionProcessor(
+        fullMethodDefName,
+        () => scopeInfo().graph,
+        () => scopeInfo().graph.rootScope,
+        dataflowInfo,
+        fullMethodDefName,
+        frameInfo
+      )
+
+      scopeBuilder.registerMethod(
+        cons,
+        method.methodName.name,
+        () => {
+          buildFunction(
+            method,
+            effectContext,
+            cons,
+            fullMethodDefName,
+            expressionProcessor
+          )
+        }
+      )
     }
 
-  private def registerTypeDefinitions(module: Module): Unit = {
-    val typeDefs = module.bindings.collect { case tp: Definition.Type => tp }
-    typeDefs.foreach { tpDef =>
-      // Register the atoms and their constructors in scope
-      val atomDefs = tpDef.members
-      val asType   = scopeBuilder.asModuleScope().getType(tpDef.name.name, true)
+    override protected def processTypeDefinition(typ: Definition.Type): Unit = {
+      val atomDefs = typ.members
+      val asType   = scopeBuilder.asModuleScope().getType(typ.name.name, true)
       val atomConstructors =
         atomDefs.map(cons => asType.getConstructors.get(cons.name.name))
       atomConstructors
         .zip(atomDefs)
         .foreach { case (atomCons, atomDefn) =>
-          registerAtomConstructor(tpDef, atomCons, atomDefn)
+          registerAtomConstructor(typ, atomCons, atomDefn)
         }
       asType.generateGetters(language)
+    }
+
+    override protected def associatedTypeFromResolvedModule(
+      module: ResolvedModule
+    ): Type =
+      asAssociatedType(module.module.unsafeAsModule())
+
+    override protected def associatedTypeFromResolvedType(
+      `type`: BindingsMap.ResolvedType,
+      isStatic: Boolean
+    ): Type = {
+      val associatedType = asType(`type`)
+      if (isStatic) {
+        associatedType
+      } else {
+        associatedType.getEigentype
+      }
+    }
+
+    override protected def buildExportScope(
+      exportedModule: BindingsMap.ExportedModule
+    ): ImportExportScope = {
+      val exportedRuntimeMod = exportedModule.module.module.unsafeAsModule()
+      new ImportExportScope(exportedRuntimeMod)
+    }
+
+    override protected def buildImportScope(
+      resolvedImport: BindingsMap.ResolvedImport,
+      resolvedModule: ResolvedModule
+    ): ImportExportScope = {
+      val mod = resolvedModule.module.unsafeAsModule()
+      resolvedImport.importDef.onlyNames
+        .map(only => new ImportExportScope(mod, only.map(_.name).asJava))
+        .getOrElse(new ImportExportScope(mod))
     }
   }
 
@@ -363,77 +496,6 @@ class IrToTruffle(
         argDefs: _*
       )
     }
-  }
-
-  private def registerMethodDefinitions(module: Module): Unit = {
-    val methodDefs = module.bindings.collect {
-      case method: definition.Method.Explicit => method
-    }
-
-    methodDefs.foreach(methodDef => {
-      lazy val where =
-        s"`method ${methodDef.typeName.map(_.name + ".").getOrElse("")}${methodDef.methodName.name}`."
-      val scopeInfo = rootScopeInfo(where, methodDef)
-      def dataflowInfo() = methodDef.unsafeGetMetadata(
-        DataflowAnalysis,
-        "Method definition missing dataflow information."
-      )
-      def frameInfo() = methodDef.unsafeGetMetadata(
-        FramePointerAnalysis,
-        "Method definition missing frame information."
-      )
-
-      @tailrec
-      def getContext(tp: Expression): Option[String] = tp match {
-        case fn: Tpe.Function => getContext(fn.result)
-        case ctx: Tpe.Context =>
-          ctx.context match {
-            case lit: Name.Literal => Some(lit.name)
-            case _                 => None
-          }
-        case _ => None
-      }
-
-      val effectContext = methodDef
-        .getMetadata(TypeSignatures)
-        .flatMap(sig => getContext(sig.signature))
-
-      val declaredConsOpt =
-        getTypeAssociatedWithMethodDefinition(methodDef)
-
-      val consOpt = declaredConsOpt.map { c =>
-        if (methodDef.isStatic) {
-          c.getEigentype
-        } else { c }
-      }
-
-      consOpt.foreach { cons =>
-        val fullMethodDefName =
-          cons.getName ++ Constants.SCOPE_SEPARATOR ++ methodDef.methodName.name
-        val expressionProcessor = new ExpressionProcessor(
-          fullMethodDefName,
-          () => scopeInfo().graph,
-          () => scopeInfo().graph.rootScope,
-          dataflowInfo,
-          fullMethodDefName,
-          frameInfo
-        )
-
-        scopeBuilder.registerMethod(
-          cons,
-          methodDef.methodName.name,
-          () => {
-            buildFunction(
-              methodDef,
-              effectContext,
-              cons,
-              fullMethodDefName,
-              expressionProcessor
-            )
-          }
-        )
-      }
-    })
   }
 
   private def buildFunction(
@@ -714,130 +776,6 @@ class IrToTruffle(
           }
         }
       )
-  }
-
-  private def getTypeAssociatedWithMethodDefinition(
-    methodDef: Method.Explicit
-  ): Option[Type] = {
-    methodDef.methodReference.typePointer match {
-      case None =>
-        Some(scopeAssociatedType)
-      case Some(tpePointer) =>
-        tpePointer
-          .getMetadata(MethodDefinitions)
-          .map { res =>
-            res.target match {
-              case binding @ BindingsMap.ResolvedType(_, _) =>
-                asType(binding)
-              case BindingsMap.ResolvedModule(module) =>
-                asAssociatedType(module.unsafeAsModule())
-              case BindingsMap.ResolvedConstructor(_, _) =>
-                throw new CompilerError(
-                  "Impossible, should be caught by MethodDefinitions pass"
-                )
-              case BindingsMap.ResolvedPolyglotSymbol(_, _) =>
-                throw new CompilerError(
-                  "Impossible polyglot symbol, should be caught by MethodDefinitions pass."
-                )
-              case BindingsMap.ResolvedPolyglotField(_, _) =>
-                throw new CompilerError(
-                  "Impossible polyglot field, should be caught by MethodDefinitions pass."
-                )
-              case _: BindingsMap.ResolvedModuleMethod =>
-                throw new CompilerError(
-                  "Impossible module method here, should be caught by MethodDefinitions pass."
-                )
-              case _: BindingsMap.ResolvedExtensionMethod =>
-                throw new CompilerError(
-                  "Impossible static method here, should be caught by MethodDefinitions pass."
-                )
-              case _: BindingsMap.ResolvedConversionMethod =>
-                throw new CompilerError(
-                  "Impossible conversion method here, should be caught by MethodDefinitions pass."
-                )
-            }
-          }
-    }
-  }
-
-  private def registerConversions(module: Module): Unit = {
-    val conversionDefs = module.bindings.collect {
-      case conversion: definition.Method.Conversion =>
-        conversion
-    }
-
-    // Register the conversion definitions in scope
-    conversionDefs.foreach(methodDef => {
-      lazy val where =
-        s"conversion `${methodDef.typeName.map(_.name + ".").getOrElse("")}${methodDef.methodName.name}`."
-      val scopeInfo = rootScopeInfo(where, methodDef)
-
-      def dataflowInfo() = methodDef.unsafeGetMetadata(
-        DataflowAnalysis,
-        "Method definition missing dataflow information."
-      )
-      def frameInfo() = methodDef.unsafeGetMetadata(
-        FramePointerAnalysis,
-        "Method definition missing frame information."
-      )
-
-      val toOpt =
-        methodDef.methodReference.typePointer match {
-          case Some(tpePointer) =>
-            getTypeResolution(tpePointer)
-          case None =>
-            Some(scopeAssociatedType)
-        }
-      val fromOpt = getTypeResolution(methodDef.sourceTypeName)
-      toOpt.zip(fromOpt).foreach { case (toType, fromType) =>
-        val expressionProcessor = new ExpressionProcessor(
-          toType.getName ++ Constants.SCOPE_SEPARATOR ++ methodDef.methodName.name,
-          () => scopeInfo().graph,
-          () => scopeInfo().graph.rootScope,
-          dataflowInfo,
-          methodDef.methodName.name,
-          frameInfo
-        )
-
-        val function = methodDef.body match {
-          case fn: Function =>
-            val bodyBuilder =
-              new expressionProcessor.BuildFunctionBody(
-                methodDef.methodName.name,
-                fn.arguments,
-                fn.body,
-                ReadArgumentCheckNode.build(context, "conversion", toType),
-                None,
-                true
-              )
-            val rootNode = MethodRootNode.build(
-              language,
-              expressionProcessor.scope,
-              scopeBuilder.asModuleScope(),
-              () => bodyBuilder.bodyNode(),
-              makeSection(scopeBuilder.getModule, methodDef.location),
-              toType,
-              methodDef.methodName.name
-            )
-            val callTarget = rootNode.getCallTarget
-            val arguments  = bodyBuilder.args()
-            val funcSchema = FunctionSchema
-              .newBuilder()
-              .argumentDefinitions(arguments: _*)
-              .build()
-            new RuntimeFunction(
-              callTarget,
-              null,
-              funcSchema
-            )
-          case _ =>
-            throw new CompilerError(
-              "Conversion bodies must be functions at the point of codegen."
-            )
-        }
-        scopeBuilder.registerConversionMethod(toType, fromType, function)
-      }
-    })
   }
 
   // ==========================================================================
@@ -1995,7 +1933,7 @@ class IrToTruffle(
       setLocation(nameExpr, name.location)
     }
 
-    private class RuntimeNameResolution
+    final private class RuntimeNameResolution
         extends NameResolutionAlgorithm[
           RuntimeExpression,
           FramePointer,

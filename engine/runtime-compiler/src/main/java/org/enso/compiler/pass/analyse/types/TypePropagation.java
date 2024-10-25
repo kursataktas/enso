@@ -422,7 +422,7 @@ abstract class TypePropagation {
     return Character.isUpperCase(firstCharacter);
   }
 
-  private class CompilerNameResolution
+  private final class CompilerNameResolution
       extends NameResolutionAlgorithm<
           TypeRepresentation, CompilerNameResolution.LinkInfo, AliasMetadata.Occurrence> {
     private final LocalBindingsTyping localBindingsTyping;

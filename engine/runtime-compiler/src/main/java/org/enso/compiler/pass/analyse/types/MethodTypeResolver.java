@@ -43,7 +43,7 @@ class MethodTypeResolver {
     return resolveMethod(parent, methodName);
   }
 
-  private class StaticMethodResolution
+  private final class StaticMethodResolution
       extends MethodResolutionAlgorithm<
           TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope> {
     @Override
