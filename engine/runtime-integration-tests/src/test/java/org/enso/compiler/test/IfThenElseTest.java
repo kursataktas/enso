@@ -332,4 +332,26 @@ public class IfThenElseTest {
       assertEquals(txt, ex.getMessage());
     }
   }
+
+  @Test
+  public void dontOverrideVariablesFromOuterScope() throws Exception {
+    var code =
+        """
+    type Hello
+        World msg good
+
+        join self init =
+            if self.good then "Ciao" else
+                x = init
+                x + self.msg
+
+    hello state =
+        Hello.World "World" state . join "Hello "
+    """;
+
+    var hello = ContextUtils.getMethodFromModule(ctx, code, "hello");
+
+    assertEquals("Ciao", hello.execute(true).asString());
+    assertEquals("Hello World", hello.execute(false).asString());
+  }
 }
