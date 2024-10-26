@@ -61,7 +61,7 @@ public abstract class CaseNode extends ExpressionNode {
    *
    * <p>It is important that this is the first specialization.
    *
-   * @param frame the stack frame in which to executeq
+   * @param frame the stack frame in which to execute
    * @param error the error being matched against
    * @return the result of executing the case expression on {@code error}
    */
