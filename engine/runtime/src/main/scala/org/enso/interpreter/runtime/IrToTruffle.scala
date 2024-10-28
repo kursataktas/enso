@@ -187,7 +187,7 @@ class IrToTruffle(
       "No binding analysis at the point of codegen."
     )
 
-    // TODO perhaps later this should be moved to builder algorithm as well
+    // TODO [RW] perhaps later this should be moved to the BuildModuleScopeFromModule
     generateReExportBindings(module)
 
     val builderAlgorithm = new BuildModuleScopeFromModule
