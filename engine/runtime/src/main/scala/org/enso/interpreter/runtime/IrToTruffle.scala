@@ -316,86 +316,31 @@ class IrToTruffle(
         .getMetadata(TypeSignatures)
         .flatMap(sig => getContext(sig.signature))
 
-      val declaredConsOpt =
-        getTypeAssociatedWithMethodDefinition(method)
+      val cons = getTypeAssociatedWithMethod(method)
+      val fullMethodDefName =
+        cons.getName ++ Constants.SCOPE_SEPARATOR ++ method.methodName.name
+      val expressionProcessor = new ExpressionProcessor(
+        fullMethodDefName,
+        () => scopeInfo().graph,
+        () => scopeInfo().graph.rootScope,
+        dataflowInfo,
+        fullMethodDefName,
+        frameInfo
+      )
 
-      val consOpt = declaredConsOpt.map { c =>
-        if (method.isStatic) {
-          c.getEigentype
-        } else { c }
-      }
-
-      consOpt.foreach { cons =>
-        val fullMethodDefName =
-          cons.getName ++ Constants.SCOPE_SEPARATOR ++ method.methodName.name
-        val expressionProcessor = new ExpressionProcessor(
-          fullMethodDefName,
-          () => scopeInfo().graph,
-          () => scopeInfo().graph.rootScope,
-          dataflowInfo,
-          fullMethodDefName,
-          frameInfo
-        )
-
-        scopeBuilder.registerMethod(
-          cons,
-          method.methodName.name,
-          () => {
-            buildFunction(
-              method,
-              effectContext,
-              cons,
-              fullMethodDefName,
-              expressionProcessor
-            )
-          }
-        )
-      }
-
-    }
-
-    private def getTypeAssociatedWithMethodDefinition(
-      methodDef: Method.Explicit
-    ): Option[Type] = {
-      methodDef.methodReference.typePointer match {
-        case None =>
-          Some(scopeAssociatedType)
-        case Some(tpePointer) =>
-          tpePointer
-            .getMetadata(MethodDefinitions)
-            .map { res =>
-              res.target match {
-                case binding @ BindingsMap.ResolvedType(_, _) =>
-                  asType(binding)
-                case BindingsMap.ResolvedModule(module) =>
-                  asAssociatedType(module.unsafeAsModule())
-                case BindingsMap.ResolvedConstructor(_, _) =>
-                  throw new CompilerError(
-                    "Impossible, should be caught by MethodDefinitions pass"
-                  )
-                case BindingsMap.ResolvedPolyglotSymbol(_, _) =>
-                  throw new CompilerError(
-                    "Impossible polyglot symbol, should be caught by MethodDefinitions pass."
-                  )
-                case BindingsMap.ResolvedPolyglotField(_, _) =>
-                  throw new CompilerError(
-                    "Impossible polyglot field, should be caught by MethodDefinitions pass."
-                  )
-                case _: BindingsMap.ResolvedModuleMethod =>
-                  throw new CompilerError(
-                    "Impossible module method here, should be caught by MethodDefinitions pass."
-                  )
-                case _: BindingsMap.ResolvedExtensionMethod =>
-                  throw new CompilerError(
-                    "Impossible static method here, should be caught by MethodDefinitions pass."
-                  )
-                case _: BindingsMap.ResolvedConversionMethod =>
-                  throw new CompilerError(
-                    "Impossible conversion method here, should be caught by MethodDefinitions pass."
-                  )
-              }
-            }
-      }
+      scopeBuilder.registerMethod(
+        cons,
+        method.methodName.name,
+        () => {
+          buildFunction(
+            method,
+            effectContext,
+            cons,
+            fullMethodDefName,
+            expressionProcessor
+          )
+        }
+      )
     }
 
     override protected def processTypeDefinition(typ: Definition.Type): Unit = {
@@ -422,9 +367,9 @@ class IrToTruffle(
     ): Type = {
       val associatedType = asType(`type`)
       if (isStatic) {
-        associatedType
-      } else {
         associatedType.getEigentype
+      } else {
+        associatedType
       }
     }
 
@@ -2651,7 +2596,7 @@ class IrToTruffle(
   }
 
   private def scopeAssociatedType =
-    scopeBuilder.asModuleScope().getAssociatedType
+    scopeBuilder.getAssociatedType
 
   private def rootScopeInfo(
     where: => String,
