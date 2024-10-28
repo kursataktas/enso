@@ -1,5 +1,5 @@
 /** @file Hooks for interacting with the backend. */
-import { useId, useMemo, useRef, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 
 import {
   queryOptions,
@@ -39,7 +39,6 @@ import {
 import { TEAMS_DIRECTORY_ID, USERS_DIRECTORY_ID } from '#/services/remoteBackendPaths'
 import { usePreventNavigation } from '#/utilities/preventNavigation'
 import { toRfc3339 } from 'enso-common/src/utilities/data/dateTime'
-import { deepEqual } from 'enso-common/src/utilities/data/object'
 
 // The number of bytes in 1 megabyte.
 const MB_BYTES = 1_000_000
@@ -50,7 +49,6 @@ const S3_CHUNK_SIZE_MB = Math.round(backendModule.S3_CHUNK_SIZE_BYTES / MB_BYTES
 // ============================
 
 /** Ensure that the given type contains only names of backend methods. */
-// eslint-disable-next-line no-restricted-syntax
 type DefineBackendMethods<T extends keyof Backend> = T
 
 // ======================
@@ -119,10 +117,7 @@ export function backendQueryOptions<Method extends BackendMethods>(
   args: Parameters<Backend[Method]>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
-): UseQueryOptions<
-  // eslint-disable-next-line no-restricted-syntax
-  Awaited<ReturnType<Backend[Method]>> | undefined
->
+): UseQueryOptions<Awaited<ReturnType<Backend[Method]>> | undefined>
 /** Wrap a backend method call in a React Query. */
 export function backendQueryOptions<Method extends BackendMethods>(
   backend: Backend | null,
@@ -153,10 +148,7 @@ export function useBackendQuery<Method extends BackendMethods>(
   args: Parameters<Backend[Method]>,
   options?: Omit<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryFn' | 'queryKey'> &
     Partial<Pick<UseQueryOptions<Awaited<ReturnType<Backend[Method]>>>, 'queryKey'>>,
-): UseQueryResult<
-  // eslint-disable-next-line no-restricted-syntax
-  Awaited<ReturnType<Backend[Method]>> | undefined
->
+): UseQueryResult<Awaited<ReturnType<Backend[Method]>> | undefined>
 /** Wrap a backend method call in a React Query. */
 export function useBackendQuery<Method extends BackendMethods>(
   backend: Backend | null,
@@ -310,7 +302,6 @@ export function useAssetPassiveListener(
   parentId: DirectoryId | null | undefined,
   category: Category,
 ) {
-  const prevAssetRef = useRef<AnyAsset | undefined>()
   const { data: asset } = useQuery<readonly AnyAsset[] | undefined, Error, AnyAsset | undefined>({
     queryKey: [
       backendType,
@@ -323,12 +314,7 @@ export function useAssetPassiveListener(
       },
     ],
     initialData: undefined,
-    select: (data) => {
-      const newAsset = data?.find((child) => child.id === assetId)
-      const result = deepEqual(prevAssetRef.current, newAsset) ? prevAssetRef.current : newAsset
-      prevAssetRef.current = result
-      return result
-    },
+    select: (data) => data?.find((child) => child.id === assetId),
   })
   if (asset || !assetId || !parentId) {
     return asset
