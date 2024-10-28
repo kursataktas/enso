@@ -812,7 +812,7 @@ export default class LocalBackend extends Backend {
   override resolveProjectAssetPath(projectId: backend.ProjectId, relativePath: string) {
     const projectPath = this.getProjectPath(projectId)
 
-    return Promise.resolve(`enso-project://${projectPath}/src/${relativePath.replace('./', '')}`)
+    return Promise.resolve(`enso://${projectPath}/src/${relativePath.replace('./', '')}`)
   }
 
   /** Invalid operation. */
