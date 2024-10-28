@@ -32,12 +32,15 @@ public abstract class BuildScopeFromModuleAlgorithm<
     ModuleScopeBuilderType extends
         CommonModuleScopeShape.Builder<
                 FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType>> {
+
+  /** The scope builder to which the algorithm will register the entities. */
   protected final ModuleScopeBuilderType scopeBuilder;
 
   protected BuildScopeFromModuleAlgorithm(ModuleScopeBuilderType scopeBuilder) {
     this.scopeBuilder = scopeBuilder;
   }
 
+  /** Runs the main processing on a module, that will build the module scope for it. */
   public void processModule(Module moduleIr, BindingsMap bindingsMap) {
     processModuleExports(bindingsMap);
     processModuleImports(bindingsMap);
@@ -78,8 +81,6 @@ public abstract class BuildScopeFromModuleAlgorithm<
     }
   }
 
-  protected abstract void processPolyglotJavaImport(String visibleName, String javaClassName);
-
   private void processBindings(Module module) {
     for (var binding : CollectionConverters.asJavaCollection(module.bindings())) {
       switch (binding) {
@@ -92,17 +93,39 @@ public abstract class BuildScopeFromModuleAlgorithm<
     }
   }
 
-  // In the future we may want to extract some common logic from this, but for now we allow the
-  // implementation to specify this.
+  /** Allows the implementation to specify how to register polyglot Java imports. */
+  protected abstract void processPolyglotJavaImport(String visibleName, String javaClassName);
+
+  /**
+   * Allows the implementation to specify how to register conversions.
+   *
+   * <p>In the future we may want to extract some common logic from this, but for now we allow the
+   * implementation to specify this.
+   */
   protected abstract void processConversion(Method.Conversion conversion);
 
+  /** Allows the implementation to specify how to register method definitions. */
   protected abstract void processMethodDefinition(Method.Explicit method);
 
-  // The type registration (registering constructors, getters) is really complex, ideally we'd also
-  // like to extract some common logic from it. But the differences are very large, so setting that
-  // for later.
+  /**
+   * Allows the implementation to specify how to register type definitions, along with their
+   * constructors and getters.
+   *
+   * <p>The type registration (registering constructors, getters) is really complex, ideally we'd
+   * also like to extract some common logic from it. But the differences are very large, so setting
+   * that aside for later.
+   */
   protected abstract void processTypeDefinition(Definition.Type typ);
 
+  /**
+   * Common method that allows to extract the type on which the method is defined.
+   *
+   * <ul>
+   *   <li>For a member method, this will be its parent type.
+   *   <li>For a static method, this will be the eigentype of the type on which it is defined.
+   *   <li>For a module method, this will be the type associated with the module.
+   * </ul>
+   */
   protected final TypeScopeReferenceType getTypeAssociatedWithMethod(Method.Explicit method) {
     var typePointerOpt = method.methodReference().typePointer();
     if (typePointerOpt.isEmpty()) {
@@ -130,15 +153,38 @@ public abstract class BuildScopeFromModuleAlgorithm<
     }
   }
 
+  /**
+   * Implementation specific piece of {@link #getTypeAssociatedWithMethod(Method.Explicit)} that
+   * specifies how to build the associated type from a resolved module.
+   */
   protected abstract TypeScopeReferenceType associatedTypeFromResolvedModule(
       BindingsMap.ResolvedModule module);
 
+  /**
+   * Implementation specific piece of {@link #getTypeAssociatedWithMethod(Method.Explicit)} that
+   * specifies how to build the associated type from a resolved type, depending on if the method is
+   * static or not.
+   */
   protected abstract TypeScopeReferenceType associatedTypeFromResolvedType(
       BindingsMap.ResolvedType type, boolean isStatic);
 
+  /**
+   * Allows the implementation to specify how to build the export scope from an exported module
+   * instance.
+   *
+   * <p>Such scope is then registered with the scope builder using {@link
+   * ModuleScopeBuilderType#addExport}.
+   */
   protected abstract ImportExportScopeType buildExportScope(
       BindingsMap.ExportedModule exportedModule);
 
+  /**
+   * Allows the implementation to specify how to build the import scope from a resolved import and
+   * module.
+   *
+   * <p>Such scope is then registered with the scope builder using {@link
+   * ModuleScopeBuilderType#addImport}.
+   */
   protected abstract ImportExportScopeType buildImportScope(
       BindingsMap.ResolvedImport resolvedImport, BindingsMap.ResolvedModule resolvedModule);
 }

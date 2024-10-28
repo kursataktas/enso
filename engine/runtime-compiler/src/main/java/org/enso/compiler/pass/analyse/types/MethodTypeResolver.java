@@ -11,21 +11,21 @@ import org.enso.compiler.pass.analyse.types.scope.TypeScopeReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** A helper that deals with resolving types of method calls. */
 class MethodTypeResolver {
   private static final Logger logger = LoggerFactory.getLogger(MethodTypeResolver.class);
   private final ModuleResolver moduleResolver;
   private final TypeHierarchy typeHierarchy = new TypeHierarchy();
-  private final StaticModuleScope currentModuleScope;
   private final BuiltinsFallbackScope builtinsFallbackScope;
-  private final StaticMethodResolution methodResolutionAlgorithm = new StaticMethodResolution();
+  private final StaticMethodResolution methodResolutionAlgorithm;
 
   MethodTypeResolver(
       ModuleResolver moduleResolver,
       StaticModuleScope currentModuleScope,
       BuiltinTypes builtinTypes) {
     this.moduleResolver = moduleResolver;
-    this.currentModuleScope = currentModuleScope;
     this.builtinsFallbackScope = new BuiltinsFallbackScope(builtinTypes);
+    this.methodResolutionAlgorithm = new StaticMethodResolution(currentModuleScope);
   }
 
   TypeRepresentation resolveMethod(TypeScopeReference type, String methodName) {
@@ -46,6 +46,10 @@ class MethodTypeResolver {
   private final class StaticMethodResolution
       extends MethodResolutionAlgorithm<
           TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope> {
+    StaticMethodResolution(StaticModuleScope currentModuleScope) {
+      super(currentModuleScope);
+    }
+
     @Override
     protected StaticModuleScope findDefinitionScope(TypeScopeReference typeScopeReference) {
       var definitionModule = moduleResolver.findContainingModule(typeScopeReference);
@@ -67,11 +71,6 @@ class MethodTypeResolver {
     }
 
     @Override
-    protected StaticModuleScope getCurrentModuleScope() {
-      return currentModuleScope;
-    }
-
-    @Override
     protected TypeRepresentation findExportedMethodInImportScope(
         StaticImportExportScope importExportScope,
         TypeScopeReference typeScopeReference,
@@ -90,12 +89,12 @@ class MethodTypeResolver {
       }
 
       long foundTypesCount =
-          methodFromImports.stream().map(MethodFromImport::resolvedType).distinct().count();
+          methodFromImports.stream().map(MethodFromImport::resolutionResult).distinct().count();
       if (foundTypesCount > 1) {
         List<String> foundTypesWithOrigins =
             methodFromImports.stream()
                 .distinct()
-                .map(m -> m.resolvedType() + " from " + m.origin())
+                .map(m -> m.resolutionResult() + " from " + m.origin())
                 .toList();
         logger.error(
             "Method {} is coming from multiple imports with different types: {}",
@@ -104,7 +103,7 @@ class MethodTypeResolver {
         return null;
       } else {
         // If all types are the same, just return the first one
-        return methodFromImports.get(0).resolvedType();
+        return methodFromImports.get(0).resolutionResult();
       }
     }
   }

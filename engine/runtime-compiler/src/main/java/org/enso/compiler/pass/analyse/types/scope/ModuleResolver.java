@@ -6,10 +6,8 @@ import org.enso.pkg.QualifiedName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** A helper class that allows to resolve qualified names to loaded modules. */
 public class ModuleResolver {
-  // TODO I think the encapsulation would be better if we were taking CompilerContext here
-  // but currently I did not find a way for an IR pass to get an instance of CompilerContext, so we
-  // go directly to PackageRepository
   private final PackageRepository packageRepository;
   private final Logger logger = LoggerFactory.getLogger(ModuleResolver.class);
 

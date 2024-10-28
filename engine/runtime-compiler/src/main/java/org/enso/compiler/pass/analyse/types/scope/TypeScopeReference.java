@@ -4,10 +4,15 @@ import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 import org.enso.pkg.QualifiedName;
 
 /**
- * A reference to a Type-like scope that can have methods associated with it.
+ * An identity of a Type (corresponds to {@link org.enso.interpreter.runtime.data.Type}).
  *
- * <p>It can be one of three things: - An atom type - The eigentype of an atom type - this will hold
- * the type's static methods - An associated type of a module
+ * <p>It can be one of three things:
+ *
+ * <ul>
+ *   <li>An atom type
+ *   <li>An eigentype of an atom type - this will hold the type's static methods
+ *   <li>An associated type of a module
+ * </ul>
  */
 public final class TypeScopeReference {
   private final QualifiedName name;

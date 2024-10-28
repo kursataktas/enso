@@ -92,7 +92,7 @@ public class StaticModuleScopeAnalysis implements IRPass {
 
     @Override
     protected void processPolyglotJavaImport(String visibleName, String javaClassName) {
-      // Currently nothing to do here, as we don't resolve methods on Java types. Asssinging them
+      // Currently nothing to do here, as we don't resolve methods on Java types. Assigning them
       // with Any should be good enough.
       // TODO: we may want a test making sure that we don't do any false positive warnings
     }

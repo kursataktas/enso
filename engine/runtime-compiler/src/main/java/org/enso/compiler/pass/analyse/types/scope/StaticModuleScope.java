@@ -65,12 +65,22 @@ public final class StaticModuleScope
     private final Map<TypeScopeReference, Map<String, TypeRepresentation>> methods =
         new HashMap<>();
 
+    private boolean sealed = false;
+
+    private void checkSealed() {
+      if (sealed) {
+        throw new IllegalStateException(
+            "`build` method has already been called, this builder should no longer be modified.");
+      }
+    }
+
     Builder(QualifiedName moduleName) {
       this.moduleName = moduleName;
       this.associatedType = TypeScopeReference.moduleAssociatedType(moduleName);
     }
 
     public StaticModuleScope build() {
+      sealed = true;
       return new StaticModuleScope(
           moduleName,
           associatedType,
@@ -90,6 +100,7 @@ public final class StaticModuleScope
     }
 
     void registerType(AtomType type) {
+      checkSealed();
       var previous = typesDefinedHere.putIfAbsent(type.getName(), type);
       if (previous != null) {
         throw new IllegalStateException("Type already defined: " + type.getName());
@@ -97,17 +108,20 @@ public final class StaticModuleScope
     }
 
     void registerMethod(TypeScopeReference parentType, String name, TypeRepresentation type) {
+      checkSealed();
       var typeMethods = methods.computeIfAbsent(parentType, k -> new HashMap<>());
       typeMethods.put(name, type);
     }
 
     @Override
     public void addImport(StaticImportExportScope importScope) {
+      checkSealed();
       imports.add(importScope);
     }
 
     @Override
     public void addExport(StaticImportExportScope exportScope) {
+      checkSealed();
       exports.add(exportScope);
     }
   }
@@ -121,7 +135,6 @@ public final class StaticModuleScope
         module, StaticModuleScopeAnalysis.INSTANCE, StaticModuleScope.class);
   }
 
-  /** Aligned with @link{ModuleScope#getMethodForType} */
   public TypeRepresentation getMethodForType(TypeScopeReference type, String name) {
     var typeMethods = methods.get(type);
     if (typeMethods == null) {

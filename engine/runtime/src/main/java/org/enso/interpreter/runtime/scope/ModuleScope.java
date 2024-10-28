@@ -98,14 +98,13 @@ public final class ModuleScope
 
   private final class RuntimeMethodResolution
       extends MethodResolutionAlgorithm<Function, Type, ImportExportScope, ModuleScope> {
-    @Override
-    protected ModuleScope findDefinitionScope(Type type) {
-      return type.getDefinitionScope();
+    RuntimeMethodResolution() {
+      super(ModuleScope.this);
     }
 
     @Override
-    protected ModuleScope getCurrentModuleScope() {
-      return ModuleScope.this;
+    protected ModuleScope findDefinitionScope(Type type) {
+      return type.getDefinitionScope();
     }
 
     @Override
@@ -118,7 +117,7 @@ public final class ModuleScope
     protected Function onMultipleDefinitionsFromImports(
         String methodName, List<MethodFromImport<Function, ImportExportScope>> methodFromImports) {
       assert !methodFromImports.isEmpty();
-      return methodFromImports.get(0).resolvedType();
+      return methodFromImports.get(0).resolutionResult();
     }
   }
 
