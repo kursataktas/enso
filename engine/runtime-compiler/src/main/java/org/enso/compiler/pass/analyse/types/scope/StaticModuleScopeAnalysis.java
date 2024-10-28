@@ -25,12 +25,15 @@ import org.enso.compiler.pass.analyse.types.TypeResolver;
 import org.enso.compiler.pass.resolve.FullyQualifiedNames$;
 import org.enso.compiler.pass.resolve.GlobalNames$;
 import org.enso.compiler.pass.resolve.TypeNames$;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.collection.immutable.Seq;
 import scala.jdk.javaapi.CollectionConverters;
 import scala.jdk.javaapi.CollectionConverters$;
 
 public class StaticModuleScopeAnalysis implements IRPass {
   public static final StaticModuleScopeAnalysis INSTANCE = new StaticModuleScopeAnalysis();
+  private final Logger logger = LoggerFactory.getLogger(StaticModuleScopeAnalysis.class);
 
   private final TypeResolver typeResolver = new TypeResolver();
 
@@ -106,10 +109,9 @@ public class StaticModuleScopeAnalysis implements IRPass {
     protected void processMethodDefinition(Method.Explicit method) {
       var typeScope = getTypeAssociatedWithMethod(method);
       if (typeScope == null) {
-        System.out.println(
-            "Failed to process method "
-                + method.methodReference().showCode()
-                + ", because its type scope could not be resolved.");
+        logger.warn(
+            "Failed to process method {}, because its type scope could not be resolved.",
+            method.methodReference().showCode());
         return;
       }
       var typeFromSignature =

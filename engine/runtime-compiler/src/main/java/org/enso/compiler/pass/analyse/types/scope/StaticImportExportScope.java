@@ -41,12 +41,12 @@ public class StaticImportExportScope {
     }
 
     public TypeRepresentation getMethodForType(TypeScopeReference type, String name) {
-      // TODO filtering only/hiding - for now we just return everything
+      // TODO filtering only/hiding (see above) - for now we just return everything
       return referredModuleScope.getMethodForType(type, name);
     }
 
     public TypeRepresentation getExportedMethod(TypeScopeReference type, String name) {
-      // TODO filtering only/hiding - for now we just return everything
+      // TODO filtering only/hiding (see above) - for now we just return everything
       return referredModuleScope.getExportedMethod(type, name, moduleResolver);
     }
   }
@@ -71,7 +71,7 @@ public class StaticImportExportScope {
       return false;
     }
 
-    // TODO once hiding is added, these filters need to be added too
+    // TODO once hiding (see above) is added, these filters need to be added too
     return referredModuleName.equals(other.referredModuleName);
   }
 }

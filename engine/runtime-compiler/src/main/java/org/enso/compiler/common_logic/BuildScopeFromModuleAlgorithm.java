@@ -7,6 +7,8 @@ import org.enso.compiler.core.ir.module.scope.definition.Method;
 import org.enso.compiler.core.ir.module.scope.imports.Polyglot;
 import org.enso.compiler.data.BindingsMap;
 import org.enso.compiler.pass.resolve.MethodDefinitions$;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import scala.jdk.javaapi.CollectionConverters;
 
 /**
@@ -32,6 +34,7 @@ public abstract class BuildScopeFromModuleAlgorithm<
     ModuleScopeBuilderType extends
         CommonModuleScopeShape.Builder<
                 FunctionType, TypeScopeReferenceType, ImportExportScopeType, ModuleScopeType>> {
+  private final Logger logger = LoggerFactory.getLogger(BuildScopeFromModuleAlgorithm.class);
 
   /** The scope builder to which the algorithm will register the entities. */
   protected final ModuleScopeBuilderType scopeBuilder;
@@ -87,8 +90,8 @@ public abstract class BuildScopeFromModuleAlgorithm<
         case Definition.Type typ -> processTypeDefinition(typ);
         case Method.Explicit method -> processMethodDefinition(method);
         case Method.Conversion conversion -> processConversion(conversion);
-        default -> System.out.println(
-            "Unexpected binding type: " + binding.getClass().getCanonicalName());
+        default -> logger.warn(
+            "Unexpected binding type: {}", binding.getClass().getCanonicalName());
       }
     }
   }
