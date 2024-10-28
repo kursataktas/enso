@@ -102,12 +102,8 @@ public abstract class BuildScopeFromModuleAlgorithm<
   protected abstract void processTypeDefinition(Definition.Type typ);
 
   protected final TypeScopeReferenceType getTypeAssociatedWithMethod(Method.Explicit method) {
-    boolean isStatic = method.isStatic();
-
     var typePointerOpt = method.methodReference().typePointer();
     if (typePointerOpt.isEmpty()) {
-      // TODO is this assert OK?
-      assert isStatic : "Module method but it's non-static? " + method.methodReference().showCode();
       return scopeBuilder.getAssociatedType();
     } else {
       var metadata =
@@ -119,6 +115,7 @@ public abstract class BuildScopeFromModuleAlgorithm<
             "Failed to resolve type pointer for method: " + method.methodReference().showCode());
       }
 
+      boolean isStatic = method.isStatic();
       return switch (metadata.target()) {
         case BindingsMap.ResolvedType resolvedType -> associatedTypeFromResolvedType(
             resolvedType, isStatic);
