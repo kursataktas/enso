@@ -15,7 +15,7 @@ public class BuiltinTypes {
 
   private TypeRepresentation fromQualifiedName(String qualifiedName) {
     var fqn = QualifiedName$.MODULE$.fromString(qualifiedName);
-    return new TypeRepresentation.AtomType(fqn, null);
+    return new TypeRepresentation.AtomType(fqn);
   }
 
   public static boolean isAny(QualifiedName qualifiedName) {

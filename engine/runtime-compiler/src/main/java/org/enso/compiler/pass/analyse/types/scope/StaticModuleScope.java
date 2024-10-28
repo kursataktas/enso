@@ -176,4 +176,8 @@ public final class StaticModuleScope
     // TODO conversions in static analysis
     return null;
   }
+
+  public AtomType getType(String name) {
+    return typesDefinedHere.get(name);
+  }
 }

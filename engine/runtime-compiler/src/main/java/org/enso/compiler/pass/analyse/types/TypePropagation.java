@@ -21,9 +21,11 @@ import org.enso.compiler.pass.analyse.AliasAnalysis$;
 import org.enso.compiler.pass.analyse.alias.AliasMetadata;
 import org.enso.compiler.pass.analyse.alias.graph.Graph;
 import org.enso.compiler.pass.analyse.alias.graph.GraphOccurrence;
+import org.enso.compiler.pass.analyse.types.scope.AtomType;
 import org.enso.compiler.pass.analyse.types.scope.ModuleResolver;
 import org.enso.compiler.pass.analyse.types.scope.StaticModuleScope;
 import org.enso.compiler.pass.analyse.types.scope.TypeScopeReference;
+import org.enso.pkg.QualifiedName;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import scala.Option;
@@ -42,6 +44,7 @@ abstract class TypePropagation {
   private final TypeResolver typeResolver;
   private final TypeCompatibility compatibilityChecker;
   private final BuiltinTypes builtinTypes;
+  private final ModuleResolver moduleResolver;
   private final MethodTypeResolver methodTypeResolver;
 
   TypePropagation(
@@ -53,6 +56,7 @@ abstract class TypePropagation {
     this.typeResolver = typeResolver;
     this.compatibilityChecker = compatibilityChecker;
     this.builtinTypes = builtinTypes;
+    this.moduleResolver = moduleResolver;
 
     var currentModuleScope = StaticModuleScope.forIR(currentModule);
     this.methodTypeResolver =
@@ -84,6 +88,11 @@ abstract class TypePropagation {
    */
   protected abstract void encounteredNoSuchMethod(
       IR relatedIr, TypeRepresentation type, String methodName, MethodCallKind kind);
+
+  /**
+   * The callback that is called when a constructor is being invoked on a type that does not have such a constructor.
+   */
+  protected abstract void encounteredNoSuchConstructor(IR relatedIr, TypeRepresentation type, String constructorName);
 
   enum MethodCallKind {
     MEMBER,
@@ -327,6 +336,12 @@ abstract class TypePropagation {
     return null;
   }
 
+  private AtomType findTypeDefinition(QualifiedName name) {
+    var module = moduleResolver.findContainingModule(TypeScopeReference.atomType(name));
+    var moduleScope = StaticModuleScope.forIR(module);
+    return moduleScope.getType(name.item());
+  }
+
   private TypeRepresentation processUnresolvedSymbolApplication(
       TypeRepresentation.UnresolvedSymbol function,
       Expression argument,
@@ -340,14 +355,26 @@ abstract class TypePropagation {
     switch (argumentType) {
       case TypeRepresentation.TypeObject typeObject -> {
         if (isConstructorOrType(function.name())) {
-          var ctorCandidate =
-              typeObject.typeInterface().constructors().stream()
-                  .filter(ctor -> ctor.name().equals(function.name()))
-                  .findFirst();
-          if (ctorCandidate.isPresent()) {
-            return typeResolver.buildAtomConstructorType(typeObject, ctorCandidate.get());
+          var typeDefinition = findTypeDefinition(typeObject.name());
+          if (typeDefinition == null) {
+            logger.warn(
+                "processUnresolvedSymbolApplication: {} - no type definition found for {}",
+                relatedWholeApplicationIR.showCode(),
+                typeObject.name());
+            return null;
+          }
+
+          var constructor = typeDefinition.getConstructor(function.name());
+          if (constructor != null) {
+            if (constructor.type() == null) {
+              // type is unknown due to default arguments
+              // TODO later on this should be assert != null because all constructors should have a type (once we can deal with default arguments)
+              return null;
+            }
+
+            return constructor.type();
           } else {
-            // TODO we could report that no valid constructor was found
+            encounteredNoSuchConstructor(relatedWholeApplicationIR, argumentType, function.name());
             return null;
           }
         } else {
