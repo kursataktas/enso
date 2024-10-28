@@ -95,12 +95,7 @@ case object FramePointerAnalysis extends IRPass {
   }
 
   private def updateSymbolNames(e: IR, s: Graph.Scope): Unit = {
-    var symbols = s.allDefinitions.map(_.symbol)
-    s.childScopes.foreach(ch =>
-      if (ch.flattenToParent) {
-        symbols ++= ch.allDefinitions.map(_.symbol)
-      }
-    )
+    val symbols = s.allDefinitions.map(_.symbol)
     updateMeta(e, FrameVariableNames.create(symbols))
   }
 
@@ -365,27 +360,7 @@ case object FramePointerAnalysis extends IRPass {
           "Def occurrence must be in the given scope"
         )
       )
-    val parentOffset = if (scope.flattenToParent && scope.parent.nonEmpty) {
-      val p   = scope.parent.get
-      var off = p.allDefinitions.size
-      val found = p.childScopes.find(ch => {
-        if (ch == scope) {
-          true
-        } else {
-          if (ch.flattenToParent) {
-            off += ch.allDefinitions.size
-          }
-          false
-        }
-      })
-      org.enso.common.Asserts.assertInJvm(
-        found != null,
-        "Child must be found: " + scope + " among " + p.childScopes
-      )
-      off
-    } else {
-      0
-    }
+    val parentOffset = 0
     parentOffset + idxInScope + LocalScope.internalSlotsSize
   }
 
@@ -402,9 +377,7 @@ case object FramePointerAnalysis extends IRPass {
     var currScope: Option[Graph.Scope] = Some(childScope)
     var scopeDistance                  = 0
     while (currScope.isDefined && currScope.get != parentScope) {
-      if (!currScope.get.flattenToParent) {
-        scopeDistance += 1
-      }
+      scopeDistance += 1
       currScope = currScope.get.parent
     }
     scopeDistance

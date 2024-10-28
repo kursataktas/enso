@@ -416,7 +416,7 @@ case object AliasAnalysis extends IRPass {
           )
       case binding @ Expression.Binding(name, expression, _, _) =>
         if (
-          !parentScope.hasSymbolOccurrenceAs[GraphOccurrence.Def](name.name)
+          true // !parentScope.hasSymbolOccurrenceAs[GraphOccurrence.Def](name.name)
         ) {
           val isSuspended = expression match {
             case Expression.Block(_, _, _, isSuspended, _) => isSuspended
@@ -450,7 +450,8 @@ case object AliasAnalysis extends IRPass {
               )
             )
         } else {
-          errors.Redefined.Binding(binding)
+          // errors.Redefined.Binding(binding)
+          binding
         }
       case app: Application =>
         analyseApplication(app, graph, parentScope)
@@ -787,7 +788,7 @@ case object AliasAnalysis extends IRPass {
       if (!isConstructorNameInPatternContext && !name.isMethod) {
         graph.resolveLocalUsage(occurrence)
       } else {
-        graph.resolveGlobalUsage(occurrence)
+        // graph.resolveGlobalUsage(occurrence)
       }
     }
     name.updateMetadata(
@@ -810,9 +811,9 @@ case object AliasAnalysis extends IRPass {
     graph: Graph,
     parentScope: Scope
   ): IfThenElse = {
-    val condScope  = parentScope.addChild(flattenToParent = true)
-    val trueScope  = parentScope.addChild(flattenToParent = true)
-    val falseScope = parentScope.addChild(flattenToParent = true)
+    val condScope  = parentScope; // .addChild()
+    val trueScope  = parentScope; // .addChild()
+    val falseScope = parentScope; // .addChild()
     ir.copy(
       cond       = analyseExpression(ir.cond, graph, condScope),
       trueBranch = analyseExpression(ir.trueBranch, graph, trueScope),

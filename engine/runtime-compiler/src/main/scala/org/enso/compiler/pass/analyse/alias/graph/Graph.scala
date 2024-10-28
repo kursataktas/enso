@@ -16,18 +16,14 @@ sealed class Graph(
 ) extends Serializable {
   private var sourceLinks: Map[Graph.Id, Set[Graph.Link]] = new HashMap()
   private var targetLinks: Map[Graph.Id, Set[Graph.Link]] = new HashMap()
-  private var frozen: Boolean                             = false
 
   {
     links.foreach(addSourceTargetLink)
   }
 
-  private var globalSymbols: Map[Graph.Symbol, GraphOccurrence.Global] =
-    Map()
-
   /** @return the next counter value
     */
-  def nextIdCounter: Int = _nextIdCounter
+  private[compiler] def nextIdCounter: Int = _nextIdCounter
 
   /** @return a deep structural copy of `this` */
   def deepCopy(
@@ -37,29 +33,15 @@ sealed class Graph(
       this.rootScope.deepCopy(scope_mapping),
       this.nextIdCounter
     )
-    copy.links         = this.links
-    copy.sourceLinks   = this.sourceLinks
-    copy.targetLinks   = this.targetLinks
-    copy.globalSymbols = this.globalSymbols
+    copy.links       = this.links
+    copy.sourceLinks = this.sourceLinks
+    copy.targetLinks = this.targetLinks
     copy
   }
 
   def getLinks(): Set[Graph.Link] = links
 
-  def freeze(): Unit = {
-    frozen = true
-  }
-
-  /** Registers a requested global symbol in the aliasing scope.
-    *
-    * @param sym the symbol occurrence
-    */
-  def addGlobalSymbol(sym: GraphOccurrence.Global): Unit = {
-    org.enso.common.Asserts.assertInJvm(!frozen)
-    if (!globalSymbols.contains(sym.symbol)) {
-      globalSymbols = globalSymbols + (sym.symbol -> sym)
-    }
-  }
+  def freeze(): Unit = {}
 
   /** Creates a deep copy of the aliasing graph structure.
     *
@@ -124,24 +106,6 @@ sealed class Graph(
     targetLinks = targetLinks.updatedWith(link.target)(v =>
       v.map(s => s + link).orElse(Some(Set(link)))
     )
-  }
-
-  /** Resolves any links for the given usage of a symbol, assuming the symbol
-    * is global (i.e. method, constructor etc.)
-    *
-    * @param occurrence the symbol usage
-    * @return the link, if it exists
-    */
-  def resolveGlobalUsage(
-    occurrence: GraphOccurrence.Use
-  ): Option[Graph.Link] = {
-    scopeFor(occurrence.id) match {
-      case Some(scope) =>
-        globalSymbols
-          .get(occurrence.symbol)
-          .map(g => Graph.Link(occurrence.id, scope.scopesToRoot + 1, g.id))
-      case None => None
-    }
   }
 
   /** Returns a string representation of the graph.
@@ -359,7 +323,6 @@ object Graph {
     *                       Note that there may not be a link for all these definitions.
     */
   sealed class Scope(
-    val flattenToParent: Boolean                  = false,
     var childScopes: List[Scope]                  = List(),
     var occurrences: Map[Id, GraphOccurrence]     = HashMap(),
     var allDefinitions: List[GraphOccurrence.Def] = List()
@@ -407,7 +370,6 @@ object Graph {
           )
           val newScope =
             new Scope(
-              this.flattenToParent,
               childScopeCopies.toList,
               occurrences,
               allDefinitions
@@ -442,8 +404,8 @@ object Graph {
       * @param is this scope "just virtual" and will be flatten to parent at the end?
       * @return a scope that is a child of `this`
       */
-    def addChild(flattenToParent: Boolean = false): Scope = {
-      val scope = new Scope(flattenToParent)
+    def addChild(): Scope = {
+      val scope = new Scope()
       scope.parent = Some(this)
       childScopes ::= scope
 

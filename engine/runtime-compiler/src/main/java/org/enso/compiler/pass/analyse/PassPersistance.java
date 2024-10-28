@@ -102,12 +102,11 @@ public final class PassPersistance {
     @Override
     @SuppressWarnings("unchecked")
     protected Graph.Scope readObject(Input in) throws IOException {
-      var flatten = in.readBoolean();
       var childScopes = in.readInline(scala.collection.immutable.List.class);
       var occurrencesValues = (scala.collection.immutable.Set<GraphOccurrence>) in.readObject();
       var occurrences = occurrencesValues.map(v -> Tuple2$.MODULE$.apply(v.id(), v)).toMap(null);
       var allDefinitions = in.readInline(scala.collection.immutable.List.class);
-      var parent = new Graph.Scope(flatten, childScopes, occurrences, allDefinitions);
+      var parent = new Graph.Scope(childScopes, occurrences, allDefinitions);
       var optionParent = Option.apply(parent);
       childScopes.forall(
           (object) -> {
@@ -121,7 +120,6 @@ public final class PassPersistance {
     @Override
     @SuppressWarnings("unchecked")
     protected void writeObject(Graph.Scope obj, Output out) throws IOException {
-      out.writeBoolean(obj.flattenToParent());
       out.writeInline(scala.collection.immutable.List.class, obj.childScopes());
       out.writeObject(obj.occurrences().values().toSet());
       out.writeInline(scala.collection.immutable.List.class, obj.allDefinitions());
