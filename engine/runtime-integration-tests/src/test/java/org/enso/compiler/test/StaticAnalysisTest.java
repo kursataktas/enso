@@ -2,6 +2,7 @@ package org.enso.compiler.test;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.OutputStream;
 import java.util.List;
 import java.util.logging.Level;
 import org.enso.common.LanguageInfo;
@@ -36,11 +37,9 @@ public abstract class StaticAnalysisTest {
               builder
                   .option(RuntimeOptions.ENABLE_STATIC_ANALYSIS, "true")
                   .option(RuntimeOptions.LOG_LEVEL, Level.INFO.getName())
-          // TODO we want to disable stdout of the tests - but for now it's useful for debugging
-          //                  .option(RuntimeOptions.LOG_LEVEL, Level.SEVERE.getName())
-          //                  .out(OutputStream.nullOutputStream())
-          //                  .err(OutputStream.nullOutputStream())
-          );
+                  .option(RuntimeOptions.LOG_LEVEL, Level.SEVERE.getName())
+                  .out(OutputStream.nullOutputStream())
+                  .err(OutputStream.nullOutputStream()));
 
   private final EnsoContext langCtx =
       interpreterContext
