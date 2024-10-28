@@ -18,17 +18,18 @@ import {
 } from '#/providers/DriveProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
-import { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
+import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import LocalStorage from '#/utilities/LocalStorage'
+import type Backend from 'enso-common/src/services/Backend'
 import type { BackendType } from 'enso-common/src/services/Backend'
-import Backend from 'enso-common/src/services/Backend'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { startTransition } from 'react'
 import { z } from 'zod'
 import { AssetDocs } from '../AssetDocs'
 import AssetProjectSessions from '../AssetProjectSessions'
-import AssetProperties, { AssetPropertiesSpotlight } from '../AssetProperties'
+import type { AssetPropertiesSpotlight } from '../AssetProperties'
+import AssetProperties from '../AssetProperties'
 import AssetVersions from '../AssetVersions/AssetVersions'
 import type { Category } from '../CategorySwitcher/Category'
 import { AssetPanelTabs } from './components/AssetPanelTabs'
@@ -138,7 +139,6 @@ export function AssetPanel(props: AssetPanelProps) {
             defaultSelectedKey={selectedTab}
             onSelectionChange={(key) => {
               startTransition(() => {
-                console.log('onSelectionChange', { key, selectedTab, isExpanded, isHidden })
                 if (key === selectedTab && isExpanded) {
                   setIsExpanded(false)
                 } else {
