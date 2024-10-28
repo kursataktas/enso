@@ -12,12 +12,16 @@ import scala.jdk.javaapi.CollectionConverters;
 /**
  * Gathers the common logic for building the ModuleScope.
  *
- * <p>This is done in two places: - in the compiler, gathering just the types to build
- * StaticModuleScope, - in the runtime, building Truffle nodes for the interpreter.
+ * <p>This is done in two places:
  *
- * <p>The interpreter does much more than the compiler, so currently this only gather the general
- * shape of the process to try to ensure that they stay in sync. In future iterations, we may try to
- * move more of the logic to this common place.
+ * <ol>
+ *   <li>in the compiler, gathering just the types to build StaticModuleScope,
+ *   <li>in the runtime, building Truffle nodes for the interpreter.
+ * </ol>
+ *
+ * <p>The interpreter does much more than the type-checker, so currently this only gathers the
+ * general shape of the process to try to ensure that they stay in sync. In future iterations, we
+ * may try to move more of the logic to this common place.
  */
 public abstract class BuildScopeFromModuleAlgorithm<
     FunctionType,
@@ -35,8 +39,6 @@ public abstract class BuildScopeFromModuleAlgorithm<
   }
 
   public void processModule(Module moduleIr, BindingsMap bindingsMap) {
-    // TODO common logic for generateReexportBindings?
-
     processModuleExports(bindingsMap);
     processModuleImports(bindingsMap);
     processPolyglotImports(moduleIr);
@@ -110,7 +112,6 @@ public abstract class BuildScopeFromModuleAlgorithm<
           MetadataInteropHelpers.getMetadataOrNull(
               typePointerOpt.get(), MethodDefinitions$.MODULE$, BindingsMap.Resolution.class);
       if (metadata == null) {
-        // return null?
         throw new IllegalStateException(
             "Failed to resolve type pointer for method: " + method.methodReference().showCode());
       }
