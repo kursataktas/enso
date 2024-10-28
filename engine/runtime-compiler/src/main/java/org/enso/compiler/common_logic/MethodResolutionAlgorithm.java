@@ -27,11 +27,6 @@ public abstract class MethodResolutionAlgorithm<
     ImportExportScopeType,
     ModuleScopeType extends
         CommonModuleScopeShape<FunctionType, TypeScopeReferenceType, ImportExportScopeType>> {
-  private final ModuleScopeType currentModuleScope;
-
-  protected MethodResolutionAlgorithm(ModuleScopeType currentModuleScope) {
-    this.currentModuleScope = currentModuleScope;
-  }
 
   /**
    * Looks up a method definition as seen in the current module.
@@ -48,7 +43,8 @@ public abstract class MethodResolutionAlgorithm<
    *   <li>Finally, methods imported from other modules.
    * </ol>
    */
-  public FunctionType lookupMethodDefinition(TypeScopeReferenceType type, String methodName) {
+  public FunctionType lookupMethodDefinition(
+      ModuleScopeType currentModuleScope, TypeScopeReferenceType type, String methodName) {
     var definitionScope = findDefinitionScope(type);
     if (definitionScope != null) {
       var definedWithAtom = definitionScope.getMethodForType(type, methodName);
@@ -62,7 +58,7 @@ public abstract class MethodResolutionAlgorithm<
       return definedHere;
     }
 
-    return findInImports(type, methodName);
+    return findInImports(currentModuleScope, type, methodName);
   }
 
   public FunctionType findExportedMethodInModule(
@@ -79,7 +75,8 @@ public abstract class MethodResolutionAlgorithm<
         .orElse(null);
   }
 
-  private FunctionType findInImports(TypeScopeReferenceType type, String methodName) {
+  private FunctionType findInImports(
+      ModuleScopeType currentModuleScope, TypeScopeReferenceType type, String methodName) {
     var found =
         currentModuleScope.getImports().stream()
             .flatMap(

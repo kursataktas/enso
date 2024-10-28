@@ -92,16 +92,13 @@ public final class ModuleScope
    */
   @CompilerDirectives.TruffleBoundary
   public Function lookupMethodDefinition(Type type, String name) {
-    return methodResolutionAlgorithm.lookupMethodDefinition(type, name);
+    return methodResolutionAlgorithm.lookupMethodDefinition(this, type, name);
   }
 
   private final RuntimeMethodResolution methodResolutionAlgorithm = new RuntimeMethodResolution();
 
-  private final class RuntimeMethodResolution
+  private static final class RuntimeMethodResolution
       extends MethodResolutionAlgorithm<Function, Type, ImportExportScope, ModuleScope> {
-    RuntimeMethodResolution() {
-      super(ModuleScope.this);
-    }
 
     @Override
     protected ModuleScope findDefinitionScope(Type type) {

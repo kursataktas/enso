@@ -1,5 +1,6 @@
 package org.enso.compiler.pass.analyse.types.scope;
 
+import org.enso.compiler.common_logic.MethodResolutionAlgorithm;
 import org.enso.compiler.pass.analyse.types.TypeRepresentation;
 import org.enso.pkg.QualifiedName;
 
@@ -14,7 +15,8 @@ public class StaticImportExportScope {
 
   private transient MaterializedImportExportScope cachedMaterializedScope = null;
 
-  public MaterializedImportExportScope materialize(ModuleResolver moduleResolver) {
+  public MaterializedImportExportScope materialize(
+      ModuleResolver moduleResolver, StaticMethodResolution methodResolutionAlgorithm) {
     if (cachedMaterializedScope != null) {
       return cachedMaterializedScope;
     }
@@ -24,17 +26,24 @@ public class StaticImportExportScope {
       throw new IllegalStateException("Could not find module: " + referredModuleName);
     }
     var moduleScope = StaticModuleScope.forIR(module);
-    var materialized = new MaterializedImportExportScope(moduleScope);
+    var materialized = new MaterializedImportExportScope(moduleScope, methodResolutionAlgorithm);
     cachedMaterializedScope = materialized;
     return materialized;
   }
 
-  // I'm not yet sure about this, but for PoC
   public static class MaterializedImportExportScope {
     private final StaticModuleScope referredModuleScope;
+    private final MethodResolutionAlgorithm<
+            TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope>
+        methodResolutionAlgorithm;
 
-    private MaterializedImportExportScope(StaticModuleScope moduleScope) {
+    private MaterializedImportExportScope(
+        StaticModuleScope moduleScope,
+        MethodResolutionAlgorithm<
+                TypeRepresentation, TypeScopeReference, StaticImportExportScope, StaticModuleScope>
+            methodResolutionAlgorithm) {
       this.referredModuleScope = moduleScope;
+      this.methodResolutionAlgorithm = methodResolutionAlgorithm;
     }
 
     public TypeRepresentation getMethodForType(TypeScopeReference type, String name) {
@@ -42,8 +51,9 @@ public class StaticImportExportScope {
       return referredModuleScope.getMethodForType(type, name);
     }
 
-    public StaticModuleScope getReferredModuleScope() {
-      return referredModuleScope;
+    public TypeRepresentation getExportedMethod(TypeScopeReference type, String name) {
+      // TODO filtering only/hiding (see above) - for now we just return everything
+      return methodResolutionAlgorithm.findExportedMethodInModule(referredModuleScope, type, name);
     }
   }
 
