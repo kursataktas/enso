@@ -61,7 +61,13 @@ public abstract class MethodResolutionAlgorithm<
     return findInImports(currentModuleScope, type, methodName);
   }
 
-  public FunctionType findExportedMethodInModule(
+  /**
+   * Finds a method exported by a module.
+   *
+   * <p>It first checks methods defined in the module and later checks any methods re-exported from
+   * other modules.
+   */
+  public FunctionType getExportedMethod(
       ModuleScopeType moduleScope, TypeScopeReferenceType type, String methodName) {
     var definedLocally = moduleScope.getMethodForType(type, methodName);
     if (definedLocally != null) {
@@ -70,6 +76,64 @@ public abstract class MethodResolutionAlgorithm<
 
     return moduleScope.getExports().stream()
         .map(scope -> getMethodForTypeFromScope(scope, type, methodName))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /**
+   * Looks up a conversion definition as seen in the current module.
+   *
+   * <p>The algorithm is as follows:
+   *
+   * <ol>
+   *   <li>Conversions defined in the definition module of the source type are looked-up first,
+   *   <li>Next, conversions defined in the definition module of the target type are considered,
+   *   <li>Then, conversions defined in the current module are considered,
+   *   <li>Finally, conversions imported from other modules are considered.
+   * </ol>
+   */
+  public FunctionType lookupConversionDefinition(
+      ModuleScopeType currentModuleScope,
+      TypeScopeReferenceType source,
+      TypeScopeReferenceType target) {
+    var definedWithSource = findDefinitionScope(source).getConversionFor(target, source);
+    if (definedWithSource != null) {
+      return definedWithSource;
+    }
+
+    var definedWithTarget = findDefinitionScope(target).getConversionFor(target, source);
+    if (definedWithTarget != null) {
+      return definedWithTarget;
+    }
+
+    var definedHere = currentModuleScope.getConversionFor(target, source);
+    if (definedHere != null) {
+      return definedHere;
+    }
+
+    return currentModuleScope.getImports().stream()
+        .map(scope -> getExportedConversionFromScope(scope, target, source))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
+  /**
+   * Finds a conversion exported by a module.
+   *
+   * <p>It first checks conversions defined in the module and later checks any conversions
+   * re-exported from other modules.
+   */
+  public FunctionType getExportedConversion(
+      ModuleScopeType moduleScope, TypeScopeReferenceType target, TypeScopeReferenceType source) {
+    var definedLocally = moduleScope.getConversionFor(target, source);
+    if (definedLocally != null) {
+      return definedLocally;
+    }
+
+    return moduleScope.getExports().stream()
+        .map(scope -> getConversionFromScope(scope, target, source))
         .filter(Objects::nonNull)
         .findFirst()
         .orElse(null);
@@ -110,9 +174,26 @@ public abstract class MethodResolutionAlgorithm<
   protected abstract FunctionType getMethodForTypeFromScope(
       ImportExportScopeType scope, TypeScopeReferenceType type, String methodName);
 
-  /* Implementation detail that should delegate to a {@code getExportedMethod} variant in the given scope. */
+  /**
+   * Implementation detail that should delegate to a {@code getExportedMethod} variant in the given
+   * scope.
+   */
   protected abstract FunctionType getExportedMethodFromScope(
       ImportExportScopeType scope, TypeScopeReferenceType type, String methodName);
+
+  /**
+   * Implementation detail that should delegate to a {@code getConversionForType} variant in the
+   * given scope.
+   */
+  protected abstract FunctionType getConversionFromScope(
+      ImportExportScopeType scope, TypeScopeReferenceType target, TypeScopeReferenceType source);
+
+  /**
+   * Implementation detail that should delegate to a {@code getExportedConversion} variant in the
+   * given scope.
+   */
+  protected abstract FunctionType getExportedConversionFromScope(
+      ImportExportScopeType scope, TypeScopeReferenceType target, TypeScopeReferenceType source);
 
   /**
    * Defines the behaviour when a method resolving to distinct results is found in multiple imports.

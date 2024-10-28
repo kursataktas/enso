@@ -170,4 +170,10 @@ public final class StaticModuleScope
   public List<StaticImportExportScope> getExports() {
     return exports;
   }
+
+  @Override
+  public TypeRepresentation getConversionFor(TypeScopeReference target, TypeScopeReference source) {
+    // TODO conversions in static analysis
+    return null;
+  }
 }

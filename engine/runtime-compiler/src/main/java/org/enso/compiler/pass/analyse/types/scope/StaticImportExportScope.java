@@ -53,7 +53,7 @@ public class StaticImportExportScope {
 
     public TypeRepresentation getExportedMethod(TypeScopeReference type, String name) {
       // TODO filtering only/hiding (see above) - for now we just return everything
-      return methodResolutionAlgorithm.findExportedMethodInModule(referredModuleScope, type, name);
+      return methodResolutionAlgorithm.getExportedMethod(referredModuleScope, type, name);
     }
   }
 
