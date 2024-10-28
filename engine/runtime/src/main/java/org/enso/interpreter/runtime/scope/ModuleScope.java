@@ -32,6 +32,7 @@ public final class ModuleScope
 
   /**
    * First key is target type, second key is source type. The value is the conversion function from
+   * First key is target type, second key is source type. The value is the conversion function from
    * source to target.
    */
   private final Map<Type, Map<Type, Function>> conversions;
@@ -108,9 +109,15 @@ public final class ModuleScope
     }
 
     @Override
-    protected Function findExportedMethodInImportScope(
-        ImportExportScope importExportScope, Type type, String methodName) {
-      return importExportScope.getExportedMethod(type, methodName);
+    protected Function getMethodForTypeFromScope(
+        ImportExportScope scope, Type type, String methodName) {
+      return scope.getMethodForType(type, methodName);
+    }
+
+    @Override
+    protected Function getExportedMethodFromScope(
+        ImportExportScope scope, Type type, String methodName) {
+      return scope.getExportedMethod(type, methodName);
     }
 
     @Override
@@ -124,6 +131,11 @@ public final class ModuleScope
   @Override
   public Collection<ImportExportScope> getImports() {
     return imports;
+  }
+
+  @Override
+  public Collection<ImportExportScope> getExports() {
+    return exports;
   }
 
   /**
@@ -163,15 +175,7 @@ public final class ModuleScope
   }
 
   Function getExportedMethod(Type type, String name) {
-    var here = getMethodForType(type, name);
-    if (here != null) {
-      return here;
-    }
-    return exports.stream()
-        .map(scope -> scope.getMethodForType(type, name))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
+    return methodResolutionAlgorithm.findExportedMethodInModule(this, type, name);
   }
 
   Function getExportedConversion(Type type, Type target) {

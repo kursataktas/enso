@@ -31,6 +31,9 @@ public interface CommonModuleScopeShape<
   /** Returns the collection containing all imports present in the current module. */
   Collection<ImportExportScopeType> getImports();
 
+  /** Returns the collection containing all exports present in the current module. */
+  Collection<ImportExportScopeType> getExports();
+
   interface Builder<
       FunctionType,
       TypeScopeReferenceType,

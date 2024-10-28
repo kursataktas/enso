@@ -24,7 +24,7 @@ public class StaticImportExportScope {
       throw new IllegalStateException("Could not find module: " + referredModuleName);
     }
     var moduleScope = StaticModuleScope.forIR(module);
-    var materialized = new MaterializedImportExportScope(moduleScope, moduleResolver);
+    var materialized = new MaterializedImportExportScope(moduleScope);
     cachedMaterializedScope = materialized;
     return materialized;
   }
@@ -32,12 +32,9 @@ public class StaticImportExportScope {
   // I'm not yet sure about this, but for PoC
   public static class MaterializedImportExportScope {
     private final StaticModuleScope referredModuleScope;
-    private final ModuleResolver moduleResolver;
 
-    private MaterializedImportExportScope(
-        StaticModuleScope moduleScope, ModuleResolver moduleResolver) {
+    private MaterializedImportExportScope(StaticModuleScope moduleScope) {
       this.referredModuleScope = moduleScope;
-      this.moduleResolver = moduleResolver;
     }
 
     public TypeRepresentation getMethodForType(TypeScopeReference type, String name) {
@@ -45,9 +42,8 @@ public class StaticImportExportScope {
       return referredModuleScope.getMethodForType(type, name);
     }
 
-    public TypeRepresentation getExportedMethod(TypeScopeReference type, String name) {
-      // TODO filtering only/hiding (see above) - for now we just return everything
-      return referredModuleScope.getExportedMethod(type, name, moduleResolver);
+    public StaticModuleScope getReferredModuleScope() {
+      return referredModuleScope;
     }
   }
 

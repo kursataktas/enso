@@ -1,6 +1,7 @@
 package org.enso.compiler.common_logic;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -64,13 +65,27 @@ public abstract class MethodResolutionAlgorithm<
     return findInImports(type, methodName);
   }
 
+  public FunctionType findExportedMethodInModule(
+      ModuleScopeType moduleScope, TypeScopeReferenceType type, String methodName) {
+    var definedLocally = moduleScope.getMethodForType(type, methodName);
+    if (definedLocally != null) {
+      return definedLocally;
+    }
+
+    return moduleScope.getExports().stream()
+        .map(scope -> getMethodForTypeFromScope(scope, type, methodName))
+        .filter(Objects::nonNull)
+        .findFirst()
+        .orElse(null);
+  }
+
   private FunctionType findInImports(TypeScopeReferenceType type, String methodName) {
     var found =
         currentModuleScope.getImports().stream()
             .flatMap(
                 (importExportScope) -> {
                   var exportedMethod =
-                      findExportedMethodInImportScope(importExportScope, type, methodName);
+                      getExportedMethodFromScope(importExportScope, type, methodName);
                   if (exportedMethod != null) {
                     return Stream.of(new MethodFromImport<>(exportedMethod, importExportScope));
                   } else {
@@ -92,13 +107,15 @@ public abstract class MethodResolutionAlgorithm<
   protected abstract ModuleScopeType findDefinitionScope(TypeScopeReferenceType type);
 
   /**
-   * Checks if an import scope brings in the requested method, and if so, returns it.
-   *
-   * <p>The method may be brought by the import scope either if the imported module defined it, or
-   * if it re-exported it from some other module.
+   * Implementation detail that should delegate to a {@code getMethodReference} variant in the given
+   * scope.
    */
-  protected abstract FunctionType findExportedMethodInImportScope(
-      ImportExportScopeType importExportScope, TypeScopeReferenceType type, String methodName);
+  protected abstract FunctionType getMethodForTypeFromScope(
+      ImportExportScopeType scope, TypeScopeReferenceType type, String methodName);
+
+  /* Implementation detail that should delegate to a {@code getExportedMethod} variant in the given scope. */
+  protected abstract FunctionType getExportedMethodFromScope(
+      ImportExportScopeType scope, TypeScopeReferenceType type, String methodName);
 
   /**
    * Defines the behaviour when a method resolving to distinct results is found in multiple imports.

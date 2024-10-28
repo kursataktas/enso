@@ -71,12 +71,18 @@ class MethodTypeResolver {
     }
 
     @Override
-    protected TypeRepresentation findExportedMethodInImportScope(
-        StaticImportExportScope importExportScope,
-        TypeScopeReference typeScopeReference,
-        String methodName) {
-      var materialized = importExportScope.materialize(moduleResolver);
-      return materialized.getExportedMethod(typeScopeReference, methodName);
+    protected TypeRepresentation getMethodForTypeFromScope(
+        StaticImportExportScope scope, TypeScopeReference typeScopeReference, String methodName) {
+      return scope.materialize(moduleResolver).getMethodForType(typeScopeReference, methodName);
+    }
+
+    @Override
+    protected TypeRepresentation getExportedMethodFromScope(
+        StaticImportExportScope scope, TypeScopeReference typeScopeReference, String methodName) {
+      return findExportedMethodInModule(
+          scope.materialize(moduleResolver).getReferredModuleScope(),
+          typeScopeReference,
+          methodName);
     }
 
     @Override

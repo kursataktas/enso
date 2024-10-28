@@ -5,7 +5,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import org.enso.compiler.MetadataInteropHelpers;
 import org.enso.compiler.common_logic.CommonModuleScopeShape;
 import org.enso.compiler.core.CompilerStub;
@@ -142,21 +141,6 @@ public final class StaticModuleScope
     }
 
     return typeMethods.get(name);
-  }
-
-  /** Aligned with @link{ModuleScope#getExportedMethod} */
-  public TypeRepresentation getExportedMethod(
-      TypeScopeReference type, String name, ModuleResolver moduleResolver) {
-    var here = getMethodForType(type, name);
-    if (here != null) {
-      return here;
-    }
-
-    return exports.stream()
-        .map(scope -> scope.materialize(moduleResolver).getMethodForType(type, name))
-        .filter(Objects::nonNull)
-        .findFirst()
-        .orElse(null);
   }
 
   @Override
