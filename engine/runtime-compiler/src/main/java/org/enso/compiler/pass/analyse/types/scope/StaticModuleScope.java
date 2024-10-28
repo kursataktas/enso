@@ -35,6 +35,7 @@ public final class StaticModuleScope
   private final TypeScopeReference associatedType;
   private final List<StaticImportExportScope> imports;
   private final List<StaticImportExportScope> exports;
+  private final Map<String, AtomType> typesDefinedHere;
   private final Map<TypeScopeReference, Map<String, TypeRepresentation>> methods;
 
   private StaticModuleScope(
@@ -42,11 +43,13 @@ public final class StaticModuleScope
       TypeScopeReference associatedType,
       List<StaticImportExportScope> imports,
       List<StaticImportExportScope> exports,
+      Map<String, AtomType> typesDefinedHere,
       Map<TypeScopeReference, Map<String, TypeRepresentation>> methods) {
     this.moduleName = moduleName;
     this.associatedType = associatedType;
     this.imports = imports;
     this.exports = exports;
+    this.typesDefinedHere = typesDefinedHere;
     this.methods = methods;
   }
 
@@ -57,6 +60,7 @@ public final class StaticModuleScope
     private final TypeScopeReference associatedType;
     private final List<StaticImportExportScope> imports = new ArrayList<>();
     private final List<StaticImportExportScope> exports = new ArrayList<>();
+    private final Map<String, AtomType> typesDefinedHere = new HashMap<>();
     private final Map<TypeScopeReference, Map<String, TypeRepresentation>> methods =
         new HashMap<>();
 
@@ -81,6 +85,7 @@ public final class StaticModuleScope
           associatedType,
           Collections.unmodifiableList(imports),
           Collections.unmodifiableList(exports),
+          Collections.unmodifiableMap(typesDefinedHere),
           Collections.unmodifiableMap(methods));
     }
 
@@ -91,6 +96,14 @@ public final class StaticModuleScope
     @Override
     public TypeScopeReference getAssociatedType() {
       return associatedType;
+    }
+
+    void registerType(AtomType type) {
+      checkSealed();
+      var previous = typesDefinedHere.putIfAbsent(type.getName(), type);
+      if (previous != null) {
+        throw new IllegalStateException("Type already defined: " + type.getName());
+      }
     }
 
     void registerMethod(TypeScopeReference parentType, String name, TypeRepresentation type) {
