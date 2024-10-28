@@ -84,8 +84,10 @@ export class Option<T> {
    * options will be displayed on-demand only.
    */
   primary = true
+
   /**
-   *
+   * Create a new instance of the configuration {@link Option}.
+   * @param cfg - The option definition object.
    */
   constructor(cfg: OptionObject<T>) {
     this.default = cfg.value
@@ -127,7 +129,7 @@ export class Option<T> {
   }
 
   /**
-   *
+   * Load option value by parsing an input string.
    */
   load(input: string) {
     if (typeof this.value === 'boolean') {
@@ -153,7 +155,7 @@ export class Option<T> {
   }
 
   /**
-   *
+   * Log an an error in case of an unparsable option input.
    */
   printValueUpdateError(input: string) {
     logger.error(

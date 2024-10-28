@@ -1,3 +1,16 @@
+/**
+ * @file A bundle post-processing script used by bazel's `dist` target.
+ *
+ * In order to aid cache usage and ensure that the testing and production bundles are as
+ * similar as possible, we use a stand-in placeholder environment variables during `vite`
+ * evaluation. Afterwards, this script is used to replace those placeholders in compiled
+ * assets, so that the appropriate environment configuration can be applied without any
+ * source code changes.
+ *
+ * This script explicitly only replaces the placeholders inside the built "config" file.
+ * Any placeholders present in other artifacts will intentionally cause a build error.
+ */
+
 /* eslint-disable jsdoc/check-tag-names */
 
 // @ts-expect-error missing dotenv typings

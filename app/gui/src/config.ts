@@ -28,8 +28,6 @@ const $config = {
   MAPBOX_API_TOKEN: import.meta.env.ENSO_IDE_MAPBOX_API_TOKEN,
 } as const
 
-console.log($config)
-
 // Undefined env variables are typed as `any`, but we want them to be `string | undefined`.
 export type $Config = {
   [K in keyof typeof $config]: unknown extends (typeof $config)[K] ? string | undefined

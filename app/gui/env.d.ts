@@ -176,7 +176,6 @@ declare global {
     toggleDevtools: () => void
   }
 
-  // const PROJECT_MANAGER_IN_BUNDLE_PATH: StringConstructor
   interface Document {
     caretPositionFromPoint(x: number, y: number): { offsetNode: Node; offset: number } | null
   }

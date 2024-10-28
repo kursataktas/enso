@@ -36,23 +36,6 @@ ts_config(
     deps = [":tsconfig_app"],
 )
 
-# BUILD_ENV_VARS = [
-#     "BUILD_INFO_VERSION",
-#     "BUILD_INFO_COMMIT_HASH",
-#     "ENSO_CLOUD_ENVIRONMENT",
-#     "ENSO_CLOUD_API_URL",
-#     "ENSO_CLOUD_CHAT_URL",
-#     "ENSO_CLOUD_SENTRY_DSN",
-#     "ENSO_CLOUD_STRIPE_KEY",
-#     "ENSO_CLOUD_COGNITO_USER_POOL_ID",
-#     "ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID",
-#     "ENSO_CLOUD_COGNITO_DOMAIN",
-#     "ENSO_CLOUD_COGNITO_REGION",
-#     "PROJECT_MANAGER_URL",
-#     "YDOC_SERVER_URL",
-#     "CLOUD_BUILD",
-# ]
-
 ICON_GENERATED_DIR = "src/project-view/util/iconMetadata"
 
 SRCS = [
@@ -140,8 +123,9 @@ js_run_binary(
 )
 
 # Convenience rule to output built artifacts to the filesystem, so JS tooling can see them.
-# Important! Make sure the output of this rule is NOT used during the build process.
-# This is part of the ICON_GENERATED_FILES definition.
+# Important! Make sure the output of this rule is NOT used during the build process, which
+# is currently ensured by ICON_GENERATED_DIR definition being used as an glob exclusion
+# in `SRC` definition.
 write_source_files(
     name = "write_icon_metadata",
     files = {
@@ -150,25 +134,3 @@ write_source_files(
     suggested_update_target = "//:write_all",
     visibility = ["//visibility:public"],
 )
-
-# vue_tsc_bin.vue_tsc_test(
-#     name = "type-check",
-#     args = ["--noEmit"],
-#     chdir = package_name(),
-#     data = SRCS + BUILD_DEPS,
-#     include_declarations = True,
-# )
-
-# vite_bin.vite_binary(
-#     name = "vite",
-#     chdir = package_name(),
-#     data = SRCS + BUILD_DEPS,
-# )
-
-# build_test(
-#     name = "build_test",
-#     targets = [
-#         ":build",
-#         ":type-check",
-#     ],
-# )
