@@ -53,9 +53,7 @@ function useDocumentationImages(
 
   const transformImageUrl = fetcherUrlTransformer(
     async (url: string) => {
-      console.log('url', url)
       const path = await urlToPath(url)
-
       if (!path) return
       return withContext(
         () => `Locating documentation image (${url})`,
@@ -63,7 +61,6 @@ function useDocumentationImages(
       )
     },
     async (path) => {
-      console.log('path', path)
       return withContext(
         () => `Loading documentation image (${pathDebugRepr(path)})`,
         async () => await readFileBinary(path),
