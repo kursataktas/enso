@@ -4,6 +4,7 @@
  */
 import { MarkdownViewer } from '#/components/MarkdownViewer'
 import { Result } from '#/components/Result'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import { AssetType, type ProjectAsset } from '#/services/Backend'
@@ -74,9 +75,13 @@ export function AssetDocsContent(props: AssetDocsContentProps) {
     },
   })
 
+  const resolveProjectAssetPath = useEventCallback((relativePath: string) =>
+    backend.resolveProjectAssetPath(item.item.id, relativePath),
+  )
+
   if (docs === '') {
     return <Result status="info" title={getText('assetDocs.noDocs')} centered />
   }
 
-  return <MarkdownViewer text={docs} />
+  return <MarkdownViewer text={docs} imgUrlResolver={resolveProjectAssetPath} />
 }

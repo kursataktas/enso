@@ -4,6 +4,7 @@
  * Wysiwyg component that provides a WYSIWYG editor using Lexical.js.
  */
 
+import { useSuspenseQuery } from '@tanstack/react-query'
 import type { RendererObject } from 'marked'
 import { marked } from 'marked'
 import { useMemo } from 'react'
@@ -17,6 +18,7 @@ export interface MarkdownViewerProps {
    * Markdown text to parse and display.
    */
   readonly text: string
+  readonly imgUrlResolver: (relativePath: string) => Promise<string>
 }
 
 const renderer: RendererObject = {
@@ -77,12 +79,22 @@ const renderer: RendererObject = {
  * Parses markdown passed in as a `text` prop into HTML and displays it.
  */
 export function MarkdownViewer(props: MarkdownViewerProps) {
-  const { text } = props
+  const { text, imgUrlResolver } = props
 
-  const markdownToHtml = useMemo(
-    () => marked.use({ renderer }).parse(text, { async: false }),
-    [text],
-  )
+  const markedInstance = useMemo(() => marked.use({ renderer, async: true }), [])
+
+  const { data: markdownToHtml } = useSuspenseQuery({
+    queryKey: ['markdownToHtml', { text }],
+    queryFn: () =>
+      markedInstance.parse(text, {
+        async: true,
+        walkTokens: async (token) => {
+          if (token.type === 'image') {
+            token.href = await imgUrlResolver(token.href)
+          }
+        },
+      }),
+  })
 
   // eslint-disable-next-line @typescript-eslint/naming-convention
   return <div className="select-text" dangerouslySetInnerHTML={{ __html: markdownToHtml }} />

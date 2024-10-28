@@ -157,7 +157,13 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       },
       isAssetPanelTemporarilyVisible: false,
       setIsAssetPanelTemporarilyVisible: (isAssetPanelTemporarilyVisible) => {
-        if (get().isAssetPanelTemporarilyVisible !== isAssetPanelTemporarilyVisible) {
+        const state = get()
+
+        if (state.isAssetPanelHidden && isAssetPanelTemporarilyVisible) {
+          set({ isAssetPanelHidden: false })
+        }
+
+        if (state.isAssetPanelTemporarilyVisible !== isAssetPanelTemporarilyVisible) {
           set({ isAssetPanelTemporarilyVisible })
         }
       },
