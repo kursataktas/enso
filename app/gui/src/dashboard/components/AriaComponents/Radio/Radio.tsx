@@ -128,7 +128,9 @@ export const Radio = forwardRef(function Radio(
     <label
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       {...aria.mergeProps<React.LabelHTMLAttributes<HTMLLabelElement>>()(hoverProps, labelProps)}
-      ref={mergeRefs.mergeRefs(labelRef, ref)}
+      ref={(el) => {
+        mergeRefs.mergeRefs(labelRef, ref)(el)
+      }}
       className={base()}
     >
       <input
@@ -148,7 +150,6 @@ export const Radio = forwardRef(function Radio(
   )
 }) as unknown as ((
   props: RadioProps & React.RefAttributes<HTMLLabelElement>,
-  // eslint-disable-next-line no-restricted-syntax
 ) => React.JSX.Element) & {
   // eslint-disable-next-line @typescript-eslint/naming-convention
   Group: typeof radioGroup.RadioGroup

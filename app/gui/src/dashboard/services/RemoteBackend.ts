@@ -1272,7 +1272,6 @@ export default class RemoteBackend extends Backend {
       },
     )
     if (!responseIsSuccessful(response)) {
-      // eslint-disable-next-line no-restricted-syntax
       return this.throw(response, 'logEventBackendError', message)
     }
   }

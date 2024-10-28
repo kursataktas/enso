@@ -89,7 +89,6 @@ await fs.symlink(
 )
 
 const ELECTRON_FLAGS =
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   process.env.ELECTRON_FLAGS == null ? [] : String(process.env.ELECTRON_FLAGS).split(' ')
 const ELECTRON_ARGS = [
   path.join(IDE_DIR_PATH, 'index.mjs'),
@@ -115,7 +114,6 @@ function startElectronProcess() {
   const electronProcess = childProcess.spawn('electron', ELECTRON_ARGS, {
     stdio: 'inherit',
     shell: true,
-    // eslint-disable-next-line @typescript-eslint/naming-convention
     env: Object.assign({ NODE_MODULES_PATH }, process.env),
   })
 

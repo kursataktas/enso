@@ -148,7 +148,6 @@ function createUsersMeQuery(
     queryKey: [remoteBackend.type, 'usersMe', session?.clientId] as const,
     queryFn: async () => {
       if (session == null) {
-        // eslint-disable-next-line no-restricted-syntax
         return Promise.resolve(null)
       }
       try {
@@ -164,7 +163,6 @@ function createUsersMeQuery(
           await performLogout()
           return null
         } else {
-          // eslint-disable-next-line no-restricted-syntax
           throw error
         }
       }
@@ -332,7 +330,6 @@ export default function AuthProvider(props: AuthProviderProps) {
       const challenge = user.challengeName ?? 'NO_CHALLENGE'
 
       if (['SMS_MFA', 'SOFTWARE_TOKEN_MFA'].includes(challenge)) {
-        // eslint-disable-next-line no-restricted-syntax
         return { challenge, user } as const
       }
 

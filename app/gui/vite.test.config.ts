@@ -17,11 +17,9 @@ export default mergeConfig(
     mode: 'testing', // load environment from .env.testing file
     resolve: {
       alias: {
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         '@stripe/stripe-js/pure': fileURLToPath(
           new URL('./e2e/dashboard/mock/stripe.ts', import.meta.url),
         ),
-        // eslint-disable-next-line @typescript-eslint/naming-convention
         '@stripe/react-stripe-js': fileURLToPath(
           new URL('./e2e/dashboard/mock/react-stripe.tsx', import.meta.url),
         ),
