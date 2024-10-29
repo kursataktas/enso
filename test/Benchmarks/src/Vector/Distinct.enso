@@ -18,7 +18,7 @@ type Data
 create_random_integer_vec = Utils.make_random_integer_vec 100000
 
 
-create_random_float_vec = Utils.make_random_vec 100000
+create_random_float_vec = Utils.make_random_float_vec 100000
 
 
 create_uniform_integer_vec = Vector.fill 100000 1
