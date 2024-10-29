@@ -94,7 +94,6 @@ export const Input = forwardRef(function Input<
           return value
         }
       } else {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return value
       }
     },
@@ -139,7 +138,9 @@ export const Input = forwardRef(function Input<
                 omit(inputProps, 'isInvalid', 'isRequired', 'isDisabled'),
                 omit(fieldProps, 'isInvalid', 'isRequired', 'isDisabled', 'invalid'),
               )}
-              ref={mergeRefs(inputRef, privateInputRef, fieldProps.ref)}
+              ref={(el) => {
+                mergeRefs(inputRef, privateInputRef, fieldProps.ref)(el)
+              }}
             />
           </div>
 
