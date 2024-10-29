@@ -1440,7 +1440,9 @@ class IrToTruffle(
       val trueNode = this.run(ife.trueBranch, subjectToInstrumentation)
       val falseNode =
         ife.falseBranch.map(this.run(_, subjectToInstrumentation)).orNull
-      IfThenElseNode.build(condNode, trueNode, falseNode)
+      val ifeNode = IfThenElseNode.build(condNode, trueNode, falseNode)
+      setLocation(ifeNode, ife.location)
+      ifeNode
     }
 
     /** Performs code generation for an Enso case expression.
