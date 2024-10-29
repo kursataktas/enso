@@ -1,9 +1,9 @@
 /** @file The React provider (and associated hooks) for providing reactive events. */
 import * as React from 'react'
 
+import * as zustand from '#/utilities/zustand'
 import invariant from 'tiny-invariant'
 import * as z from 'zod'
-import * as zustand from 'zustand'
 
 import * as eventCallbacks from '#/hooks/eventCallbackHooks'
 import * as searchParamsState from '#/hooks/searchParamsStateHooks'
@@ -214,7 +214,9 @@ export function useProjectsStore() {
 /** A function to retrieve all launched projects. */
 export function useLaunchedProjects() {
   const store = useProjectsStore()
-  return zustand.useStore(store, (state) => state.launchedProjects)
+  return zustand.useStore(store, (state) => state.launchedProjects, {
+    unsafeEnableTransition: true,
+  })
 }
 
 // =================================
@@ -224,7 +226,9 @@ export function useLaunchedProjects() {
 /** A function to update launched projects. */
 export function useUpdateLaunchedProjects() {
   const store = useProjectsStore()
-  const updateLaunchedProjects = zustand.useStore(store, (state) => state.updateLaunchedProjects)
+  const updateLaunchedProjects = zustand.useStore(store, (state) => state.updateLaunchedProjects, {
+    unsafeEnableTransition: true,
+  })
   return eventCallbacks.useEventCallback(
     (update: (projects: readonly LaunchedProject[]) => readonly LaunchedProject[]) => {
       React.startTransition(() => {
@@ -241,7 +245,9 @@ export function useUpdateLaunchedProjects() {
 /** A function to add a new launched project. */
 export function useAddLaunchedProject() {
   const store = useProjectsStore()
-  const addLaunchedProject = zustand.useStore(store, (state) => state.addLaunchedProject)
+  const addLaunchedProject = zustand.useStore(store, (state) => state.addLaunchedProject, {
+    unsafeEnableTransition: true,
+  })
   return eventCallbacks.useEventCallback((project: LaunchedProject) => {
     React.startTransition(() => {
       addLaunchedProject(project)
@@ -256,7 +262,9 @@ export function useAddLaunchedProject() {
 /** A function to remove a launched project. */
 export function useRemoveLaunchedProject() {
   const store = useProjectsStore()
-  const removeLaunchedProject = zustand.useStore(store, (state) => state.removeLaunchedProject)
+  const removeLaunchedProject = zustand.useStore(store, (state) => state.removeLaunchedProject, {
+    unsafeEnableTransition: true,
+  })
   return eventCallbacks.useEventCallback((projectId: LaunchedProjectId) => {
     React.startTransition(() => {
       removeLaunchedProject(projectId)
@@ -271,7 +279,9 @@ export function useRemoveLaunchedProject() {
 /** A function to remove all launched projects. */
 export function useClearLaunchedProjects() {
   const store = useProjectsStore()
-  const clearLaunchedProjects = zustand.useStore(store, (state) => state.clearLaunchedProjects)
+  const clearLaunchedProjects = zustand.useStore(store, (state) => state.clearLaunchedProjects, {
+    unsafeEnableTransition: true,
+  })
   return eventCallbacks.useEventCallback(() => {
     React.startTransition(() => {
       clearLaunchedProjects()
@@ -286,7 +296,9 @@ export function useClearLaunchedProjects() {
 /** A function to get the current page. */
 export function usePage() {
   const store = useProjectsStore()
-  return zustand.useStore(store, (state) => state.page)
+  return zustand.useStore(store, (state) => state.page, {
+    unsafeEnableTransition: true,
+  })
 }
 // ==================
 // === useSetPage ===
@@ -295,7 +307,9 @@ export function usePage() {
 /** A function to set the current page. */
 export function useSetPage() {
   const store = useProjectsStore()
-  const setPage = zustand.useStore(store, (state) => state.setPage)
+  const setPage = zustand.useStore(store, (state) => state.setPage, {
+    unsafeEnableTransition: true,
+  })
   return eventCallbacks.useEventCallback((page: LaunchedProjectId | TabType) => {
     React.startTransition(() => {
       setPage(page)
