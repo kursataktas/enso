@@ -4,6 +4,8 @@
  * Tabs for the asset panel. Contains the visual state for the tabs and animations.
  */
 import { AnimatedBackground } from '#/components/AnimatedBackground'
+import type { TabListProps, TabPanelProps, TabProps } from '#/components/aria'
+import { Tab, TabList, TabPanel, Tabs, type TabsProps } from '#/components/aria'
 import { useVisualTooltip } from '#/components/AriaComponents'
 import { ErrorBoundary } from '#/components/ErrorBoundary'
 import { Suspense } from '#/components/Suspense'
@@ -11,32 +13,20 @@ import SvgMask from '#/components/SvgMask'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRef } from 'react'
-import type { TabListProps, TabPanelProps, TabProps } from 'react-aria-components'
-import { Tab, TabList, TabPanel, Tabs, type TabsProps } from 'react-aria-components'
-
-/**
- * Props for a {@link AssetPanelTabs}.
- */
-export interface AssetPanelTabsProps extends TabsProps {}
 
 /**
  * Display a set of tabs.
  */
-export function AssetPanelTabs(props: AssetPanelTabsProps) {
+export function AssetPanelTabs(props: TabsProps) {
   const { children } = props
 
   return <Tabs {...props}>{children}</Tabs>
 }
 
 /**
- * Props for a {@link AssetPanelTabList}.
- */
-export interface AssetPanelTabListProps<T extends object> extends TabListProps<T> {}
-
-/**
  * Display a list of tabs.
  */
-export function AssetPanelTabList<T extends object>(props: AssetPanelTabListProps<T>) {
+export function AssetPanelTabList<T extends object>(props: TabListProps<T>) {
   return (
     <AnimatedBackground>
       <TabList {...props} />
@@ -91,7 +81,6 @@ export function AssetPanelTab(props: AssetPanelTabProps) {
               animate={{ x: 0 }}
               // eslint-disable-next-line @typescript-eslint/no-magic-numbers
               exit={{ x: 100 }}
-              // eslint-disable-next-line @typescript-eslint/no-magic-numbers
               transition={DEFAULT_TRANSITION_OPTIONS}
             >
               <div
@@ -111,11 +100,6 @@ export function AssetPanelTab(props: AssetPanelTabProps) {
   )
 }
 
-/**
- * Props for a {@link AssetPanelTabPanel}.
- */
-export interface AssetPanelTabPanelProps extends TabPanelProps {}
-
 const DEFAULT_TRANSITION_OPTIONS: Spring = {
   type: 'spring',
   // eslint-disable-next-line @typescript-eslint/no-magic-numbers
@@ -129,34 +113,36 @@ const DEFAULT_TRANSITION_OPTIONS: Spring = {
 /**
  * Display a tab panel.
  */
-export function AssetPanelTabPanel(props: AssetPanelTabPanelProps) {
+export function AssetPanelTabPanel(props: TabPanelProps) {
   const { children, id = '' } = props
 
   return (
     <TabPanel className="contents" shouldForceMount {...props}>
-      {(renderProps) => (
-        <AnimatePresence mode="popLayout">
-          {renderProps.state.selectionManager.isSelected(id) && (
-            <motion.div
-              // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-              initial={{ x: 16, filter: 'blur(4px)', opacity: 0 }}
-              animate={{ x: 0, filter: 'blur(0px)', opacity: 1 }}
-              // eslint-disable-next-line @typescript-eslint/no-magic-numbers
-              exit={{ x: 16, filter: 'blur(4px)', opacity: 0 }}
-              transition={DEFAULT_TRANSITION_OPTIONS}
-              className="flex h-full w-full flex-col overflow-y-auto scroll-offset-edge-3xl"
-            >
-              <Suspense loaderProps={{ className: 'my-auto' }}>
-                <ErrorBoundary>
-                  <div className="pointer-events-auto flex h-fit min-h-full w-full shrink-0 flex-col px-4 py-5">
-                    {typeof children === 'function' ? children(renderProps) : children}
-                  </div>
-                </ErrorBoundary>
-              </Suspense>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      )}
+      {(renderProps) => {
+        return (
+          <AnimatePresence mode="popLayout">
+            {renderProps.state.selectionManager.isSelected(id) && (
+              <motion.div
+                // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+                initial={{ x: 16, filter: 'blur(4px)', opacity: 0 }}
+                animate={{ x: 0, filter: 'blur(0px)', opacity: 1 }}
+                // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+                exit={{ x: 16, filter: 'blur(4px)', opacity: 0 }}
+                transition={DEFAULT_TRANSITION_OPTIONS}
+                className="flex h-full w-full flex-col overflow-y-auto scroll-offset-edge-3xl"
+              >
+                <Suspense loaderProps={{ className: 'my-auto' }}>
+                  <ErrorBoundary resetKeys={[renderProps.state.selectedItem]}>
+                    <div className="pointer-events-auto flex h-fit min-h-full w-full shrink-0 flex-col px-4 py-5">
+                      {typeof children === 'function' ? children(renderProps) : children}
+                    </div>
+                  </ErrorBoundary>
+                </Suspense>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        )
+      }}
     </TabPanel>
   )
 }
