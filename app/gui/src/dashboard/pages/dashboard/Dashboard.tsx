@@ -66,19 +66,6 @@ import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import { usePrefetchQuery } from '@tanstack/react-query'
 
-// ============================
-// === Global configuration ===
-// ============================
-
-declare module '#/utilities/LocalStorage' {
-  /** */
-  interface LocalStorageData {
-    readonly isAssetPanelVisible: boolean
-  }
-}
-
-LocalStorage.registerKey('isAssetPanelVisible', { schema: z.boolean() })
-
 // =================
 // === Dashboard ===
 // =================

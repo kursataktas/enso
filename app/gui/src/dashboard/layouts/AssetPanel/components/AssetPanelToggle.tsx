@@ -5,12 +5,10 @@
 import RightPanelIcon from '#/assets/right_panel.svg'
 import { Button } from '#/components/AriaComponents'
 
-import { Provider, TabsContext } from '#/components/aria'
 import { useIsAssetPanelHidden, useSetIsAssetPanelHidden } from '#/providers/DriveProvider'
 import { useText } from '#/providers/TextProvider'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useId } from 'react'
 
 /**
  * Props for a {@link AssetPanelToggle}.
@@ -30,31 +28,38 @@ const DEFAULT_TRANSITION_OPTIONS: Spring = {
   velocity: 0,
 }
 
+const COLLAPSED_X_TRANSLATION = 16
+const EXPANDED_X_TRANSLATION = -16
+
 /**
  * Toggle for opening the asset panel.
  */
 export function AssetPanelToggle(props: AssetPanelToggleProps) {
   const { className, showWhen = 'collapsed' } = props
 
+  const { getText } = useText()
   const isAssetPanelHidden = useIsAssetPanelHidden()
   const setIsAssetPanelHidden = useSetIsAssetPanelHidden()
 
-  const shouldShow = showWhen === 'collapsed' ? isAssetPanelHidden : !isAssetPanelHidden
-
-  const id = useId()
-
-  const { getText } = useText()
+  const canDisplay = showWhen === 'collapsed' ? isAssetPanelHidden : !isAssetPanelHidden
 
   return (
-    <AnimatePresence mode="sync">
-      {shouldShow && (
+    <AnimatePresence initial={!canDisplay} mode="sync">
+      {canDisplay && (
         <motion.div
           className={className}
-          layout
-          layoutId={`asset-panel-toggle-${id}`}
-          initial={{ opacity: 0, filter: 'blur(8px)', x: showWhen === 'collapsed' ? 16 : -16 }}
+          layout="position"
+          initial={{
+            opacity: 0,
+            filter: 'blur(4px)',
+            x: showWhen === 'collapsed' ? COLLAPSED_X_TRANSLATION : EXPANDED_X_TRANSLATION,
+          }}
           animate={{ opacity: 1, filter: 'blur(0px)', x: 0 }}
-          exit={{ opacity: 0, filter: 'blur(4px)', x: showWhen === 'collapsed' ? 16 : -16 }}
+          exit={{
+            opacity: 0,
+            filter: 'blur(4px)',
+            x: showWhen === 'collapsed' ? COLLAPSED_X_TRANSLATION : EXPANDED_X_TRANSLATION,
+          }}
           transition={DEFAULT_TRANSITION_OPTIONS}
         >
           <Button

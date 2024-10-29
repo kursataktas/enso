@@ -102,7 +102,7 @@ AnimatedBackground.Item = function AnimatedBackgroundItem(props: AnimatedBackgro
 
   return (
     <div className={twJoin('relative *:isolate', className)}>
-      <AnimatePresence initial={false}>
+      <AnimatePresence initial={!isActive}>
         {isActive && (
           <motion.div
             layout="position"

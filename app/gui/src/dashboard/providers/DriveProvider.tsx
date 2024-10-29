@@ -50,7 +50,6 @@ interface DriveStore {
   readonly visuallySelectedKeys: ReadonlySet<AssetId> | null
   readonly setVisuallySelectedKeys: (visuallySelectedKeys: ReadonlySet<AssetId> | null) => void
   readonly isAssetPanelPermanentlyVisible: boolean
-  readonly isAssetPanelExpanded: boolean
   readonly setIsAssetPanelExpanded: (isAssetPanelExpanded: boolean) => void
   readonly setIsAssetPanelPermanentlyVisible: (isAssetPanelTemporarilyVisible: boolean) => void
   readonly toggleIsAssetPanelPermanentlyVisible: () => void
@@ -151,10 +150,10 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       },
       isAssetPanelPermanentlyVisible: localStorage.get('isAssetPanelVisible') ?? false,
       toggleIsAssetPanelPermanentlyVisible: () => {
-        const next = !get().isAssetPanelPermanentlyVisible
+        const state = get()
+        const next = !state.isAssetPanelPermanentlyVisible
 
-        set({ isAssetPanelPermanentlyVisible: next })
-        localStorage.set('isAssetPanelVisible', next)
+        state.setIsAssetPanelPermanentlyVisible(next)
       },
       setIsAssetPanelPermanentlyVisible: (isAssetPanelPermanentlyVisible) => {
         if (get().isAssetPanelPermanentlyVisible !== isAssetPanelPermanentlyVisible) {
@@ -162,14 +161,16 @@ export default function DriveProvider(props: ProjectsProviderProps) {
           localStorage.set('isAssetPanelVisible', isAssetPanelPermanentlyVisible)
         }
       },
-      isAssetPanelExpanded: false,
       setIsAssetPanelExpanded: (isAssetPanelExpanded) => {
-        if (get().isAssetPanelExpanded !== isAssetPanelExpanded) {
-          set({
-            isAssetPanelExpanded,
-            isAssetPanelPermanentlyVisible: isAssetPanelExpanded,
-            isAssetPanelTemporarilyVisible: false,
-          })
+        const state = get()
+
+        if (state.isAssetPanelPermanentlyVisible !== isAssetPanelExpanded) {
+          state.setIsAssetPanelPermanentlyVisible(isAssetPanelExpanded)
+          state.setIsAssetPanelTemporarilyVisible(false)
+        }
+
+        if (state.isAssetPanelHidden && isAssetPanelExpanded) {
+          state.setIsAssetPanelHidden(false)
         }
       },
       isAssetPanelTemporarilyVisible: false,
@@ -177,7 +178,7 @@ export default function DriveProvider(props: ProjectsProviderProps) {
         const state = get()
 
         if (state.isAssetPanelHidden && isAssetPanelTemporarilyVisible) {
-          set({ isAssetPanelHidden: false })
+          state.setIsAssetPanelHidden(false)
         }
 
         if (state.isAssetPanelTemporarilyVisible !== isAssetPanelTemporarilyVisible) {
@@ -185,7 +186,7 @@ export default function DriveProvider(props: ProjectsProviderProps) {
         }
       },
       assetPanelProps: {
-        selectedTab: 'settings',
+        selectedTab: localStorage.get('assetPanelTab') ?? 'settings',
         backend: null,
         item: null,
         spotlightOn: null,
@@ -200,10 +201,13 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       setSuggestions: (suggestions) => {
         set({ suggestions })
       },
-      isAssetPanelHidden: false,
+      isAssetPanelHidden: localStorage.get('isAssetPanelHidden') ?? false,
       setIsAssetPanelHidden: (isAssetPanelHidden) => {
-        if (get().isAssetPanelHidden !== isAssetPanelHidden) {
+        const state = get()
+
+        if (state.isAssetPanelHidden !== isAssetPanelHidden) {
           set({ isAssetPanelHidden })
+          localStorage.set('isAssetPanelHidden', isAssetPanelHidden)
         }
       },
     })),
@@ -387,6 +391,7 @@ export function useAssetPanelProps() {
 
   return zustand.useStore(store, (state) => state.assetPanelProps, {
     unsafeEnableTransition: true,
+    areEqual: 'shallow',
   })
 }
 

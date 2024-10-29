@@ -119,9 +119,11 @@ export function AssetPanelTabPanel(props: TabPanelProps) {
   return (
     <TabPanel className="contents" shouldForceMount {...props}>
       {(renderProps) => {
+        const isSelected = renderProps.state.selectionManager.isSelected(id)
+
         return (
-          <AnimatePresence mode="popLayout">
-            {renderProps.state.selectionManager.isSelected(id) && (
+          <AnimatePresence initial={!isSelected} mode="popLayout">
+            {isSelected && (
               <motion.div
                 // eslint-disable-next-line @typescript-eslint/no-magic-numbers
                 initial={{ x: 16, filter: 'blur(4px)', opacity: 0 }}

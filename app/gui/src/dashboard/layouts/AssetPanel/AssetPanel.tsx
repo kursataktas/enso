@@ -12,6 +12,7 @@ import versionsIcon from '#/assets/versions.svg'
 import { useBackend } from '#/providers/BackendProvider'
 import {
   useAssetPanelProps,
+  useAssetPanelSelectedTab,
   useIsAssetPanelExpanded,
   useIsAssetPanelHidden,
   useSetAssetPanelSelectedTab,
@@ -45,13 +46,11 @@ const ASSET_PANEL_TABS = ['settings', 'versions', 'sessions', 'schedules', 'docs
 /** Determines the content of the {@link AssetPanel}. */
 type AssetPanelTab = (typeof ASSET_PANEL_TABS)[number]
 
-// ============================
-// === Global configuration ===
-// ============================
-
 declare module '#/utilities/LocalStorage' {
   /** */
   interface LocalStorageData {
+    readonly isAssetPanelVisible: boolean
+    readonly isAssetPanelHidden: boolean
     readonly assetPanelTab: AssetPanelTab
     readonly assetPanelWidth: number
   }
@@ -62,6 +61,8 @@ const ASSET_PANEL_TAB_SCHEMA = z.enum(ASSET_PANEL_TABS)
 LocalStorage.register({
   assetPanelTab: { schema: ASSET_PANEL_TAB_SCHEMA },
   assetPanelWidth: { schema: z.number().int() },
+  isAssetPanelHidden: { schema: z.boolean() },
+  isAssetPanelVisible: { schema: z.boolean() },
 })
 
 /** Props supplied by the row. */
@@ -102,7 +103,7 @@ export function AssetPanel(props: AssetPanelProps) {
   const isVisible = !isHidden
 
   return (
-    <AnimatePresence initial={isVisible} mode="sync">
+    <AnimatePresence initial={!isVisible} mode="sync">
       {isVisible && (
         <motion.div
           initial="initial"
@@ -115,7 +116,7 @@ export function AssetPanel(props: AssetPanelProps) {
             exit: { opacity: 0, width: 0 },
           }}
           transition={DEFAULT_TRANSITION_OPTIONS}
-          className="relative flex flex-col shadow-softer clip-path-left-shadow"
+          className="relative flex h-full flex-col shadow-softer clip-path-left-shadow"
           onClick={(event) => {
             // Prevent deselecting Assets Table rows.
             event.stopPropagation()
@@ -134,7 +135,9 @@ export function AssetPanel(props: AssetPanelProps) {
 function InternalAssetPanelTabs(props: AssetPanelProps) {
   const { category } = props
 
-  const { item, spotlightOn, selectedTab } = useAssetPanelProps()
+  const { item, spotlightOn } = useAssetPanelProps()
+
+  const selectedTab = useAssetPanelSelectedTab()
   const setSelectedTab = useSetAssetPanelSelectedTab()
   const isHidden = useIsAssetPanelHidden()
 
@@ -170,7 +173,7 @@ function InternalAssetPanelTabs(props: AssetPanelProps) {
         })
       }}
     >
-      <AnimatePresence mode="sync">
+      <AnimatePresence initial={!isExpanded} mode="sync">
         {isExpanded && (
           <div
             className="min-h-full"
