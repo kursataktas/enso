@@ -5,9 +5,11 @@
 import RightPanelIcon from '#/assets/right_panel.svg'
 import { Button } from '#/components/AriaComponents'
 
+import { Provider, TabsContext } from '#/components/aria'
 import { useIsAssetPanelHidden, useSetIsAssetPanelHidden } from '#/providers/DriveProvider'
 import { useText } from '#/providers/TextProvider'
-import { AnimatePresence, motion, Spring } from 'framer-motion'
+import type { Spring } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useId } from 'react'
 
 /**

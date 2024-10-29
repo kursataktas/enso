@@ -390,6 +390,16 @@ export function useAssetPanelProps() {
   })
 }
 
+/**
+ * The selected tab of the Asset Panel.
+ */
+export function useAssetPanelSelectedTab() {
+  const store = useDriveStore()
+  return zustand.useStore(store, (state) => state.assetPanelProps.selectedTab, {
+    unsafeEnableTransition: true,
+  })
+}
+
 /** A function to set props for the Asset Panel. */
 export function useSetAssetPanelProps() {
   const store = useDriveStore()

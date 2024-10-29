@@ -95,20 +95,8 @@ const DEFAULT_TRANSITION_OPTIONS: Spring = {
  * It is used to view and interact with assets in the drive.
  */
 export function AssetPanel(props: AssetPanelProps) {
-  const { category } = props
-
-  const { item, spotlightOn, selectedTab } = useAssetPanelProps()
-  const setSelectedTab = useSetAssetPanelSelectedTab()
-
-  const isReadonly = category.type === 'trash'
-
-  const { getText } = useText()
-
   const isHidden = useIsAssetPanelHidden()
   const isExpanded = useIsAssetPanelExpanded()
-  const setIsExpanded = useSetIsAssetPanelExpanded()
-
-  const backend = useBackend(category)
 
   const panelWidth = isExpanded ? ASSET_PANEL_TOTAL_WIDTH : ASSET_SIDEBAR_COLLAPSED_WIDTH
   const isVisible = !isHidden
@@ -133,113 +121,145 @@ export function AssetPanel(props: AssetPanelProps) {
             event.stopPropagation()
           }}
         >
-          <AssetPanelTabs
-            className="h-full"
-            orientation="vertical"
-            defaultSelectedKey={selectedTab}
-            onSelectionChange={(key) => {
-              startTransition(() => {
-                if (key === selectedTab && isExpanded) {
-                  setIsExpanded(false)
-                } else {
-                  setSelectedTab(ASSET_PANEL_TAB_SCHEMA.parse(key))
-                  setIsExpanded(true)
-                }
-              })
-            }}
-          >
-            <AnimatePresence mode="sync">
-              {isExpanded && (
-                <div
-                  className="min-h-full"
-                  // We use clipPath to prevent the sidebar from being visible under tabs while expanding.
-                  style={{ clipPath: `inset(0 ${ASSET_SIDEBAR_COLLAPSED_WIDTH}px 0 0)` }}
-                >
-                  <motion.div
-                    initial={{ filter: 'blur(8px)' }}
-                    animate={{ filter: 'blur(0px)' }}
-                    exit={{ filter: 'blur(8px)' }}
-                    transition={DEFAULT_TRANSITION_OPTIONS}
-                    className="absolute left-0 top-0 h-full w-full bg-background"
-                    style={{ width: ASSET_PANEL_WIDTH }}
-                  >
-                    <AssetPanelTabs.TabPanel id="settings">
-                      <AssetProperties
-                        backend={backend}
-                        item={item}
-                        isReadonly={isReadonly}
-                        category={category}
-                        spotlightOn={spotlightOn}
-                      />
-                    </AssetPanelTabs.TabPanel>
-
-                    <AssetPanelTabs.TabPanel id="versions">
-                      <AssetVersions backend={backend} item={item} />
-                    </AssetPanelTabs.TabPanel>
-
-                    <AssetPanelTabs.TabPanel id="sessions">
-                      <AssetProjectSessions backend={backend} item={item} />
-                    </AssetPanelTabs.TabPanel>
-
-                    <AssetPanelTabs.TabPanel id="docs">
-                      <AssetDocs backend={backend} item={item} />
-                    </AssetPanelTabs.TabPanel>
-                  </motion.div>
-                </div>
-              )}
-            </AnimatePresence>
-
-            <div
-              className="absolute bottom-0 right-0 top-0 pt-2.5"
-              style={{ width: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
-            >
-              <AssetPanelToggle
-                showWhen="expanded"
-                className="flex aspect-square w-full items-center justify-center"
-              />
-
-              <AssetPanelTabs.TabList>
-                <AssetPanelTabs.Tab
-                  id="settings"
-                  icon={inspectIcon}
-                  label={getText('properties')}
-                  isExpanded={isExpanded}
-                  onPress={() => {
-                    setIsExpanded(true)
-                  }}
-                />
-                <AssetPanelTabs.Tab
-                  id="versions"
-                  icon={versionsIcon}
-                  label={getText('versions')}
-                  isExpanded={isExpanded}
-                  onPress={() => {
-                    setIsExpanded(true)
-                  }}
-                />
-                <AssetPanelTabs.Tab
-                  id="sessions"
-                  icon={sessionsIcon}
-                  label={getText('projectSessions')}
-                  isExpanded={isExpanded}
-                  onPress={() => {
-                    setIsExpanded(true)
-                  }}
-                />
-                <AssetPanelTabs.Tab
-                  id="docs"
-                  icon={docsIcon}
-                  label={getText('docs')}
-                  isExpanded={isExpanded}
-                  onPress={() => {
-                    setIsExpanded(true)
-                  }}
-                />
-              </AssetPanelTabs.TabList>
-            </div>
-          </AssetPanelTabs>
+          <InternalAssetPanelTabs {...props} />
         </motion.div>
       )}
     </AnimatePresence>
+  )
+}
+
+/**
+ * The internal implementation of the Asset Panel Tabs.
+ */
+function InternalAssetPanelTabs(props: AssetPanelProps) {
+  const { category } = props
+
+  const { item, spotlightOn, selectedTab } = useAssetPanelProps()
+  const setSelectedTab = useSetAssetPanelSelectedTab()
+  const isHidden = useIsAssetPanelHidden()
+
+  const isReadonly = category.type === 'trash'
+
+  const { getText } = useText()
+
+  const isExpanded = useIsAssetPanelExpanded()
+  const setIsExpanded = useSetIsAssetPanelExpanded()
+
+  const backend = useBackend(category)
+
+  return (
+    <AssetPanelTabs
+      className="h-full"
+      orientation="vertical"
+      selectedKey={selectedTab}
+      defaultSelectedKey={selectedTab}
+      onSelectionChange={(key) => {
+        if (isHidden) {
+          return
+        }
+
+        startTransition(() => {
+          if (key === selectedTab && isExpanded) {
+            setIsExpanded(false)
+          } else {
+            // This is safe because we know the key is a valid AssetPanelTab.
+            // eslint-disable-next-line no-restricted-syntax
+            setSelectedTab(key as AssetPanelTab)
+            setIsExpanded(true)
+          }
+        })
+      }}
+    >
+      <AnimatePresence mode="sync">
+        {isExpanded && (
+          <div
+            className="min-h-full"
+            // We use clipPath to prevent the sidebar from being visible under tabs while expanding.
+            style={{ clipPath: `inset(0 ${ASSET_SIDEBAR_COLLAPSED_WIDTH}px 0 0)` }}
+          >
+            <motion.div
+              initial={{ filter: 'blur(8px)' }}
+              animate={{ filter: 'blur(0px)' }}
+              exit={{ filter: 'blur(8px)' }}
+              transition={DEFAULT_TRANSITION_OPTIONS}
+              className="absolute left-0 top-0 h-full w-full bg-background"
+              style={{ width: ASSET_PANEL_WIDTH }}
+            >
+              <AssetPanelTabs.TabPanel id="settings">
+                <AssetProperties
+                  backend={backend}
+                  item={item}
+                  isReadonly={isReadonly}
+                  category={category}
+                  spotlightOn={spotlightOn}
+                />
+              </AssetPanelTabs.TabPanel>
+
+              <AssetPanelTabs.TabPanel id="versions">
+                <AssetVersions backend={backend} item={item} />
+              </AssetPanelTabs.TabPanel>
+
+              <AssetPanelTabs.TabPanel id="sessions">
+                <AssetProjectSessions backend={backend} item={item} />
+              </AssetPanelTabs.TabPanel>
+
+              <AssetPanelTabs.TabPanel id="docs">
+                <AssetDocs backend={backend} item={item} />
+              </AssetPanelTabs.TabPanel>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <div
+        className="absolute bottom-0 right-0 top-0 pt-2.5"
+        style={{ width: ASSET_SIDEBAR_COLLAPSED_WIDTH }}
+      >
+        <AssetPanelToggle
+          showWhen="expanded"
+          className="flex aspect-square w-full items-center justify-center"
+        />
+
+        <AssetPanelTabs.TabList>
+          <AssetPanelTabs.Tab
+            id="settings"
+            icon={inspectIcon}
+            label={getText('properties')}
+            isExpanded={isExpanded}
+            onPress={() => {
+              setIsExpanded(true)
+            }}
+          />
+          <AssetPanelTabs.Tab
+            id="versions"
+            icon={versionsIcon}
+            label={getText('versions')}
+            isExpanded={isExpanded}
+            isDisabled={isHidden}
+            onPress={() => {
+              setIsExpanded(true)
+            }}
+          />
+          <AssetPanelTabs.Tab
+            id="sessions"
+            icon={sessionsIcon}
+            label={getText('projectSessions')}
+            isExpanded={isExpanded}
+            onPress={() => {
+              setIsExpanded(true)
+            }}
+          />
+          <AssetPanelTabs.Tab
+            id="docs"
+            icon={docsIcon}
+            label={getText('docs')}
+            isExpanded={isExpanded}
+            onPress={() => {
+              setIsExpanded(true)
+            }}
+          />
+        </AssetPanelTabs.TabList>
+      </div>
+    </AssetPanelTabs>
   )
 }
