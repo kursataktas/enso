@@ -142,14 +142,11 @@ public abstract class BuildScopeFromModuleAlgorithm<
             "Failed to resolve type pointer for method: " + method.methodReference().showCode());
       }
 
-      boolean isStatic = method.isStatic();
       return switch (metadata.target()) {
         case BindingsMap.ResolvedType resolvedType -> associatedTypeFromResolvedType(
-            resolvedType, isStatic);
-        case BindingsMap.ResolvedModule resolvedModule -> {
-          assert !isStatic;
-          yield associatedTypeFromResolvedModule(resolvedModule);
-        }
+            resolvedType, method.isStatic());
+        case BindingsMap.ResolvedModule resolvedModule -> associatedTypeFromResolvedModule(
+            resolvedModule);
         default -> throw new IllegalStateException(
             "Unexpected target type: " + metadata.target().getClass().getCanonicalName());
       };
