@@ -17,7 +17,6 @@ import {
   useSetAssetPanelSelectedTab,
   useSetIsAssetPanelExpanded,
 } from '#/providers/DriveProvider'
-import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import LocalStorage from '#/utilities/LocalStorage'
