@@ -21,7 +21,7 @@ export interface VisualTooltipProps
   readonly isDisabled?: boolean
   readonly overlayPositionProps?: Pick<
     aria.AriaPositionProps,
-    'containerPadding' | 'offset' | 'placement'
+    'containerPadding' | 'crossOffset' | 'offset' | 'placement'
   >
   /**
    * Determines when the tooltip should be displayed.
@@ -70,6 +70,7 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
   const {
     containerPadding = 0,
     offset = DEFAULT_OFFSET,
+    crossOffset = 0,
     placement = 'bottom',
   } = overlayPositionProps
 
@@ -116,6 +117,7 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
     overlayRef: popoverRef,
     targetRef,
     offset,
+    crossOffset,
     placement,
     containerPadding,
   })
