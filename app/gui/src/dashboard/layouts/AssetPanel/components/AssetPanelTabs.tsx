@@ -12,7 +12,7 @@ import { Suspense } from '#/components/Suspense'
 import SvgMask from '#/components/SvgMask'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
-import { useRef } from 'react'
+import { memo, useRef } from 'react'
 
 /**
  * Display a set of tabs.
@@ -45,10 +45,18 @@ export interface AssetPanelTabProps extends TabProps {
   readonly onPress?: () => void
 }
 
+const UNDERLAY_ELEMENT = (
+  <>
+    <div className="h-full w-full rounded-r-2xl bg-background" />
+    <div className="absolute -top-3 left-0 aspect-square w-3 [background:radial-gradient(circle_at_100%_0%,_transparent_70%,_var(--color-background)_70%)]" />
+    <div className="absolute -bottom-3 left-0 aspect-square w-3 [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-background)_70%)]" />
+  </>
+)
+
 /**
  * Display a tab.
  */
-export function AssetPanelTab(props: AssetPanelTabProps) {
+export const AssetPanelTab = memo(function AssetPanelTab(props: AssetPanelTabProps) {
   const { id, icon, label, isExpanded } = props
 
   const tabRef = useRef<HTMLDivElement>(null)
@@ -66,13 +74,7 @@ export function AssetPanelTab(props: AssetPanelTabProps) {
           <AnimatedBackground.Item
             isSelected={isSelected && isExpanded}
             className="h-full w-full rounded-2xl"
-            underlayElement={
-              <>
-                <div className="h-full w-full rounded-r-2xl bg-background" />
-                <div className="absolute -top-3 left-0 aspect-square w-3 [background:radial-gradient(circle_at_100%_0%,_transparent_70%,_var(--color-background)_70%)]" />
-                <div className="absolute -bottom-3 left-0 aspect-square w-3 [background:radial-gradient(circle_at_100%_100%,_transparent_70%,_var(--color-background)_70%)]" />
-              </>
-            }
+            underlayElement={UNDERLAY_ELEMENT}
           >
             <motion.div
               className="h-full w-full"
@@ -98,7 +100,7 @@ export function AssetPanelTab(props: AssetPanelTabProps) {
       )}
     </Tab>
   )
-}
+})
 
 const DEFAULT_TRANSITION_OPTIONS: Spring = {
   type: 'spring',

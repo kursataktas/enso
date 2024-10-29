@@ -9,6 +9,7 @@ import { useIsAssetPanelHidden, useSetIsAssetPanelHidden } from '#/providers/Dri
 import { useText } from '#/providers/TextProvider'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
+import { memo } from 'react'
 
 /**
  * Props for a {@link AssetPanelToggle}.
@@ -34,7 +35,7 @@ const EXPANDED_X_TRANSLATION = -16
 /**
  * Toggle for opening the asset panel.
  */
-export function AssetPanelToggle(props: AssetPanelToggleProps) {
+export const AssetPanelToggle = memo(function AssetPanelToggle(props: AssetPanelToggleProps) {
   const { className, showWhen = 'collapsed' } = props
 
   const { getText } = useText()
@@ -76,4 +77,4 @@ export function AssetPanelToggle(props: AssetPanelToggleProps) {
       )}
     </AnimatePresence>
   )
-}
+})

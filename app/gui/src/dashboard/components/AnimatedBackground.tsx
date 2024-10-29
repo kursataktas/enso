@@ -6,7 +6,7 @@
 import type { Transition } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { PropsWithChildren } from 'react'
-import { createContext, useContext, useId } from 'react'
+import { createContext, memo, useContext, useId, useMemo } from 'react'
 
 import { twJoin } from '#/utilities/tailwindMerge'
 import invariant from 'tiny-invariant'
@@ -42,10 +42,16 @@ const DEFAULT_TRANSITION: Transition = {
 /** `<AnimatedBackground />` component visually highlights selected items by sliding a background into view when hovered over or clicked. */
 export function AnimatedBackground(props: AnimatedBackgroundProps) {
   const { value, transition = DEFAULT_TRANSITION, children } = props
+
   const layoutId = useId()
 
+  const contextValue = useMemo(
+    () => ({ value, transition, layoutId }),
+    [value, transition, layoutId],
+  )
+
   return (
-    <AnimatedBackgroundContext.Provider value={{ value, transition, layoutId }}>
+    <AnimatedBackgroundContext.Provider value={contextValue}>
       {children}
     </AnimatedBackgroundContext.Provider>
   )
@@ -79,7 +85,7 @@ interface AnimatedBackgroundItemPropsWithSelected {
 }
 
 /** Item within an {@link AnimatedBackground}. */
-AnimatedBackground.Item = function AnimatedBackgroundItem(props: AnimatedBackgroundItemProps) {
+AnimatedBackground.Item = memo(function AnimatedBackgroundItem(props: AnimatedBackgroundItemProps) {
   const {
     value,
     className,
@@ -121,4 +127,4 @@ AnimatedBackground.Item = function AnimatedBackgroundItem(props: AnimatedBackgro
       {children}
     </div>
   )
-}
+})

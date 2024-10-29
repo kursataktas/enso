@@ -9,6 +9,7 @@ import sessionsIcon from '#/assets/group.svg'
 import inspectIcon from '#/assets/inspect.svg'
 import versionsIcon from '#/assets/versions.svg'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useBackend } from '#/providers/BackendProvider'
 import {
   useAssetPanelProps,
@@ -25,7 +26,7 @@ import type Backend from 'enso-common/src/services/Backend'
 import type { BackendType } from 'enso-common/src/services/Backend'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
-import { startTransition } from 'react'
+import { memo, startTransition } from 'react'
 import { z } from 'zod'
 import { AssetDocs } from '../AssetDocs'
 import AssetProjectSessions from '../AssetProjectSessions'
@@ -132,7 +133,7 @@ export function AssetPanel(props: AssetPanelProps) {
 /**
  * The internal implementation of the Asset Panel Tabs.
  */
-function InternalAssetPanelTabs(props: AssetPanelProps) {
+const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: AssetPanelProps) {
   const { category } = props
 
   const { item, spotlightOn } = useAssetPanelProps()
@@ -147,6 +148,10 @@ function InternalAssetPanelTabs(props: AssetPanelProps) {
 
   const isExpanded = useIsAssetPanelExpanded()
   const setIsExpanded = useSetIsAssetPanelExpanded()
+
+  const expandTab = useEventCallback(() => {
+    setIsExpanded(true)
+  })
 
   const backend = useBackend(category)
 
@@ -229,9 +234,7 @@ function InternalAssetPanelTabs(props: AssetPanelProps) {
             icon={inspectIcon}
             label={getText('properties')}
             isExpanded={isExpanded}
-            onPress={() => {
-              setIsExpanded(true)
-            }}
+            onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="versions"
@@ -239,30 +242,24 @@ function InternalAssetPanelTabs(props: AssetPanelProps) {
             label={getText('versions')}
             isExpanded={isExpanded}
             isDisabled={isHidden}
-            onPress={() => {
-              setIsExpanded(true)
-            }}
+            onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="sessions"
             icon={sessionsIcon}
             label={getText('projectSessions')}
             isExpanded={isExpanded}
-            onPress={() => {
-              setIsExpanded(true)
-            }}
+            onPress={expandTab}
           />
           <AssetPanelTabs.Tab
             id="docs"
             icon={docsIcon}
             label={getText('docs')}
             isExpanded={isExpanded}
-            onPress={() => {
-              setIsExpanded(true)
-            }}
+            onPress={expandTab}
           />
         </AssetPanelTabs.TabList>
       </div>
     </AssetPanelTabs>
   )
-}
+})
