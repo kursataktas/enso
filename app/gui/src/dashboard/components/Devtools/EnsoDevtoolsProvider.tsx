@@ -3,8 +3,8 @@
  * This file provides a zustand store that contains the state of the Enso devtools.
  */
 import type { PaywallFeatureName } from '#/hooks/billing'
+import * as React from 'react'
 import { createStore, useStore } from 'zustand'
-import { useShallow } from 'zustand/shallow'
 
 /** Configuration for a paywall feature. */
 export interface PaywallDevtoolsFeatureConfiguration {
@@ -17,13 +17,23 @@ export interface PaywallDevtoolsFeatureConfiguration {
 
 /** The state of this zustand store. */
 interface EnsoDevtoolsStore {
+  readonly showDevtools: boolean
+  readonly setShowDevtools: (showDevtools: boolean) => void
+  readonly toggleDevtools: () => void
   readonly showVersionChecker: boolean | null
   readonly paywallFeatures: Record<PaywallFeatureName, PaywallDevtoolsFeatureConfiguration>
   readonly setPaywallFeature: (feature: PaywallFeatureName, isForceEnabled: boolean | null) => void
   readonly setEnableVersionChecker: (showVersionChecker: boolean | null) => void
 }
 
-const ensoDevtoolsStore = createStore<EnsoDevtoolsStore>((set) => ({
+export const ensoDevtoolsStore = createStore<EnsoDevtoolsStore>((set) => ({
+  showDevtools: import.meta.env.DEV,
+  setShowDevtools: (showDevtools) => {
+    set({ showDevtools })
+  },
+  toggleDevtools: () => {
+    set(({ showDevtools }) => ({ showDevtools: !showDevtools }))
+  },
   showVersionChecker: false,
   paywallFeatures: {
     share: { isForceEnabled: null },
@@ -70,4 +80,24 @@ export function usePaywallDevtools() {
       setFeature: state.setPaywallFeature,
     })),
   )
+}
+
+/** A hook that provides access to the show devtools state. */
+export function useShowDevtools() {
+  return useStore(ensoDevtoolsStore, (state) => state.showDevtools)
+}
+
+// =================================
+// === DevtoolsProvider ===
+// =================================
+
+/**
+ * Provide the Enso devtools to the app.
+ */
+export function DevtoolsProvider(props: { children: React.ReactNode }) {
+  React.useEffect(() => {
+    window.toggleDevtools = ensoDevtoolsStore.getState().toggleDevtools
+  }, [])
+
+  return <>{props.children}</>
 }
