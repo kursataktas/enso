@@ -18,6 +18,7 @@ export interface VisualTooltipProps
   readonly children: React.ReactNode
   readonly className?: string
   readonly targetRef: React.RefObject<HTMLElement>
+  readonly triggerRef?: React.RefObject<HTMLElement> | undefined
   readonly isDisabled?: boolean
   readonly overlayPositionProps?: Pick<
     aria.AriaPositionProps,
@@ -56,6 +57,7 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
   const {
     children,
     targetRef,
+    triggerRef = targetRef,
     className,
     isDisabled = false,
     overlayPositionProps = {},
@@ -115,7 +117,7 @@ export function useVisualTooltip(props: VisualTooltipProps): VisualTooltipReturn
   const { overlayProps, updatePosition } = aria.useOverlayPosition({
     isOpen: state.isOpen,
     overlayRef: popoverRef,
-    targetRef,
+    targetRef: triggerRef,
     offset,
     crossOffset,
     placement,

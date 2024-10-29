@@ -99,6 +99,7 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
 
   const fallbackInputRef = useRef<HTMLFieldSetElement>(null)
   const inputRef = rawInputRef ?? fallbackInputRef
+  const containerRef = useRef<HTMLDivElement>(null)
 
   // This type is a little too wide but it is unavoidable.
   /** Set values, while also changing the input text. */
@@ -175,6 +176,7 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
   return (
     <div className={twJoin('relative isolate h-6 w-full', isDropdownVisible && 'z-1')}>
       <div
+        ref={containerRef}
         onKeyDown={onKeyDown}
         className={twMerge(
           'absolute w-full grow transition-colors',
@@ -246,33 +248,32 @@ export default function Autocomplete<T>(props: AutocompleteProps<T>) {
           <div className="relative max-h-60 w-full overflow-auto rounded-b-xl">
             {/* FIXME: "Invite" modal does not take into account the height of the autocomplete,
              * so the suggestions may go offscreen. */}
-            {matchingItems.map((item, index) => {
-              let cachedElement: HTMLDivElement | null = null as HTMLDivElement | null
-              return (
-                <div
-                  key={itemToKey(item)}
-                  ref={(element) => {
-                    cachedElement = element
-                  }}
-                  className={twMerge(
-                    'text relative min-w-max cursor-pointer whitespace-nowrap rounded-full px-input-x last:rounded-b-xl hover:bg-hover-bg',
-                    valuesSet.has(item) && 'bg-hover-bg',
-                    index === selectedIndex && 'bg-black/5',
-                  )}
-                  onMouseDown={(event) => {
-                    event.preventDefault()
-                  }}
-                  onClick={(event) => {
-                    event.stopPropagation()
-                    toggleValue(item)
-                  }}
+            {matchingItems.map((item, index) => (
+              <div
+                key={itemToKey(item)}
+                className={twMerge(
+                  'text relative min-w-max cursor-pointer whitespace-nowrap rounded-full px-input-x last:rounded-b-xl hover:bg-hover-bg',
+                  valuesSet.has(item) && 'bg-hover-bg',
+                  index === selectedIndex && 'bg-black/5',
+                )}
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                }}
+                onClick={(event) => {
+                  event.stopPropagation()
+                  toggleValue(item)
+                }}
+              >
+                <Text
+                  truncate="1"
+                  className="w-full"
+                  tooltipPlacement="top"
+                  tooltipTriggerRef={containerRef}
                 >
-                  <Text truncate="1" className="w-full" tooltipPlacement="left">
-                    {children(item)}
-                  </Text>
-                </div>
-              )
-            })}
+                  {children(item)}
+                </Text>
+              </div>
+            ))}
           </div>
         </div>
       </div>

@@ -17,6 +17,7 @@ export interface TextProps
   readonly elementType?: keyof HTMLElementTagNameMap
   readonly lineClamp?: number
   readonly tooltip?: React.ReactElement | string | false | null
+  readonly tooltipTriggerRef?: React.RefObject<HTMLElement>
   readonly tooltipDisplay?: visualTooltip.VisualTooltipProps['display']
   readonly tooltipPlacement?: aria.Placement
   readonly tooltipOffset?: number
@@ -136,6 +137,7 @@ export const Text = forwardRef(function Text(props: TextProps, ref: React.Ref<HT
     balance,
     elementType: ElementType = 'span',
     tooltip: tooltipElement = children,
+    tooltipTriggerRef,
     tooltipDisplay = 'whenOverflowing',
     tooltipPlacement,
     tooltipOffset,
@@ -180,6 +182,7 @@ export const Text = forwardRef(function Text(props: TextProps, ref: React.Ref<HT
   const { tooltip, targetProps } = visualTooltip.useVisualTooltip({
     isDisabled: isTooltipDisabled(),
     targetRef: textElementRef,
+    triggerRef: tooltipTriggerRef,
     display: tooltipDisplay,
     children: tooltipElement,
     ...(tooltipPlacement || tooltipOffset != null ?
