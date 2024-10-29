@@ -7,7 +7,6 @@ use crate::env::accessor::RawVariable;
 
 use std::collections::btree_map::Entry;
 use std::collections::BTreeMap;
-use std::convert::identity;
 use std::sync::atomic::AtomicU64;
 use std::sync::atomic::Ordering;
 
@@ -70,6 +69,19 @@ pub fn get_input_expression(name: impl Into<String>) -> String {
 /// GH Actions expression piece that evaluates to `true` if run on a GitHub-hosted runner.
 pub fn is_github_hosted() -> String {
     "startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')".into()
+}
+
+pub fn setup_bazel() -> Step {
+    Step {
+        name: Some("Setup bazel environment".into()),
+        uses: Some("bazel-contrib/setup-bazel@0.9.0".into()),
+        with: Some(step::Argument::Other(BTreeMap::from([
+            ("bazelisk-cache".to_string(), serde_yaml::Value::Bool(true)),
+            ("disk-cache".to_string(), serde_yaml::Value::Bool(true)),
+            ("repository-cache".to_string(), serde_yaml::Value::Bool(true)),
+        ]))),
+        ..default()
+    }
 }
 
 pub fn setup_wasm_pack_step() -> Step {
@@ -1034,8 +1046,8 @@ pub enum RunnerLabel {
     MatrixOs,
 }
 
-pub fn checkout_repo_step_customized(f: impl FnOnce(Step) -> Step) -> Vec<Step> {
-    let actual_checkout = Step {
+pub fn checkout_repo_step() -> Step {
+    Step {
         name: Some("Checking out the repository".into()),
         uses: Some("actions/checkout@v4".into()),
         with: Some(step::Argument::Checkout {
@@ -1044,15 +1056,7 @@ pub fn checkout_repo_step_customized(f: impl FnOnce(Step) -> Step) -> Vec<Step> 
             submodules: Some(CheckoutArgumentSubmodules::Recursive),
         }),
         ..default()
-    };
-    // Apply customization.
-    let actual_checkout = f(actual_checkout);
-    vec![actual_checkout]
-}
-
-/// See [`checkout_repo_step_customized`].
-pub fn checkout_repo_step() -> impl IntoIterator<Item = Step> {
-    checkout_repo_step_customized(identity)
+    }
 }
 
 pub trait JobArchetype {

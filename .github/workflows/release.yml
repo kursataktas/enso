@@ -22,6 +22,12 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -56,6 +62,12 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -108,6 +120,12 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -157,6 +175,12 @@ jobs:
       - macOS
       - ARM64
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -204,6 +228,12 @@ jobs:
     runs-on:
       - macos-13
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -252,6 +282,12 @@ jobs:
       - self-hosted
       - Windows
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -305,6 +341,12 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -357,6 +399,12 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -382,19 +430,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: ./run ide upload --backend-source release --backend-release ${{env.ENSO_RELEASE_ID}} --sign-artifacts
         env:
-          ENSO_CLOUD_API_URL: ${{ vars.ENSO_CLOUD_API_URL }}
-          ENSO_CLOUD_CHAT_URL: ${{ vars.ENSO_CLOUD_CHAT_URL }}
-          ENSO_CLOUD_COGNITO_DOMAIN: ${{ vars.ENSO_CLOUD_COGNITO_DOMAIN }}
-          ENSO_CLOUD_COGNITO_REGION: ${{ vars.ENSO_CLOUD_COGNITO_REGION }}
-          ENSO_CLOUD_COGNITO_USER_POOL_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_ID }}
-          ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID }}
-          ENSO_CLOUD_ENVIRONMENT: ${{ vars.ENSO_CLOUD_ENVIRONMENT }}
-          ENSO_CLOUD_GOOGLE_ANALYTICS_TAG: ${{ vars.ENSO_CLOUD_GOOGLE_ANALYTICS_TAG }}
-          ENSO_CLOUD_SENTRY_DSN: ${{ vars.ENSO_CLOUD_SENTRY_DSN }}
-          ENSO_CLOUD_STRIPE_KEY: ${{ vars.ENSO_CLOUD_STRIPE_KEY }}
+          ENSO_IDE_AG_GRID_LICENSE_KEY: ${{ vars.ENSO_AG_GRID_LICENSE_KEY }}
+          ENSO_IDE_API_URL: ${{ vars.ENSO_CLOUD_API_URL }}
+          ENSO_IDE_CHAT_URL: ${{ vars.ENSO_CLOUD_CHAT_URL }}
+          ENSO_IDE_COGNITO_DOMAIN: ${{ vars.ENSO_CLOUD_COGNITO_DOMAIN }}
+          ENSO_IDE_COGNITO_REGION: ${{ vars.ENSO_CLOUD_COGNITO_REGION }}
+          ENSO_IDE_COGNITO_USER_POOL_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_ID }}
+          ENSO_IDE_COGNITO_USER_POOL_WEB_CLIENT_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID }}
+          ENSO_IDE_ENVIRONMENT: ${{ vars.ENSO_CLOUD_ENVIRONMENT }}
+          ENSO_IDE_GOOGLE_ANALYTICS_TAG: ${{ vars.ENSO_CLOUD_GOOGLE_ANALYTICS_TAG }}
+          ENSO_IDE_MAPBOX_API_TOKEN: ${{ vars.ENSO_MAPBOX_API_TOKEN }}
+          ENSO_IDE_SENTRY_DSN: ${{ vars.ENSO_CLOUD_SENTRY_DSN }}
+          ENSO_IDE_STRIPE_KEY: ${{ vars.ENSO_CLOUD_STRIPE_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VITE_ENSO_AG_GRID_LICENSE_KEY: ${{ vars.ENSO_AG_GRID_LICENSE_KEY }}
-          VITE_ENSO_MAPBOX_API_TOKEN: ${{ vars.ENSO_MAPBOX_API_TOKEN }}
       - if: failure() && runner.os == 'Windows'
         name: List files if failed (Windows)
         run: Get-ChildItem -Force -Recurse
@@ -419,6 +467,12 @@ jobs:
       - macOS
       - ARM64
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -451,19 +505,19 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "true"
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CODE_SIGNING_CERT_PASSWORD }}
           CSC_LINK: ${{ secrets.APPLE_CODE_SIGNING_CERT }}
-          ENSO_CLOUD_API_URL: ${{ vars.ENSO_CLOUD_API_URL }}
-          ENSO_CLOUD_CHAT_URL: ${{ vars.ENSO_CLOUD_CHAT_URL }}
-          ENSO_CLOUD_COGNITO_DOMAIN: ${{ vars.ENSO_CLOUD_COGNITO_DOMAIN }}
-          ENSO_CLOUD_COGNITO_REGION: ${{ vars.ENSO_CLOUD_COGNITO_REGION }}
-          ENSO_CLOUD_COGNITO_USER_POOL_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_ID }}
-          ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID }}
-          ENSO_CLOUD_ENVIRONMENT: ${{ vars.ENSO_CLOUD_ENVIRONMENT }}
-          ENSO_CLOUD_GOOGLE_ANALYTICS_TAG: ${{ vars.ENSO_CLOUD_GOOGLE_ANALYTICS_TAG }}
-          ENSO_CLOUD_SENTRY_DSN: ${{ vars.ENSO_CLOUD_SENTRY_DSN }}
-          ENSO_CLOUD_STRIPE_KEY: ${{ vars.ENSO_CLOUD_STRIPE_KEY }}
+          ENSO_IDE_AG_GRID_LICENSE_KEY: ${{ vars.ENSO_AG_GRID_LICENSE_KEY }}
+          ENSO_IDE_API_URL: ${{ vars.ENSO_CLOUD_API_URL }}
+          ENSO_IDE_CHAT_URL: ${{ vars.ENSO_CLOUD_CHAT_URL }}
+          ENSO_IDE_COGNITO_DOMAIN: ${{ vars.ENSO_CLOUD_COGNITO_DOMAIN }}
+          ENSO_IDE_COGNITO_REGION: ${{ vars.ENSO_CLOUD_COGNITO_REGION }}
+          ENSO_IDE_COGNITO_USER_POOL_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_ID }}
+          ENSO_IDE_COGNITO_USER_POOL_WEB_CLIENT_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID }}
+          ENSO_IDE_ENVIRONMENT: ${{ vars.ENSO_CLOUD_ENVIRONMENT }}
+          ENSO_IDE_GOOGLE_ANALYTICS_TAG: ${{ vars.ENSO_CLOUD_GOOGLE_ANALYTICS_TAG }}
+          ENSO_IDE_MAPBOX_API_TOKEN: ${{ vars.ENSO_MAPBOX_API_TOKEN }}
+          ENSO_IDE_SENTRY_DSN: ${{ vars.ENSO_CLOUD_SENTRY_DSN }}
+          ENSO_IDE_STRIPE_KEY: ${{ vars.ENSO_CLOUD_STRIPE_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VITE_ENSO_AG_GRID_LICENSE_KEY: ${{ vars.ENSO_AG_GRID_LICENSE_KEY }}
-          VITE_ENSO_MAPBOX_API_TOKEN: ${{ vars.ENSO_MAPBOX_API_TOKEN }}
       - if: failure() && runner.os == 'Windows'
         name: List files if failed (Windows)
         run: Get-ChildItem -Force -Recurse
@@ -486,6 +540,12 @@ jobs:
     runs-on:
       - macos-13
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -518,19 +578,19 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "true"
           CSC_KEY_PASSWORD: ${{ secrets.APPLE_CODE_SIGNING_CERT_PASSWORD }}
           CSC_LINK: ${{ secrets.APPLE_CODE_SIGNING_CERT }}
-          ENSO_CLOUD_API_URL: ${{ vars.ENSO_CLOUD_API_URL }}
-          ENSO_CLOUD_CHAT_URL: ${{ vars.ENSO_CLOUD_CHAT_URL }}
-          ENSO_CLOUD_COGNITO_DOMAIN: ${{ vars.ENSO_CLOUD_COGNITO_DOMAIN }}
-          ENSO_CLOUD_COGNITO_REGION: ${{ vars.ENSO_CLOUD_COGNITO_REGION }}
-          ENSO_CLOUD_COGNITO_USER_POOL_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_ID }}
-          ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID }}
-          ENSO_CLOUD_ENVIRONMENT: ${{ vars.ENSO_CLOUD_ENVIRONMENT }}
-          ENSO_CLOUD_GOOGLE_ANALYTICS_TAG: ${{ vars.ENSO_CLOUD_GOOGLE_ANALYTICS_TAG }}
-          ENSO_CLOUD_SENTRY_DSN: ${{ vars.ENSO_CLOUD_SENTRY_DSN }}
-          ENSO_CLOUD_STRIPE_KEY: ${{ vars.ENSO_CLOUD_STRIPE_KEY }}
+          ENSO_IDE_AG_GRID_LICENSE_KEY: ${{ vars.ENSO_AG_GRID_LICENSE_KEY }}
+          ENSO_IDE_API_URL: ${{ vars.ENSO_CLOUD_API_URL }}
+          ENSO_IDE_CHAT_URL: ${{ vars.ENSO_CLOUD_CHAT_URL }}
+          ENSO_IDE_COGNITO_DOMAIN: ${{ vars.ENSO_CLOUD_COGNITO_DOMAIN }}
+          ENSO_IDE_COGNITO_REGION: ${{ vars.ENSO_CLOUD_COGNITO_REGION }}
+          ENSO_IDE_COGNITO_USER_POOL_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_ID }}
+          ENSO_IDE_COGNITO_USER_POOL_WEB_CLIENT_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID }}
+          ENSO_IDE_ENVIRONMENT: ${{ vars.ENSO_CLOUD_ENVIRONMENT }}
+          ENSO_IDE_GOOGLE_ANALYTICS_TAG: ${{ vars.ENSO_CLOUD_GOOGLE_ANALYTICS_TAG }}
+          ENSO_IDE_MAPBOX_API_TOKEN: ${{ vars.ENSO_MAPBOX_API_TOKEN }}
+          ENSO_IDE_SENTRY_DSN: ${{ vars.ENSO_CLOUD_SENTRY_DSN }}
+          ENSO_IDE_STRIPE_KEY: ${{ vars.ENSO_CLOUD_STRIPE_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VITE_ENSO_AG_GRID_LICENSE_KEY: ${{ vars.ENSO_AG_GRID_LICENSE_KEY }}
-          VITE_ENSO_MAPBOX_API_TOKEN: ${{ vars.ENSO_MAPBOX_API_TOKEN }}
       - if: failure() && runner.os == 'Windows'
         name: List files if failed (Windows)
         run: Get-ChildItem -Force -Recurse
@@ -554,6 +614,12 @@ jobs:
       - self-hosted
       - Windows
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -579,19 +645,19 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: ./run ide upload --backend-source release --backend-release ${{env.ENSO_RELEASE_ID}} --sign-artifacts
         env:
-          ENSO_CLOUD_API_URL: ${{ vars.ENSO_CLOUD_API_URL }}
-          ENSO_CLOUD_CHAT_URL: ${{ vars.ENSO_CLOUD_CHAT_URL }}
-          ENSO_CLOUD_COGNITO_DOMAIN: ${{ vars.ENSO_CLOUD_COGNITO_DOMAIN }}
-          ENSO_CLOUD_COGNITO_REGION: ${{ vars.ENSO_CLOUD_COGNITO_REGION }}
-          ENSO_CLOUD_COGNITO_USER_POOL_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_ID }}
-          ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID }}
-          ENSO_CLOUD_ENVIRONMENT: ${{ vars.ENSO_CLOUD_ENVIRONMENT }}
-          ENSO_CLOUD_GOOGLE_ANALYTICS_TAG: ${{ vars.ENSO_CLOUD_GOOGLE_ANALYTICS_TAG }}
-          ENSO_CLOUD_SENTRY_DSN: ${{ vars.ENSO_CLOUD_SENTRY_DSN }}
-          ENSO_CLOUD_STRIPE_KEY: ${{ vars.ENSO_CLOUD_STRIPE_KEY }}
+          ENSO_IDE_AG_GRID_LICENSE_KEY: ${{ vars.ENSO_AG_GRID_LICENSE_KEY }}
+          ENSO_IDE_API_URL: ${{ vars.ENSO_CLOUD_API_URL }}
+          ENSO_IDE_CHAT_URL: ${{ vars.ENSO_CLOUD_CHAT_URL }}
+          ENSO_IDE_COGNITO_DOMAIN: ${{ vars.ENSO_CLOUD_COGNITO_DOMAIN }}
+          ENSO_IDE_COGNITO_REGION: ${{ vars.ENSO_CLOUD_COGNITO_REGION }}
+          ENSO_IDE_COGNITO_USER_POOL_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_ID }}
+          ENSO_IDE_COGNITO_USER_POOL_WEB_CLIENT_ID: ${{ vars.ENSO_CLOUD_COGNITO_USER_POOL_WEB_CLIENT_ID }}
+          ENSO_IDE_ENVIRONMENT: ${{ vars.ENSO_CLOUD_ENVIRONMENT }}
+          ENSO_IDE_GOOGLE_ANALYTICS_TAG: ${{ vars.ENSO_CLOUD_GOOGLE_ANALYTICS_TAG }}
+          ENSO_IDE_MAPBOX_API_TOKEN: ${{ vars.ENSO_MAPBOX_API_TOKEN }}
+          ENSO_IDE_SENTRY_DSN: ${{ vars.ENSO_CLOUD_SENTRY_DSN }}
+          ENSO_IDE_STRIPE_KEY: ${{ vars.ENSO_CLOUD_STRIPE_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          VITE_ENSO_AG_GRID_LICENSE_KEY: ${{ vars.ENSO_AG_GRID_LICENSE_KEY }}
-          VITE_ENSO_MAPBOX_API_TOKEN: ${{ vars.ENSO_MAPBOX_API_TOKEN }}
           WIN_CSC_KEY_PASSWORD: ${{ secrets.MICROSOFT_CODE_SIGNING_CERT_PASSWORD }}
           WIN_CSC_LINK: ${{ secrets.MICROSOFT_CODE_SIGNING_CERT }}
       - if: failure() && runner.os == 'Windows'

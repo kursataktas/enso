@@ -147,7 +147,7 @@
     },
     "//toolchains:tar/extensions.bzl%tar_toolchain": {
       "general": {
-        "bzlTransitiveDigest": "EvvQ4gs12iM8l7sGl04Ow+JKiSf6QHhGa1jPTiYUs5I=",
+        "bzlTransitiveDigest": "zaB1i+QbFHKAtb8fdIPYDrVMuvv47NruofNSwyBYoGQ=",
         "usagesDigest": "yHQh0sStI9GJ51fZEq01cM63BkgwGwNiLtLNeTm53D8=",
         "recordedFileInputs": {},
         "recordedDirentsInputs": {},

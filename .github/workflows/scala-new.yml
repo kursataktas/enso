@@ -33,6 +33,12 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -77,6 +83,12 @@ jobs:
     runs-on:
       - macos-13
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -122,6 +134,12 @@ jobs:
       - self-hosted
       - Windows
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -167,6 +185,12 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -222,6 +246,12 @@ jobs:
     runs-on:
       - macos-13
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -278,6 +308,12 @@ jobs:
       - self-hosted
       - Windows
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -334,6 +370,12 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -392,6 +434,12 @@ jobs:
     runs-on:
       - macos-13
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -451,6 +499,12 @@ jobs:
       - self-hosted
       - Windows
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0
@@ -510,6 +564,12 @@ jobs:
       - self-hosted
       - Linux
     steps:
+      - name: Setup bazel environment
+        uses: bazel-contrib/setup-bazel@0.9.0
+        with:
+          bazelisk-cache: true
+          disk-cache: true
+          repository-cache: true
       - if: startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')
         name: Installing wasm-pack
         uses: jetli/wasm-pack-action@v0.4.0

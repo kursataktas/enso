@@ -1,3 +1,19 @@
+# FIXME: consider using RC files from guide: https://docs.aspect.build/guides/bazelrc/
+
+## General rules
+common --enable_platform_specific_config
+common --incompatible_allow_tags_propagation
+common --incompatible_disallow_empty_glob
+test --test_output=errors
+build --show_result=20
+build --reuse_sandbox_directories
+build --nolegacy_external_runfiles
+build --noexperimental_check_output_files --experimental_allow_tags_propagation
+fetch --noexperimental_check_output_files --experimental_allow_tags_propagation
+query --noexperimental_check_output_files --experimental_allow_tags_propagation
+build --nobuild_runfile_links
+coverage --build_runfile_links
+
 ## JS
 
 # passes an argument `--skipLibCheck` to *every* spawn of tsc
@@ -27,14 +43,5 @@ common --java_language_version=21
 startup --windows_enable_symlinks
 build --enable_runfiles
 
-## other
-# build --experimental_output_directory_naming_scheme=diff_against_dynamic_baseline
-# build --incompatible_disallow_empty_glob
-# build --verbose_failures
-# build --worker_sandboxing
-# build:linux --sandbox_add_mount_pair=/tmp
-# build:macos --sandbox_add_mount_pair=/var/tmp
-# build:windows --sandbox_add_mount_pair=C:\Temp
-
-# test --sandbox_default_allow_network=false
-# test --test_output=errors
+## Allow local overrides of bazel configuration
+try-import %workspace%/.bazelrc.local
