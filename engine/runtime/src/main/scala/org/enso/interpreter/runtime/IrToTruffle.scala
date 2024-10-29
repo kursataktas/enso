@@ -317,30 +317,32 @@ class IrToTruffle(
         .flatMap(sig => getContext(sig.signature))
 
       val cons = getTypeAssociatedWithMethod(method)
-      val fullMethodDefName =
-        cons.getName ++ Constants.SCOPE_SEPARATOR ++ method.methodName.name
-      val expressionProcessor = new ExpressionProcessor(
-        fullMethodDefName,
-        () => scopeInfo().graph,
-        () => scopeInfo().graph.rootScope,
-        dataflowInfo,
-        fullMethodDefName,
-        frameInfo
-      )
+      if (cons != null) {
+        val fullMethodDefName =
+          cons.getName ++ Constants.SCOPE_SEPARATOR ++ method.methodName.name
+        val expressionProcessor = new ExpressionProcessor(
+          fullMethodDefName,
+          () => scopeInfo().graph,
+          () => scopeInfo().graph.rootScope,
+          dataflowInfo,
+          fullMethodDefName,
+          frameInfo
+        )
 
-      scopeBuilder.registerMethod(
-        cons,
-        method.methodName.name,
-        () => {
-          buildFunction(
-            method,
-            effectContext,
-            cons,
-            fullMethodDefName,
-            expressionProcessor
-          )
-        }
-      )
+        scopeBuilder.registerMethod(
+          cons,
+          method.methodName.name,
+          () => {
+            buildFunction(
+              method,
+              effectContext,
+              cons,
+              fullMethodDefName,
+              expressionProcessor
+            )
+          }
+        )
+      }
     }
 
     override protected def processTypeDefinition(typ: Definition.Type): Unit = {

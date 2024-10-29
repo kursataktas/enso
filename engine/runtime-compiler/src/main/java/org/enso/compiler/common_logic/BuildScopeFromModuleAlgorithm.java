@@ -138,8 +138,9 @@ public abstract class BuildScopeFromModuleAlgorithm<
           MetadataInteropHelpers.getMetadataOrNull(
               typePointerOpt.get(), MethodDefinitions$.MODULE$, BindingsMap.Resolution.class);
       if (metadata == null) {
-        throw new IllegalStateException(
-            "Failed to resolve type pointer for method: " + method.methodReference().showCode());
+        logger.debug(
+            "Failed to resolve type pointer for method: {}", method.methodReference().showCode());
+        return null;
       }
 
       return switch (metadata.target()) {
