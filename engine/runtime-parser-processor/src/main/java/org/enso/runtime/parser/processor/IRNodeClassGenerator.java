@@ -1,20 +1,12 @@
 package org.enso.runtime.parser.processor;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.SimpleElementVisitor14;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
 
@@ -139,85 +131,8 @@ final class IRNodeClassGenerator {
    * @return List of fields
    */
   private List<Field> getAllFields(TypeElement irNodeInterface) {
-    // Mapped by field name
-    var fields = new LinkedHashMap<String, Field>();
-
-    var fieldCollector =
-        new SimpleElementVisitor14<Void, Void>() {
-          @Override
-          protected Void defaultAction(Element e, Void unused) {
-            for (var childElem : e.getEnclosedElements()) {
-              childElem.accept(this, unused);
-            }
-            return null;
-          }
-
-          @Override
-          public Void visitExecutable(ExecutableElement e, Void unused) {
-            if (e.getParameters().isEmpty()
-                && !Utils.hasDefaultImplementation(e, irNodeInterface, processingEnv)) {
-              var retType = e.getReturnType();
-              var name = e.getSimpleName().toString();
-
-              if (retType.getKind().isPrimitive()) {
-                var primField = new PrimitiveField(retType, name);
-                fields.put(name, primField);
-                return super.visitExecutable(e, unused);
-              }
-
-              var retTypeElem = (TypeElement) processingEnv.getTypeUtils().asElement(retType);
-              assert retTypeElem != null;
-              var childAnnot = e.getAnnotation(IRChild.class);
-              if (childAnnot == null) {
-                var refField = new ReferenceField(processingEnv, retTypeElem, name, false, false);
-                fields.put(name, refField);
-                return super.visitExecutable(e, unused);
-              }
-
-              assert childAnnot != null;
-              if (Utils.isScalaList(retTypeElem, processingEnv)) {
-                assert retType instanceof DeclaredType;
-                var declaredRetType = (DeclaredType) retType;
-                assert declaredRetType.getTypeArguments().size() == 1;
-                var typeArg = declaredRetType.getTypeArguments().get(0);
-                var typeArgElem = (TypeElement) processingEnv.getTypeUtils().asElement(typeArg);
-                ensureIsSubtypeOfIR(typeArgElem);
-                var listField = new ListField(name, typeArgElem);
-                fields.put(name, listField);
-                return super.visitExecutable(e, unused);
-              }
-
-              boolean isNullable = !childAnnot.required();
-              ensureIsSubtypeOfIR(retTypeElem);
-              var field = new ReferenceField(processingEnv, retTypeElem, name, isNullable, true);
-              fields.put(name, field);
-            }
-            return super.visitExecutable(e, unused);
-          }
-        };
-    var superInterfaces = irNodeInterface.getInterfaces();
-    Deque<TypeMirror> toProcess = new ArrayDeque<>();
-    toProcess.add(irNodeInterface.asType());
-    toProcess.addAll(superInterfaces);
-    // Process transitively all the super interface until the parent IR is reached.
-    while (!toProcess.isEmpty()) {
-      var current = toProcess.pop();
-      // Skip processing of IR root interface.
-      if (Utils.isIRInterface(current, processingEnv)) {
-        continue;
-      }
-      var currentElem = processingEnv.getTypeUtils().asElement(current);
-      currentElem.accept(fieldCollector, null);
-      // Add all super interfaces to the processing queue, if they are not there already.
-      if (currentElem instanceof TypeElement currentTypeElem) {
-        for (var superInterface : currentTypeElem.getInterfaces()) {
-          if (!toProcess.contains(superInterface)) {
-            toProcess.add(superInterface);
-          }
-        }
-      }
-    }
-    return fields.values().stream().toList();
+    var fieldCollector = new FieldCollector(processingEnv, irNodeInterface);
+    return fieldCollector.collectFields();
   }
 
   /**

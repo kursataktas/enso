@@ -322,4 +322,37 @@ public class TestIRProcessor {
     srcSubject.contains("public final class JNameGen");
     srcSubject.doesNotContain("String name()");
   }
+
+  @Test
+  public void overrideCorrectMethods() {
+    var src =
+        JavaFileObjects.forSourceString(
+            "JExpression",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.compiler.core.IR;
+
+        @IRNode
+        public interface JExpression extends IR {
+        
+          interface JBlock extends JExpression {
+            boolean suspended();
+          }
+        
+          interface JBinding extends JExpression {
+            String name();
+          }
+        }
+        """);
+    var compiler = Compiler.javac().withProcessors(new IRProcessor());
+    var compilation = compiler.compile(src);
+    CompilationSubject.assertThat(compilation).succeeded();
+    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
+    var srcSubject =
+        CompilationSubject.assertThat(compilation)
+            .generatedSourceFile("JExpressionGen")
+            .contentsAsUtf8String();
+    srcSubject.contains("class JBlockGen");
+    srcSubject.contains("class JBindingGen");
+  }
 }
