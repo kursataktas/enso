@@ -7,6 +7,11 @@ make_random_vec n =
     random_gen = Java_Random.new n
     Vector.new n (_-> random_gen.nextDouble)
 
+make_random_integer_vec : Integer -> Vector
+make_random_integer_vec  n =
+    random_gen = Java_Random.new n
+    Vector.new n (_-> random_gen.nextInt)
+
 make_random_rational_vec n =
     random_gen = Java_Random.new n
     Vector.new n _->
