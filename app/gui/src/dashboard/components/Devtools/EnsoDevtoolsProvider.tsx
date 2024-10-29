@@ -5,6 +5,7 @@
 import type { PaywallFeatureName } from '#/hooks/billing'
 import * as React from 'react'
 import { createStore, useStore } from 'zustand'
+import { useShallow } from 'zustand/shallow'
 
 /** Configuration for a paywall feature. */
 export interface PaywallDevtoolsFeatureConfiguration {
