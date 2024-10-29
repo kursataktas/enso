@@ -48,7 +48,6 @@ import { COLUMN_HEADING } from '#/components/dashboard/columnHeading'
 import Label from '#/components/dashboard/Label'
 import { ErrorDisplay } from '#/components/ErrorBoundary'
 import SelectionBrush from '#/components/SelectionBrush'
-import Spinner, { SpinnerState } from '#/components/Spinner'
 import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
 import { ASSETS_MIME_TYPE } from '#/data/mimeTypes'
@@ -86,6 +85,7 @@ import {
 } from '#/providers/BackendProvider'
 import {
   useDriveStore,
+  useResetAssetPanelProps,
   useSetAssetPanelProps,
   useSetCanCreateAssets,
   useSetCanDownload,
@@ -165,6 +165,7 @@ import { regexEscape } from '#/utilities/string'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
 import { uniqueString } from 'enso-common/src/utilities/uniqueString'
+import StatelessSpinner from '../components/StatelessSpinner'
 
 // ============================
 // === Global configuration ===
@@ -373,6 +374,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   const [enabledColumns, setEnabledColumns] = useState(DEFAULT_ENABLED_COLUMNS)
   const setIsAssetPanelTemporarilyVisible = useSetIsAssetPanelTemporarilyVisible()
   const setAssetPanelProps = useSetAssetPanelProps()
+  const resetAssetPanelProps = useResetAssetPanelProps()
 
   const hiddenColumns = getColumnList(user, backend.type, category).filter(
     (column) => !enabledColumns.has(column),
@@ -888,7 +890,10 @@ export default function AssetsTable(props: AssetsTableProps) {
             if (item != null && item.isType(AssetType.directory)) {
               setTargetDirectory(item)
             }
-            if (item && item.item.id !== driveStore.getState().assetPanelProps?.item?.item.id) {
+            if (
+              item != null &&
+              item.item.id !== driveStore.getState().assetPanelProps.item?.item.id
+            ) {
               setAssetPanelProps({ backend, item })
               setIsAssetPanelTemporarilyVisible(false)
             }
@@ -1212,11 +1217,11 @@ export default function AssetsTable(props: AssetsTableProps) {
     () =>
       driveStore.subscribe(({ selectedKeys }) => {
         if (selectedKeys.size !== 1) {
-          setAssetPanelProps(null)
+          resetAssetPanelProps()
           setIsAssetPanelTemporarilyVisible(false)
         }
       }),
-    [driveStore, setAssetPanelProps, setIsAssetPanelTemporarilyVisible],
+    [driveStore, resetAssetPanelProps, setIsAssetPanelTemporarilyVisible],
   )
 
   const doToggleDirectoryExpansion = useEventCallback(
@@ -1260,8 +1265,8 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const doMove = useEventCallback(async (newParentId: DirectoryId | null, asset: AnyAsset) => {
     try {
-      if (asset.id === driveStore.getState().assetPanelProps?.item?.item.id) {
-        setAssetPanelProps(null)
+      if (asset.id === driveStore.getState().assetPanelProps.item?.item.id) {
+        resetAssetPanelProps()
       }
       await updateAssetMutation.mutateAsync([
         asset.id,
@@ -1274,8 +1279,8 @@ export default function AssetsTable(props: AssetsTableProps) {
   })
 
   const doDelete = useEventCallback(async (asset: AnyAsset, forever: boolean = false) => {
-    if (asset.id === driveStore.getState().assetPanelProps?.item?.item.id) {
-      setAssetPanelProps(null)
+    if (asset.id === driveStore.getState().assetPanelProps.item?.item.id) {
+      resetAssetPanelProps()
     }
     if (asset.type === AssetType.directory) {
       dispatchAssetListEvent({
@@ -1299,8 +1304,8 @@ export default function AssetsTable(props: AssetsTableProps) {
   })
 
   const doDeleteById = useEventCallback(async (assetId: AssetId, forever: boolean = false) => {
-    if (assetId === driveStore.getState().assetPanelProps?.item?.item.id) {
-      setAssetPanelProps(null)
+    if (assetId === driveStore.getState().assetPanelProps.item?.item.id) {
+      resetAssetPanelProps()
     }
     const asset = nodeMapRef.current.get(assetId)?.item
 
@@ -1309,7 +1314,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     }
   })
 
-  const [spinnerState, setSpinnerState] = useState(SpinnerState.initial)
   const [keyboardSelectedIndex, setKeyboardSelectedIndex] = useState<number | null>(null)
   const mostRecentlySelectedIndexRef = useRef<number | null>(null)
   const selectionStartIndexRef = useRef<number | null>(null)
@@ -2096,8 +2100,8 @@ export default function AssetsTable(props: AssetsTableProps) {
 
   const doRestore = useEventCallback(async (asset: AnyAsset) => {
     try {
-      if (asset.id === driveStore.getState().assetPanelProps?.item?.item.id) {
-        setAssetPanelProps(null)
+      if (asset.id === driveStore.getState().assetPanelProps.item?.item.id) {
+        resetAssetPanelProps()
       }
       await undoDeleteAssetMutation.mutateAsync([asset.id, asset.title])
     } catch (error) {
@@ -2275,25 +2279,6 @@ export default function AssetsTable(props: AssetsTableProps) {
       ),
     [setSelectedKeys, inputBindings, setMostRecentlySelectedIndex, driveStore],
   )
-
-  useEffect(() => {
-    if (isLoading) {
-      // Ensure the spinner stays in the "initial" state for at least one frame,
-      // to ensure the CSS animation begins at the initial state.
-      requestAnimationFrame(() => {
-        setSpinnerState(SpinnerState.loadingFast)
-      })
-    } else {
-      const queuedAssetEvents = queuedAssetListEventsRef.current
-      if (queuedAssetEvents.length !== 0) {
-        queuedAssetListEventsRef.current = []
-        for (const event of queuedAssetEvents) {
-          onAssetListEvent(event)
-        }
-      }
-      setSpinnerState(SpinnerState.initial)
-    }
-  }, [isLoading, onAssetListEvent])
 
   const calculateNewKeys = useEventCallback(
     (event: MouseEvent | ReactMouseEvent, keys: AssetId[], getRange: () => AssetId[]) => {
@@ -2615,7 +2600,7 @@ export default function AssetsTable(props: AssetsTableProps) {
       <tr className="h-row">
         <td colSpan={columns.length} className="bg-transparent">
           <div className="grid w-container justify-around">
-            <Spinner size={LOADING_SPINNER_SIZE_PX} state={spinnerState} />
+            <StatelessSpinner size={LOADING_SPINNER_SIZE_PX} state="initial" />
           </div>
         </td>
       </tr>

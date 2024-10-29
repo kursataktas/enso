@@ -1,8 +1,8 @@
 /** @file The React provider (and associated hooks) for Data Catalog state. */
 import * as React from 'react'
 
+import * as zustand from '#/utilities/zustand'
 import invariant from 'tiny-invariant'
-import * as zustand from 'zustand'
 
 import type { AssetPanelContextProps } from '#/layouts/AssetPanel'
 import type { Suggestion } from '#/layouts/AssetSearchBar'
@@ -18,6 +18,7 @@ import type {
   DirectoryId,
 } from 'enso-common/src/services/Backend'
 import { EMPTY_ARRAY } from 'enso-common/src/utilities/data/array'
+import { useEventCallback } from '../hooks/eventCallbackHooks'
 
 // ==================
 // === DriveStore ===
@@ -52,10 +53,11 @@ interface DriveStore {
   readonly isAssetPanelExpanded: boolean
   readonly setIsAssetPanelExpanded: (isAssetPanelExpanded: boolean) => void
   readonly setIsAssetPanelPermanentlyVisible: (isAssetPanelTemporarilyVisible: boolean) => void
+  readonly toggleIsAssetPanelPermanentlyVisible: () => void
   readonly isAssetPanelTemporarilyVisible: boolean
   readonly setIsAssetPanelTemporarilyVisible: (isAssetPanelTemporarilyVisible: boolean) => void
-  readonly assetPanelProps: AssetPanelContextProps | null
-  readonly setAssetPanelProps: (assetPanelProps: AssetPanelContextProps | null) => void
+  readonly assetPanelProps: AssetPanelContextProps
+  readonly setAssetPanelProps: (assetPanelProps: Partial<AssetPanelContextProps>) => void
   readonly suggestions: readonly Suggestion[]
   readonly setSuggestions: (suggestions: readonly Suggestion[]) => void
   readonly isAssetPanelHidden: boolean
@@ -96,7 +98,12 @@ export default function DriveProvider(props: ProjectsProviderProps) {
             selectedKeys: EMPTY_SET,
             visuallySelectedKeys: null,
             suggestions: EMPTY_ARRAY,
-            assetPanelProps: null,
+            assetPanelProps: {
+              selectedTab: get().assetPanelProps.selectedTab,
+              backend: null,
+              item: null,
+              spotlightOn: null,
+            },
           })
         }
       },
@@ -143,6 +150,12 @@ export default function DriveProvider(props: ProjectsProviderProps) {
         }
       },
       isAssetPanelPermanentlyVisible: localStorage.get('isAssetPanelVisible') ?? false,
+      toggleIsAssetPanelPermanentlyVisible: () => {
+        const next = !get().isAssetPanelPermanentlyVisible
+
+        set({ isAssetPanelPermanentlyVisible: next })
+        localStorage.set('isAssetPanelVisible', next)
+      },
       setIsAssetPanelPermanentlyVisible: (isAssetPanelPermanentlyVisible) => {
         if (get().isAssetPanelPermanentlyVisible !== isAssetPanelPermanentlyVisible) {
           set({ isAssetPanelPermanentlyVisible })
@@ -152,7 +165,11 @@ export default function DriveProvider(props: ProjectsProviderProps) {
       isAssetPanelExpanded: false,
       setIsAssetPanelExpanded: (isAssetPanelExpanded) => {
         if (get().isAssetPanelExpanded !== isAssetPanelExpanded) {
-          set({ isAssetPanelExpanded })
+          set({
+            isAssetPanelExpanded,
+            isAssetPanelPermanentlyVisible: isAssetPanelExpanded,
+            isAssetPanelTemporarilyVisible: false,
+          })
         }
       },
       isAssetPanelTemporarilyVisible: false,
@@ -167,17 +184,21 @@ export default function DriveProvider(props: ProjectsProviderProps) {
           set({ isAssetPanelTemporarilyVisible })
         }
       },
-      assetPanelProps: null,
+      assetPanelProps: {
+        selectedTab: 'settings',
+        backend: null,
+        item: null,
+        spotlightOn: null,
+      },
       setAssetPanelProps: (assetPanelProps) => {
-        if (get().assetPanelProps !== assetPanelProps) {
-          set({ assetPanelProps })
+        const current = get().assetPanelProps
+        if (current !== assetPanelProps) {
+          set({ assetPanelProps: { ...current, ...assetPanelProps } })
         }
       },
       suggestions: EMPTY_ARRAY,
       setSuggestions: (suggestions) => {
-        if (get().suggestions !== suggestions) {
-          set({ suggestions })
-        }
+        set({ suggestions })
       },
       isAssetPanelHidden: false,
       setIsAssetPanelHidden: (isAssetPanelHidden) => {
@@ -287,37 +308,49 @@ export function useSetSelectedKeys() {
 /** The visually selected keys in the Asset Table. */
 export function useVisuallySelectedKeys() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.selectedKeys)
+  return zustand.useStore(store, (state) => state.selectedKeys, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** A function to set the visually selected keys in the Asset Table. */
 export function useSetVisuallySelectedKeys() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setVisuallySelectedKeys)
+  return zustand.useStore(store, (state) => state.setVisuallySelectedKeys, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** Whether the Asset Panel is toggled on. */
 export function useIsAssetPanelPermanentlyVisible() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.isAssetPanelPermanentlyVisible)
+  return zustand.useStore(store, (state) => state.isAssetPanelPermanentlyVisible, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** A function to set whether the Asset Panel is toggled on. */
 export function useSetIsAssetPanelPermanentlyVisible() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setIsAssetPanelPermanentlyVisible)
+  return zustand.useStore(store, (state) => state.setIsAssetPanelPermanentlyVisible, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** Whether the Asset Panel is currently visible (e.g. for editing a Datalink). */
 export function useIsAssetPanelTemporarilyVisible() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.isAssetPanelTemporarilyVisible)
+  return zustand.useStore(store, (state) => state.isAssetPanelTemporarilyVisible, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** A function to set whether the Asset Panel is currently visible (e.g. for editing a Datalink). */
 export function useSetIsAssetPanelTemporarilyVisible() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setIsAssetPanelTemporarilyVisible)
+  return zustand.useStore(store, (state) => state.setIsAssetPanelTemporarilyVisible, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** Whether the Asset Panel is currently visible, either temporarily or permanently. */
@@ -332,29 +365,73 @@ export function useIsAssetPanelVisible() {
  */
 export function useIsAssetPanelExpanded() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.isAssetPanelExpanded)
+  return zustand.useStore(
+    store,
+    ({ isAssetPanelPermanentlyVisible, isAssetPanelTemporarilyVisible }) =>
+      isAssetPanelPermanentlyVisible || isAssetPanelTemporarilyVisible,
+    { unsafeEnableTransition: true },
+  )
 }
 
 /** A function to set whether the Asset Panel is expanded. */
 export function useSetIsAssetPanelExpanded() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setIsAssetPanelExpanded)
+  return zustand.useStore(store, (state) => state.setIsAssetPanelExpanded, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** Props for the Asset Panel. */
 export function useAssetPanelProps() {
   const store = useDriveStore()
 
-  return zustand.useStore(
-    store,
-    (state) => state.assetPanelProps ?? { backend: null, item: null, setItem: null },
-  )
+  return zustand.useStore(store, (state) => state.assetPanelProps, {
+    unsafeEnableTransition: true,
+  })
 }
 
 /** A function to set props for the Asset Panel. */
 export function useSetAssetPanelProps() {
   const store = useDriveStore()
-  return zustand.useStore(store, (state) => state.setAssetPanelProps)
+  return zustand.useStore(store, (state) => state.setAssetPanelProps, {
+    unsafeEnableTransition: true,
+  })
+}
+
+/**
+ * A function to reset the Asset Panel props to their default values.
+ */
+export function useResetAssetPanelProps() {
+  const store = useDriveStore()
+  return useEventCallback(() => {
+    const current = store.getState().assetPanelProps
+    if (current.item != null) {
+      store.setState({
+        assetPanelProps: {
+          selectedTab: current.selectedTab,
+          backend: null,
+          item: null,
+          spotlightOn: null,
+        },
+      })
+    }
+  })
+}
+
+/**
+ * A function to set the selected tab of the Asset Panel.
+ */
+export function useSetAssetPanelSelectedTab() {
+  const store = useDriveStore()
+
+  return useEventCallback((selectedTab: AssetPanelContextProps['selectedTab']) => {
+    const current = store.getState().assetPanelProps
+    if (current.selectedTab !== selectedTab) {
+      store.setState({
+        assetPanelProps: { ...current, selectedTab },
+      })
+    }
+  })
 }
 
 /** Search suggestions. */

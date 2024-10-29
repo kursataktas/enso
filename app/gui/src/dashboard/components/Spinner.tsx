@@ -2,15 +2,16 @@
  * @file A spinning arc that animates using the `dasharray-<percentage>` custom Tailwind
  * classes.
  */
-import * as React from 'react'
-
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
 // ===============
 // === Spinner ===
 // ===============
 
-/** The state of the spinner. It should go from initial, to loading, to done. */
+/**
+ * The state of the spinner. It should go from initial, to loading, to done.
+ * @deprecated Use {@link SpinnerStateLiteral} instead.
+ */
 export enum SpinnerState {
   initial = 'initial',
   loadingSlow = 'loading-slow',
@@ -19,12 +20,25 @@ export enum SpinnerState {
   done = 'done',
 }
 
-export const SPINNER_CSS_CLASSES: Readonly<Record<SpinnerState, string>> = {
-  [SpinnerState.initial]: 'dasharray-5 ease-linear',
-  [SpinnerState.loadingSlow]: 'dasharray-75 duration-spinner-slow ease-linear',
-  [SpinnerState.loadingMedium]: 'dasharray-75 duration-spinner-medium ease-linear',
-  [SpinnerState.loadingFast]: 'dasharray-75 duration-spinner-fast ease-linear',
-  [SpinnerState.done]: 'dasharray-100 duration-spinner-fast ease-in',
+/**
+ * A literal type for the {@link SpinnerState} enum.
+ */
+export type SpinnerStateLiteral =
+  | 'done'
+  | 'initial'
+  | 'loading-fast'
+  | 'loading-medium'
+  | 'loading-slow'
+
+export const SPINNER_CSS_CLASSES: Readonly<Record<SpinnerStateLiteral, string>> = {
+  initial: 'dasharray-5 ease-linear',
+  /* eslint-disable-next-line @typescript-eslint/naming-convention */
+  'loading-slow': 'dasharray-75 duration-spinner-slow ease-linear',
+  /* eslint-disable-next-line @typescript-eslint/naming-convention */
+  'loading-medium': 'dasharray-75 duration-spinner-medium ease-linear',
+  /* eslint-disable-next-line @typescript-eslint/naming-convention */
+  'loading-fast': 'dasharray-75 duration-spinner-fast ease-linear',
+  done: 'dasharray-100 duration-spinner-fast ease-in',
 }
 
 /** Props for a {@link Spinner}. */
@@ -32,12 +46,13 @@ export interface SpinnerProps {
   readonly size?: number
   readonly padding?: number
   readonly className?: string
-  readonly state: SpinnerState
+  readonly state: SpinnerState | SpinnerStateLiteral
 }
 
 /** A spinning arc that animates using the `dasharray-<percentage>` custom Tailwind classes. */
 export default function Spinner(props: SpinnerProps) {
   const { size, padding, className, state } = props
+
   return (
     <svg
       width={size}

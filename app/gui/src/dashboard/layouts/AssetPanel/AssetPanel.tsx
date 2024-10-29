@@ -14,6 +14,7 @@ import {
   useAssetPanelProps,
   useIsAssetPanelExpanded,
   useIsAssetPanelHidden,
+  useSetAssetPanelSelectedTab,
   useSetIsAssetPanelExpanded,
 } from '#/providers/DriveProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
@@ -67,8 +68,9 @@ LocalStorage.register({
 /** Props supplied by the row. */
 export interface AssetPanelContextProps {
   readonly backend: Backend | null
+  readonly selectedTab: AssetPanelTab
   readonly item: AnyAssetTreeNode | null
-  readonly spotlightOn?: AssetPropertiesSpotlight
+  readonly spotlightOn: AssetPropertiesSpotlight | null
 }
 
 /**
@@ -96,7 +98,8 @@ const DEFAULT_TRANSITION_OPTIONS: Spring = {
 export function AssetPanel(props: AssetPanelProps) {
   const { category } = props
 
-  const [selectedTab, setSelectedTab] = useLocalStorageState('assetPanelTab', ASSET_PANEL_TABS[0])
+  const { item, spotlightOn, selectedTab } = useAssetPanelProps()
+  const setSelectedTab = useSetAssetPanelSelectedTab()
 
   const isReadonly = category.type === 'trash'
 
@@ -107,8 +110,6 @@ export function AssetPanel(props: AssetPanelProps) {
   const setIsExpanded = useSetIsAssetPanelExpanded()
 
   const backend = useBackend(category)
-
-  const { item } = useAssetPanelProps()
 
   const panelWidth = isExpanded ? ASSET_PANEL_TOTAL_WIDTH : ASSET_SIDEBAR_COLLAPSED_WIDTH
   const isVisible = !isHidden
@@ -169,6 +170,7 @@ export function AssetPanel(props: AssetPanelProps) {
                         item={item}
                         isReadonly={isReadonly}
                         category={category}
+                        spotlightOn={spotlightOn}
                       />
                     </AssetPanelTabs.TabPanel>
 

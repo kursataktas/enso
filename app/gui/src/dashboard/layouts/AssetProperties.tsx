@@ -63,14 +63,14 @@ export interface AssetPropertiesProps {
   readonly item: AnyAssetTreeNode | null
   readonly category: Category
   readonly isReadonly?: boolean
-  readonly spotlightOn?: AssetPropertiesSpotlight | undefined
+  readonly spotlightOn?: AssetPropertiesSpotlight | null
 }
 
 /**
  * Display and modify the properties of an asset.
  */
 export default function AssetProperties(props: AssetPropertiesProps) {
-  const { item, isReadonly = false, backend, category, spotlightOn } = props
+  const { item, isReadonly = false, backend, category, spotlightOn = null } = props
 
   const { getText } = useText()
 
@@ -115,11 +115,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
 
   const closeSpotlight = useEventCallback(() => {
     const assetPanelProps = driveStore.getState().assetPanelProps
-    if (assetPanelProps != null) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const { spotlightOn: unusedSpotlightOn, ...rest } = assetPanelProps
-      setAssetPanelProps(rest)
-    }
+    setAssetPanelProps({ ...assetPanelProps, spotlightOn: null })
   })
   const { user } = useFullUserSession()
   const isEnterprise = user.plan === Plan.enterprise
@@ -154,21 +150,15 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
       : {}),
     },
   )
-  const descriptionRef = React.useRef<HTMLDivElement>(null)
   const descriptionSpotlight = useSpotlight({
-    ref: descriptionRef,
     enabled: spotlightOn === 'description',
     close: closeSpotlight,
   })
-  const secretRef = React.useRef<HTMLDivElement>(null)
   const secretSpotlight = useSpotlight({
-    ref: secretRef,
     enabled: spotlightOn === 'secret',
     close: closeSpotlight,
   })
-  const datalinkRef = React.useRef<HTMLDivElement>(null)
   const datalinkSpotlight = useSpotlight({
-    ref: datalinkRef,
     enabled: spotlightOn === 'datalink',
     close: closeSpotlight,
   })
@@ -244,7 +234,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
       {descriptionSpotlight.spotlightElement}
       {secretSpotlight.spotlightElement}
       {datalinkSpotlight.spotlightElement}
-      <div ref={descriptionRef} className={styles.section()} {...descriptionSpotlight.props}>
+      <div className={styles.section()} {...descriptionSpotlight.props}>
         <Heading
           level={2}
           className="flex h-side-panel-heading items-center gap-side-panel-section py-side-panel-heading-y text-lg leading-snug"
@@ -344,7 +334,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
       )}
 
       {isSecret && (
-        <div ref={secretRef} className={styles.section()} {...secretSpotlight.props}>
+        <div className={styles.section()} {...secretSpotlight.props}>
           <Heading
             level={2}
             className="h-side-panel-heading py-side-panel-heading-y text-lg leading-snug"
@@ -365,7 +355,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
       )}
 
       {isDatalink && (
-        <div ref={datalinkRef} className={styles.section()} {...datalinkSpotlight.props}>
+        <div className={styles.section()} {...datalinkSpotlight.props}>
           <Heading
             level={2}
             className="h-side-panel-heading py-side-panel-heading-y text-lg leading-snug"

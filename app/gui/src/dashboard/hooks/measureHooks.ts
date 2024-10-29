@@ -3,10 +3,13 @@
  *
  * This file contains the useMeasure hook, which is used to measure the size and position of an element.
  */
-import { useEffect, useRef, useState } from 'react'
+import { frame } from 'framer-motion'
+
+import { startTransition, useEffect, useRef, useState } from 'react'
 import { unsafeMutable } from '../utilities/object'
 import { useDebouncedCallback } from './debounceCallbackHooks'
 import { useEventCallback } from './eventCallbackHooks'
+import { useUnmount } from './unmountHooks'
 
 /**
  * A read-only version of the DOMRect object.
@@ -38,7 +41,6 @@ type Result = [(element: HTMLOrSVGElement | null) => void, RectReadOnly, () => v
 interface State {
   readonly element: HTMLOrSVGElement | null
   readonly scrollContainers: HTMLOrSVGElement[] | null
-  readonly resizeObserver: ResizeObserver | null
   readonly lastBounds: RectReadOnly
 }
 
@@ -46,7 +48,9 @@ interface State {
  * A type that represents the options for the useMeasure hook.
  */
 export interface Options {
-  readonly debounce?: number | { readonly scroll: number; readonly resize: number }
+  readonly debounce?:
+    | number
+    | { readonly scroll: number; readonly resize: number; readonly frame: number }
   readonly scroll?: boolean
   readonly polyfill?: { new (cb: ResizeObserverCallback): ResizeObserver }
   readonly offsetSize?: boolean
@@ -55,7 +59,7 @@ export interface Options {
 /**
  * Custom hook to measure the size and position of an element
  */
-export function useMeasure(options: Options): Result {
+export function useMeasure(options: Options = {}): Result {
   const { debounce = 0, scroll = false, offsetSize = false } = options
 
   const [bounds, set] = useState<RectReadOnly>(() => ({
@@ -73,49 +77,57 @@ export function useMeasure(options: Options): Result {
   const state = useRef<State>({
     element: null,
     scrollContainers: null,
-    resizeObserver: null,
     lastBounds: bounds,
   })
 
   // set actual debounce values early, so effects know if they should react accordingly
   const scrollDebounce = typeof debounce === 'number' ? debounce : debounce.scroll
   const resizeDebounce = typeof debounce === 'number' ? debounce : debounce.resize
-
+  const frameDebounce = typeof debounce === 'number' ? debounce : debounce.frame
   // make sure to update state only as long as the component is truly mounted
   const mounted = useRef(false)
-  useEffect(() => {
-    mounted.current = true
-    return () => void (mounted.current = false)
+
+  useUnmount(() => {
+    mounted.current = false
   })
 
   const callback = useEventCallback(() => {
-    if (!state.current.element) return
-    const { left, top, width, height, bottom, right, x, y } =
-      state.current.element.getBoundingClientRect()
+    frame.read(() => {
+      if (!state.current.element) return
+      const { left, top, width, height, bottom, right, x, y } =
+        state.current.element.getBoundingClientRect()
 
-    const size = {
-      left,
-      top,
-      width,
-      height,
-      bottom,
-      right,
-      x,
-      y,
-    }
+      const size = {
+        left,
+        top,
+        width,
+        height,
+        bottom,
+        right,
+        x,
+        y,
+      }
 
-    if (state.current.element instanceof HTMLElement && offsetSize) {
-      size.height = state.current.element.offsetHeight
-      size.width = state.current.element.offsetWidth
-    }
+      if (state.current.element instanceof HTMLElement && offsetSize) {
+        size.height = state.current.element.offsetHeight
+        size.width = state.current.element.offsetWidth
+      }
 
-    if (mounted.current && !areBoundsEqual(state.current.lastBounds, size)) {
-      set((unsafeMutable(state.current).lastBounds = size))
-    }
+      if (mounted.current && !areBoundsEqual(state.current.lastBounds, size)) {
+        startTransition(() => {
+          set((unsafeMutable(state.current).lastBounds = size))
+        })
+      }
+    })
   })
 
+  const [resizeObserver] = useState(() => new ResizeObserver(callback))
+  const [mutationObserver] = useState(() => new MutationObserver(callback))
+
+  const frameDebounceCallback = useDebouncedCallback(callback, [], frameDebounce)
   const resizeDebounceCallback = useDebouncedCallback(callback, [], resizeDebounce)
   const scrollDebounceCallback = useDebouncedCallback(callback, [], scrollDebounce)
+
   const forceRefresh = useDebouncedCallback(callback, [], 0)
 
   // cleanup current scroll-listeners / observers
@@ -127,16 +139,21 @@ export function useMeasure(options: Options): Result {
       unsafeMutable(state.current).scrollContainers = null
     }
 
-    if (state.current.resizeObserver) {
-      state.current.resizeObserver.disconnect()
-      unsafeMutable(state.current).resizeObserver = null
-    }
+    resizeObserver.disconnect()
+    mutationObserver.disconnect()
   })
 
   const addListeners = useEventCallback(() => {
     if (!state.current.element) return
-    unsafeMutable(state.current).resizeObserver = new ResizeObserver(scrollDebounceCallback)
-    state.current.resizeObserver?.observe(state.current.element)
+
+    resizeObserver.observe(state.current.element)
+    mutationObserver.observe(state.current.element, {
+      attributes: true,
+      attributeFilter: ['style', 'class'],
+    })
+
+    frame.read(frameDebounceCallback, true)
+
     if (scroll && state.current.scrollContainers) {
       state.current.scrollContainers.forEach((scrollContainer) => {
         scrollContainer.addEventListener('scroll', scrollDebounceCallback, {
@@ -149,6 +166,8 @@ export function useMeasure(options: Options): Result {
 
   // the ref we expose to the user
   const ref = (node: HTMLOrSVGElement | null) => {
+    mounted.current = node != null
+
     if (!node || node === state.current.element) return
     removeListeners()
 
@@ -167,8 +186,8 @@ export function useMeasure(options: Options): Result {
     addListeners()
   }, [scroll, scrollDebounceCallback, resizeDebounceCallback, removeListeners, addListeners])
 
-  // remove all listeners when the components unmounts
-  useEffect(() => removeListeners, [removeListeners])
+  useUnmount(removeListeners)
+
   return [ref, bounds, forceRefresh]
 }
 
