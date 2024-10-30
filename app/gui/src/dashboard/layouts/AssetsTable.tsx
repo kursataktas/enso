@@ -16,7 +16,13 @@ import {
   type SetStateAction,
 } from 'react'
 
-import { queryOptions, useMutation, useQueries, useQueryClient } from '@tanstack/react-query'
+import {
+  queryOptions,
+  useMutation,
+  useQueries,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import * as z from 'zod'
 
@@ -419,24 +425,11 @@ export default function AssetsTable(props: AssetsTableProps) {
               }
             },
 
-            refetchInterval:
-              enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
-            refetchOnMount: 'always',
-            refetchIntervalInBackground: false,
-            refetchOnWindowFocus: true,
-
             enabled: !hidden,
             meta: { persist: false },
           }),
         ),
-      [
-        hidden,
-        backend,
-        category,
-        expandedDirectoryIds,
-        assetsTableBackgroundRefreshInterval,
-        enableAssetsTableBackgroundRefresh,
-      ],
+      [hidden, backend, category, expandedDirectoryIds],
     ),
     combine: (results) => {
       const rootQuery = results[expandedDirectoryIds.indexOf(rootDirectory.id)]
@@ -461,6 +454,20 @@ export default function AssetsTable(props: AssetsTableProps) {
         ),
       }
     },
+  })
+
+  // We use a different query to refetch the directory data in the background.
+  // This reduces the amount of rerenders by batching them together, so they happen less often.
+  useQuery({
+    queryKey: [backend.type, 'refetchListDirectory'],
+    queryFn: () => queryClient.refetchQueries({ queryKey: [backend.type, 'listDirectory'] }),
+    refetchInterval:
+      enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
+    refetchOnMount: 'always',
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
+    enabled: !hidden,
+    meta: { persist: false },
   })
 
   /** Return type of the query function for the listDirectory query. */
