@@ -71,7 +71,7 @@ export function useDebouncedCallback<Fn extends (...args: never[]) => unknown>(
     })
 
     return wrapped
-    // Not possible to address, as this is a wrapped hook.
+    // Unavoidable, as this is a wrapped hook.
     // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stableCallback, delay, maxWait, ...deps])

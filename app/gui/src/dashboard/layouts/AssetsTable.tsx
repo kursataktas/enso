@@ -64,6 +64,7 @@ import {
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useIntersectionRatio } from '#/hooks/intersectionHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
+import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import useOnScroll from '#/hooks/useOnScroll'
 import type * as assetSearchBar from '#/layouts/AssetSearchBar'
@@ -1167,34 +1168,33 @@ export default function AssetsTable(props: AssetsTableProps) {
     [driveStore, isCloud, setCanDownload],
   )
 
+  const initialProjectNameDeps = useSyncRef({ assetTree, doOpenProject, isLoading, toastAndLog })
   useEffect(() => {
-    if (isLoading) {
+    const deps = initialProjectNameDeps.current
+    if (deps.isLoading) {
       nameOfProjectToImmediatelyOpenRef.current = initialProjectName
     } else {
       // The project name here might also be a string with project id, e.g. when opening
       // a project file from explorer on Windows.
       const isInitialProject = (asset: AnyAsset) =>
         asset.title === initialProjectName || asset.id === initialProjectName
-      const projectToLoad = assetTree
+      const projectToLoad = deps.assetTree
         .preorderTraversal()
         .map((node) => node.item)
         .filter(assetIsProject)
         .find(isInitialProject)
       if (projectToLoad != null) {
-        doOpenProject({
+        deps.doOpenProject({
           type: BackendType.local,
           id: projectToLoad.id,
           title: projectToLoad.title,
           parentId: projectToLoad.parentId,
         })
       } else if (initialProjectName != null) {
-        toastAndLog('findProjectError', null, initialProjectName)
+        deps.toastAndLog('findProjectError', null, initialProjectName)
       }
     }
-    // This effect MUST only run when `initialProjectName` is changed.
-    // eslint-disable-next-line react-compiler/react-compiler
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialProjectName])
+  }, [initialProjectName, initialProjectNameDeps])
 
   useEffect(() => {
     const savedEnabledColumns = localStorage.get('enabledColumns')

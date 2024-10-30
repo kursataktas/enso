@@ -19,12 +19,14 @@ import SvgMask from '#/components/SvgMask'
 
 import type Backend from '#/services/Backend'
 
+import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useSuggestions } from '#/providers/DriveProvider'
 import * as array from '#/utilities/array'
 import AssetQuery from '#/utilities/AssetQuery'
 import * as eventModule from '#/utilities/event'
 import * as string from '#/utilities/string'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
+import { unsafeWriteValue } from '#/utilities/write'
 
 // =============
 // === Types ===
@@ -100,9 +102,7 @@ function Tags(props: InternalTagsProps) {
                   size="xsmall"
                   className="min-w-12"
                   onPress={() => {
-                    // This ref is intended to be mutated.
-                    // eslint-disable-next-line react-compiler/react-compiler
-                    querySource.current = QuerySource.internal
+                    unsafeWriteValue(querySource, 'current', QuerySource.internal)
                     setQuery(query.add({ [key]: [[]] }))
                   }}
                 >
@@ -142,12 +142,11 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
   )
   const [selectedIndex, setSelectedIndex] = React.useState<number | null>(null)
   const [areSuggestionsVisible, setAreSuggestionsVisible] = React.useState(false)
-  const areSuggestionsVisibleRef = React.useRef(areSuggestionsVisible)
+  const areSuggestionsVisibleRef = useSyncRef(areSuggestionsVisible)
   const querySource = React.useRef(QuerySource.external)
   const rootRef = React.useRef<HTMLLabelElement | null>(null)
   const searchRef = React.useRef<HTMLInputElement | null>(null)
   const labels = backendHooks.useBackendQuery(backend, 'listTags', []).data ?? []
-  areSuggestionsVisibleRef.current = areSuggestionsVisible
 
   React.useEffect(() => {
     if (querySource.current !== QuerySource.tabbing) {
@@ -177,16 +176,18 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
     }
   }, [rawSuggestions])
 
+  const selectedIndexDeps = useSyncRef({ query, setQuery, suggestions })
   React.useEffect(() => {
+    const deps = selectedIndexDeps.current
     if (
       querySource.current === QuerySource.internal ||
       querySource.current === QuerySource.tabbing
     ) {
-      let newQuery = query
-      const suggestion = selectedIndex == null ? null : suggestions[selectedIndex]
+      let newQuery = deps.query
+      const suggestion = selectedIndex == null ? null : deps.suggestions[selectedIndex]
       if (suggestion != null) {
         newQuery = suggestion.addToQuery(baseQuery.current)
-        setQuery(newQuery)
+        deps.setQuery(newQuery)
       }
       searchRef.current?.focus()
       const end = searchRef.current?.value.length ?? 0
@@ -195,10 +196,7 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
         searchRef.current.value = newQuery.toString()
       }
     }
-    // This effect MUST only run when `selectedIndex` changes.
-    // eslint-disable-next-line react-compiler/react-compiler
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedIndex])
+  }, [selectedIndex, selectedIndices, selectedIndexDeps])
 
   React.useEffect(() => {
     const onSearchKeyDown = (event: KeyboardEvent) => {
@@ -269,7 +267,7 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
       root?.removeEventListener('keydown', onSearchKeyDown)
       document.removeEventListener('keydown', onKeyDown)
     }
-  }, [setQuery, modalRef])
+  }, [setQuery, modalRef, areSuggestionsVisibleRef])
 
   // Reset `querySource` after all other effects have run.
   React.useEffect(() => {

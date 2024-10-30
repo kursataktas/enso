@@ -76,6 +76,10 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
 
     const computedSchema = typeof schema === 'function' ? schema(schemaModule.schema) : schema
 
+    // We need to disable the eslint rules here, because we call hooks conditionally
+    // but it's safe to do so, because we don't switch between the two types of arguments
+    // and if we do, we throw an error.
+    // eslint-disable-next-line react-compiler/react-compiler
     const formInstance = reactHookForm.useForm({
       ...options,
       resolver: zodResolver.zodResolver(
@@ -140,8 +144,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
     // We need to disable the eslint rules here, because we call hooks conditionally
     // but it's safe to do so, because we don't switch between the two types of arguments
     // and if we do, we throw an error.
-    /* eslint-disable react-compiler/react-compiler */
-    /* eslint-disable react-hooks/rules-of-hooks */
+    /* eslint-disable react-compiler/react-compiler, react-hooks/rules-of-hooks */
     const formMutation = useMutation({
       // We use template literals to make the mutation key more readable in the devtools
       // This mutation exists only for debug purposes - React Query dev tools record the mutation,
@@ -185,7 +188,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
     })
 
     // There is no way to avoid type casting here
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any,no-restricted-syntax,@typescript-eslint/no-unsafe-argument
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, no-restricted-syntax, @typescript-eslint/no-unsafe-argument
     const formOnSubmit = formInstance.handleSubmit(formMutation.mutateAsync as any)
 
     const { isOffline } = useOffline()
@@ -236,8 +239,7 @@ export function useForm<Schema extends types.TSchema, SubmitResult = void>(
 
     return form
   }
-  /* eslint-enable react-compiler/react-compiler */
-  /* eslint-enable react-hooks/rules-of-hooks */
+  /* eslint-enable react-compiler/react-compiler, react-hooks/rules-of-hooks */
 }
 
 /** Get the type of arguments passed to the useForm hook */
