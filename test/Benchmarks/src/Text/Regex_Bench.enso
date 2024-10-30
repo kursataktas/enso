@@ -1,23 +1,27 @@
 from Standard.Base import all
 
+import Standard.Base.Data.Text.Regex.Internal.Replacer.Replacer
+
 from Standard.Test import Bench, Faker
 
 
 type Data
-    Value ~two_nums ~just_two_nums ~double_two_nums ~one_num_regex ~two_nums_regex
+    Value ~two_nums ~just_two_nums ~double_two_nums ~a_regex ~regexes ~replacers ~one_num_regex ~two_nums_regex
 
     create =
         faker = Faker.new
-        Data.Value (build_two_nums faker) (build_just_two_nums faker) (build_double_two_nums faker) (Regex.compile "(\d+)") (Regex.compile "(\d+)[a-z]+(\d+)")
+        a_regex = Regex.compile "(\d)ab(\d)"
+        Data.Value (build_two_nums faker) (build_just_two_nums faker) (build_double_two_nums faker) a_regex (build_regexes faker) (build_replacers faker) (Regex.compile "(\d+)") (Regex.compile "(\d+)[a-z]+(\d+)")
 
-count = 10
+list_count = 10
+regex_count = 10
 
 # "ab12cdefg634hi"
-build_two_nums faker = 0.up_to count . map _->
+build_two_nums faker = 0.up_to list_count . map _->
     (faker.alpha 2) + (faker.integer 0 100).to_text + (faker.alpha 8) + (faker.integer 0 100).to_text + (faker.alpha 2)
 
 # "12cdefg634"
-build_just_two_nums faker = 0.up_to count . map _->
+build_just_two_nums faker = 0.up_to list_count . map _->
     (faker.integer 0 100).to_text + (faker.alpha 8) + (faker.integer 0 100).to_text
 
 # "ab12cdefg634hiab12cdefg634hi"
@@ -26,6 +30,12 @@ build_double_two_nums faker =
     strings1 = build_two_nums faker
     strings0.zip strings1 (_ + _)
 
+
+build_regexes faker = 0.up_to regex_count . map _->
+    "(\d)" + (faker.alpha 2) + "(\d)"
+
+build_replacers faker = 0.up_to regex_count . map _->
+    "$0" + (faker.alpha 2) + "$1" + (faker.alpha 2) + "$2"
 
 options = Bench.options . set_warmup (Bench.phase_conf 1 2) . set_measure (Bench.phase_conf 1 2)
 
@@ -57,6 +67,18 @@ collect_benches = Bench.build builder->
 
         group_builder.specify "replace" <|
             data.two_nums . map  (x-> data.two_nums_regex.replace x "NUM")
+
+        group_builder.specify "regex_compile_same" <|
+            Regex.compile "(\d)ab(\d)"
+
+        group_builder.specify "regex_compile_different" <|
+            data.regexes.map Regex.compile
+
+        group_builder.specify "replacer_compile_same" <|
+            Replacer.new "$0 ab $1 cd $2" data.a_regex
+
+        group_builder.specify "replacer_compile_different" <|
+            data.replacers.map (r-> Replacer.new r data.a_regex)
 
 
 main = collect_benches . run_main
