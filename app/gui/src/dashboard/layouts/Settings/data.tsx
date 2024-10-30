@@ -1,5 +1,5 @@
 /** @file Metadata for rendering each settings section. */
-import type { ReactNode } from 'react'
+import type { HTMLInputAutoCompleteAttribute, ReactNode } from 'react'
 
 import type { QueryClient } from '@tanstack/react-query'
 import * as z from 'zod'
@@ -18,6 +18,7 @@ import { ACTION_TO_TEXT_ID } from '#/components/MenuEntry'
 import { BINDINGS } from '#/configurations/inputBindings'
 import type { PaywallFeatureName } from '#/hooks/billing'
 import type { ToastAndLogCallback } from '#/hooks/toastAndLogHooks'
+import { passwordSchema, passwordWithPatternSchema } from '#/pages/authentication/schemas'
 import type { GetText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import {
@@ -31,8 +32,8 @@ import type LocalBackend from '#/services/LocalBackend'
 import type RemoteBackend from '#/services/RemoteBackend'
 import { normalizePath } from '#/utilities/fileInfo'
 import { pick, unsafeEntries } from '#/utilities/object'
+import { PASSWORD_REGEX } from '#/utilities/validation'
 import ActivityLogSettingsSection from './ActivityLogSettingsSection'
-import ChangePasswordForm from './ChangePasswordForm'
 import DeleteUserAccountSettingsSection from './DeleteUserAccountSettingsSection'
 import KeyboardShortcutsSettingsSection from './KeyboardShortcutsSettingsSection'
 import MembersSettingsSection from './MembersSettingsSection'
@@ -96,10 +97,62 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
       {
         nameId: 'changePasswordSettingsSection',
         entries: [
-          {
-            type: 'custom',
-            aliasesId: 'changePasswordSettingsCustomEntryAliases',
-            render: ChangePasswordForm,
+          settingsFormEntryData({
+            type: 'form',
+            schema: ({ getText }) =>
+              z
+                .object({
+                  username: z.string().email(getText('invalidEmailValidationError')),
+                  currentPassword: passwordSchema(getText),
+                  newPassword: passwordWithPatternSchema(getText),
+                  confirmNewPassword: z.string(),
+                })
+                .superRefine((object, context) => {
+                  if (
+                    PASSWORD_REGEX.test(object.newPassword) &&
+                    object.newPassword !== object.confirmNewPassword
+                  ) {
+                    context.addIssue({
+                      path: ['confirmNewPassword'],
+                      code: 'custom',
+                      message: getText('passwordMismatchError'),
+                    })
+                  }
+                }),
+            getValue: ({ user }) => ({
+              username: user.email,
+              currentPassword: '',
+              newPassword: '',
+              confirmNewPassword: '',
+            }),
+            onSubmit: async ({ changePassword }, { currentPassword, newPassword }) => {
+              await changePassword(currentPassword, newPassword)
+            },
+            inputs: [
+              {
+                nameId: 'userNameSettingsInput',
+                name: 'username',
+                autoComplete: 'username',
+                editable: false,
+                hidden: true,
+              },
+              {
+                nameId: 'userCurrentPasswordSettingsInput',
+                name: 'currentPassword',
+                autoComplete: 'current-assword',
+              },
+              {
+                nameId: 'userNewPasswordSettingsInput',
+                name: 'newPassword',
+                autoComplete: 'new-password',
+                descriptionId: 'passwordValidationMessage',
+              },
+              {
+                nameId: 'userConfirmNewPasswordSettingsInput',
+                name: 'confirmNewPassword',
+                autoComplete: 'new-password',
+              },
+            ],
             getVisible: (context) => {
               // The shape of the JWT payload is statically known.
               // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
@@ -108,7 +161,7 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
                 JSON.parse(atob(context.accessToken.split('.')[1]!)).username
               return username != null ? !/^Github_|^Google_/.test(username) : false
             },
-          },
+          }),
         ],
       },
       {
@@ -231,7 +284,7 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
     nameId: 'localSettingsTab',
     settingsTab: SettingsTabType.local,
     icon: ComputerIcon,
-    visible: (context) => context.localBackend != null,
+    visible: ({ localBackend }) => localBackend != null,
     sections: [
       {
         nameId: 'localSettingsSection',
@@ -241,9 +294,9 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
             schema: z.object({
               localRootPath: z.string(),
             }),
-            getValue: (context) => ({ localRootPath: context.localBackend?.rootPath() ?? '' }),
-            onSubmit: (context, { localRootPath }) => {
-              context.updateLocalRootPath(localRootPath)
+            getValue: ({ localBackend }) => ({ localRootPath: localBackend?.rootPath() ?? '' }),
+            onSubmit: ({ updateLocalRootPath }, { localRootPath }) => {
+              updateLocalRootPath(localRootPath)
             },
             inputs: [{ nameId: 'localRootPathSettingsInput', name: 'localRootPath' }],
           }),
@@ -461,6 +514,7 @@ export interface SettingsContext {
   readonly getText: GetText
   readonly queryClient: QueryClient
   readonly isMatch: (name: string) => boolean
+  readonly changePassword: (oldPassword: string, newPassword: string) => Promise<boolean>
 }
 
 // ==============================
@@ -471,8 +525,12 @@ export interface SettingsContext {
 export interface SettingsInputData<T extends Record<keyof T, string>> {
   readonly nameId: TextId & `${string}SettingsInput`
   readonly name: string & keyof T
-  /** Defaults to true. */
+  readonly autoComplete?: HTMLInputAutoCompleteAttribute
+  /** Defaults to `false`. */
+  readonly hidden?: boolean | ((context: SettingsContext) => boolean)
+  /** Defaults to `true`. */
   readonly editable?: boolean | ((context: SettingsContext) => boolean)
+  readonly descriptionId?: TextId
 }
 
 /** Metadata describing a settings entry that is a form. */
@@ -482,6 +540,7 @@ export interface SettingsFormEntryData<T extends Record<keyof T, string>> {
   readonly getValue: (context: SettingsContext) => T
   readonly onSubmit: (context: SettingsContext, value: T) => Promise<void> | void
   readonly inputs: readonly SettingsInputData<NoInfer<T>>[]
+  readonly getVisible?: (context: SettingsContext) => boolean
 }
 
 /** A type-safe function to define a {@link SettingsFormEntryData}. */

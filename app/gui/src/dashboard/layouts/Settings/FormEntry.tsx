@@ -20,33 +20,32 @@ export function SettingsFormEntry<T extends Record<keyof T, string>>(
   props: SettingsFormEntryProps<T>,
 ) {
   const { context, data } = props
-  const { schema: schemaRaw, getValue, inputs, onSubmit } = data
+  const { schema: schemaRaw, getValue, inputs, onSubmit, getVisible } = data
   const { getText } = useText()
+  const visible = getVisible?.(context) ?? true
   const value = getValue(context)
   const schema = useMemo(
     () => (typeof schemaRaw === 'function' ? schemaRaw(context) : schemaRaw),
     [context, schemaRaw],
   )
 
-  return (
-    <Form
-      gap="none"
-      // @ts-expect-error This is SAFE, as the type `T` is statically known.
-      schema={schema}
-      defaultValues={value}
-      // @ts-expect-error This is SAFE, as the type `T` is statically known.
-      onSubmit={(newValue) => onSubmit(context, newValue)}
-    >
-      {inputs
-        .filter((input) => context.isMatch(getText(input.nameId)))
-        .map((input) => (
+  return !visible ? null : (
+      <Form
+        gap="none"
+        // @ts-expect-error This is SAFE, as the type `T` is statically known.
+        schema={schema}
+        defaultValues={value}
+        // @ts-expect-error This is SAFE, as the type `T` is statically known.
+        onSubmit={(newValue) => onSubmit(context, newValue)}
+      >
+        {inputs.map((input) => (
           <SettingsInput key={input.name} context={context} data={input} />
         ))}
-      <ButtonGroup>
-        <Form.Submit>{getText('save')}</Form.Submit>
-        <Form.Reset>{getText('cancel')}</Form.Reset>
-      </ButtonGroup>
-      <Form.FormError />
-    </Form>
-  )
+        <ButtonGroup>
+          <Form.Submit>{getText('save')}</Form.Submit>
+          <Form.Reset>{getText('cancel')}</Form.Reset>
+        </ButtonGroup>
+        <Form.FormError />
+      </Form>
+    )
 }

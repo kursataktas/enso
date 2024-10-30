@@ -12,7 +12,7 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useSearchParamsState } from '#/hooks/searchParamsStateHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
 import SearchBar from '#/layouts/SearchBar'
-import { useFullUserSession } from '#/providers/AuthProvider'
+import { useAuth, useFullUserSession } from '#/providers/AuthProvider'
 import { useLocalBackend, useRemoteBackend } from '#/providers/BackendProvider'
 import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
@@ -53,6 +53,7 @@ export default function Settings() {
     includesPredicate(Object.values(SettingsTabType)),
   )
   const { user, accessToken } = useFullUserSession()
+  const { changePassword } = useAuth()
   const { getText } = useText()
   const toastAndLog = useToastAndLog()
   const [query, setQuery] = React.useState('')
@@ -98,6 +99,7 @@ export default function Settings() {
       getText,
       queryClient,
       isMatch,
+      changePassword,
     }),
     [
       accessToken,
@@ -113,6 +115,7 @@ export default function Settings() {
       user,
       queryClient,
       isMatch,
+      changePassword,
     ],
   )
 

@@ -18,9 +18,21 @@ export default function SettingsInput<T extends Record<keyof T, string>>(
   props: SettingsInputProps<T>,
 ) {
   const { context, data } = props
-  const { name, nameId, editable } = data
+  const { name, nameId, autoComplete, hidden: hiddenRaw, editable, descriptionId } = data
   const { getText } = useText()
   const isEditable = typeof editable === 'function' ? editable(context) : editable ?? true
+  const hidden = typeof hiddenRaw === 'function' ? hiddenRaw(context) : hiddenRaw ?? false
 
-  return <SettingsAriaInput readOnly={!isEditable} label={getText(nameId)} name={name} />
+  return (
+    <SettingsAriaInput
+      readOnly={!isEditable}
+      label={getText(nameId)}
+      name={name}
+      hidden={hidden}
+      autoComplete={autoComplete}
+      {...(descriptionId != null && {
+        description: getText(descriptionId),
+      })}
+    />
+  )
 }
