@@ -28,12 +28,13 @@ export function DialogDismiss(props: DialogDismissProps): JSX.Element {
       type="button"
       variant="outline"
       size={size}
-      onPress={() => {
-        dialogContext?.close()
-      }}
       /* This is safe because we are passing all props to the button */
       /* eslint-disable-next-line @typescript-eslint/no-explicit-any,no-restricted-syntax */
       {...(buttonProps as any)}
+      onPress={async (event) => {
+        dialogContext?.close()
+        await buttonProps.onPress?.(event)
+      }}
     >
       {getText('cancel')}
     </Button>
