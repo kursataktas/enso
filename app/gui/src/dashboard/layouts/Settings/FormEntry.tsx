@@ -1,8 +1,7 @@
 /** @file Rendering for an {@link SettingsFormEntryData}. */
 import { ButtonGroup, Form } from '#/components/AriaComponents'
-import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useText } from '#/providers/TextProvider'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import SettingsInput from './Input'
 import type { SettingsContext, SettingsFormEntryData } from './data'
 
@@ -23,7 +22,6 @@ export function SettingsFormEntry<T extends Record<keyof T, string>>(
   const { context, data } = props
   const { schema: schemaRaw, getValue, inputs, onSubmit, getVisible } = data
   const { getText } = useText()
-  const [dirty, setDirty] = useState(false)
   const visible = getVisible?.(context) ?? true
   const value = getValue(context)
   const schema = useMemo(
@@ -38,19 +36,10 @@ export function SettingsFormEntry<T extends Record<keyof T, string>>(
     onSubmit: async (newValue) => {
       // @ts-expect-error This is SAFE, as the type `T` is statically known.
       await onSubmit(context, newValue)
-      setDirty(true)
+      form.reset(newValue)
+      // The form should not be reset on error.
     },
   })
-
-  const dirtyEffectDeps = useSyncRef({ context, form, getValue })
-
-  useEffect(() => {
-    const deps = dirtyEffectDeps.current
-    if (dirty) {
-      setDirty(false)
-      deps.form.reset(deps.getValue(deps.context))
-    }
-  }, [dirty, dirtyEffectDeps])
 
   return !visible ? null : (
       <Form form={form} gap="none">
