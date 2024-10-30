@@ -6,6 +6,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
@@ -35,6 +36,14 @@ final class IRNodeClassGenerator {
   /** User defined fields - all the abstract parameterless methods, including the inherited ones. */
   private final List<Field> fields;
 
+  /**
+   * {@link org.enso.compiler.core.IR#duplicate(boolean, boolean, boolean, boolean) duplicate} method element.
+   * We need to know if there is any override with a different return type in the
+   * interface hierarchy.
+   * If not, this is just a reference to the method from IR.
+   */
+  private final ExecutableElement duplicateMethod;
+
   private static final Set<String> defaultImportedTypes =
       Set.of(
           "java.util.UUID",
@@ -61,6 +70,7 @@ final class IRNodeClassGenerator {
     this.interfaceType = interfaceType;
     this.className = className;
     this.fields = getAllFields(interfaceType);
+    this.duplicateMethod = Utils.findDuplicateMethod(interfaceType, processingEnv);
     var nestedTypes =
         interfaceType.getEnclosedElements().stream()
             .filter(
@@ -220,11 +230,65 @@ final class IRNodeClassGenerator {
     return indent(sb.toString(), 2);
   }
 
+  private String duplicateMethodBody() {
+    var nl = System.lineSeparator();
+    var nullableChildrenCode = fields.stream()
+        .filter(field -> field.isChild() && field.isNullable())
+        .map(field -> """
+            IR $childNameDup = null;
+            if ($childName != null) {
+              $childNameDup = $childName.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
+              if (!($childNameDup instanceof $childType)) {
+                throw new IllegalStateException("Duplicated child is not of the expected type: " + $childNameDup);
+              }
+            }
+            """
+            .replace("$childType", field.getSimpleTypeName())
+            .replace("$childName", field.getName())
+            .replace("$childNameDup", field.getName() + "Duplicated"))
+        .collect(Collectors.joining(nl));
+
+    var notNullableChildrenCode = fields.stream()
+        .filter(field -> field.isChild() && !field.isNullable() && !field.isList())
+        .map(field -> """
+            IR $childNameDup =
+              $childName.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
+            if (!($childNameDup instanceof $childType)) {
+              throw new IllegalStateException("Duplicated child is not of the expected type: " + $childNameDup);
+            }
+            """
+            .replace("$childType", field.getSimpleTypeName())
+            .replace("$childName", field.getName())
+            .replace("$childNameDup", field.getName() + "Duplicated"))
+        .collect(Collectors.joining(nl));
+
+    var listChildrenCode = fields.stream()
+        .filter(field -> field.isChild() && field.isList())
+        .map(field -> """
+            $childType $childNameDup =
+              $childName.map(child -> {
+                return child.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
+              });
+            """
+            .replace("$childType", field.getSimpleTypeName())
+            .replace("$childName", field.getName())
+            .replace("$childNameDup", field.getName() + "Duplicated"))
+        .collect(Collectors.joining(nl));
+
+    var code = nullableChildrenCode
+        + nl
+        + notNullableChildrenCode
+        + nl
+        + listChildrenCode;
+    return indent(code, 2);
+  }
+
   /**
    * Returns a String representing all the overriden methods from {@link org.enso.compiler.core.IR}.
    * Meant to be inside the generated record definition.
    */
   private String overrideIRMethods() {
+    var duplicateMethodRetType = duplicateMethod.getReturnType().toString();
     var code =
         """
 
@@ -282,13 +346,13 @@ final class IRNodeClassGenerator {
         }
 
         @Override
-        public IR duplicate(
+        public $duplicateMethodRetType duplicate(
           boolean keepLocations,
           boolean keepMetadata,
           boolean keepDiagnostics,
           boolean keepIdentifiers
         ) {
-          throw new UnsupportedOperationException("unimplemented");
+          $duplicateMethodBody
         }
 
         @Override
@@ -296,7 +360,9 @@ final class IRNodeClassGenerator {
           throw new UnsupportedOperationException("unimplemented");
         }
         """
-            .replace("$childrenMethodBody", childrenMethodBody());
+            .replace("$childrenMethodBody", childrenMethodBody())
+            .replace("$duplicateMethodRetType", duplicateMethodRetType)
+            .replace("$duplicateMethodBody", duplicateMethodBody());
     return indent(code, 2);
   }
 

@@ -355,4 +355,32 @@ public class TestIRProcessor {
     srcSubject.contains("class JBlockGen");
     srcSubject.contains("class JBindingGen");
   }
+
+  @Test
+  public void canOverrideMethodsFromIR() {
+    var src =
+        JavaFileObjects.forSourceString(
+            "JName",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.compiler.core.IR;
+
+        @IRNode
+        public interface JName extends IR {
+          @Override
+          JName duplicate(boolean keepLocations, boolean keepMetadata, boolean keepDiagnostics, boolean keepIdentifiers);
+        
+          interface JSelf extends JName {}
+        }
+        """);
+    var compiler = Compiler.javac().withProcessors(new IRProcessor());
+    var compilation = compiler.compile(src);
+    CompilationSubject.assertThat(compilation).succeeded();
+    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
+    var srcSubject =
+        CompilationSubject.assertThat(compilation)
+            .generatedSourceFile("JNameGen")
+            .contentsAsUtf8String();
+    srcSubject.contains("JName duplicate");
+  }
 }

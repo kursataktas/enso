@@ -11,6 +11,10 @@ public interface JName extends JExpression {
 
   boolean isMethod();
 
+  @Override
+  JName duplicate(boolean keepLocations, boolean keepMetadata, boolean keepDiagnostics,
+      boolean keepIdentifiers);
+
   interface JBlank extends JName {}
 
   interface JLiteral extends JName {
