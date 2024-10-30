@@ -37,7 +37,7 @@ build_regexes faker = 0.up_to regex_count . map _->
 build_replacers faker = 0.up_to regex_count . map _->
     "$0" + (faker.alpha 2) + "$1" + (faker.alpha 2) + "$2"
 
-options = Bench.options . set_warmup (Bench.phase_conf 1 2) . set_measure (Bench.phase_conf 1 2)
+options = Bench.options . set_warmup (Bench.phase_conf 3 5) . set_measure (Bench.phase_conf 3 5)
 
 
 collect_benches = Bench.build builder->
