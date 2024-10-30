@@ -43,6 +43,7 @@ final class IRNodeClassGenerator {
           "org.enso.compiler.core.Identifier",
           "org.enso.compiler.core.IR",
           "org.enso.compiler.core.ir.DiagnosticStorage",
+          "org.enso.compiler.core.ir.DiagnosticStorage$",
           "org.enso.compiler.core.ir.Expression",
           "org.enso.compiler.core.ir.IdentifiedLocation",
           "org.enso.compiler.core.ir.MetadataStorage",
@@ -229,12 +230,19 @@ final class IRNodeClassGenerator {
 
         @Override
         public MetadataStorage passData() {
-          throw new UnsupportedOperationException("unimplemented");
+          if (passData == null) {
+            passData = new MetadataStorage();
+          }
+          return passData;
         }
 
         @Override
         public Option<IdentifiedLocation> location() {
-          throw new UnsupportedOperationException("unimplemented");
+          if (location == null) {
+            return scala.Option.empty();
+          } else {
+            return scala.Option.apply(location);
+          }
         }
 
         @Override
@@ -262,12 +270,15 @@ final class IRNodeClassGenerator {
 
         @Override
         public DiagnosticStorage diagnostics() {
-          throw new UnsupportedOperationException("unimplemented");
+          return diagnostics;
         }
 
         @Override
         public DiagnosticStorage getDiagnostics() {
-          throw new UnsupportedOperationException("unimplemented");
+          if (diagnostics == null) {
+            diagnostics = DiagnosticStorage$.MODULE$.empty();
+          }
+          return diagnostics;
         }
 
         @Override
