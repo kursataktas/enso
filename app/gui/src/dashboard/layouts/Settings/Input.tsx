@@ -64,6 +64,12 @@ function SettingsInput(props: SettingsInputProps, ref: ForwardedRef<HTMLInputEle
     }
   }
 
+  const onBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    if (!cancelled.current) {
+      onSubmit?.(event)
+    }
+  }
+
   return (
     <div className="text my-auto grow font-bold">
       <FocusRing within placement="after">
@@ -71,7 +77,6 @@ function SettingsInput(props: SettingsInputProps, ref: ForwardedRef<HTMLInputEle
           <Input
             {...mergeProps<InputProps & RefAttributes<HTMLInputElement>>()(
               {
-                ref,
                 className: twMerge(
                   'w-full rounded-full bg-transparent font-bold placeholder-black/30 transition-colors invalid:border invalid:border-red-700 hover:bg-selected-frame focus:bg-selected-frame px-1 border-0.5 border-transparent',
                   !isDisabled && 'border-primary/20',
@@ -81,16 +86,16 @@ function SettingsInput(props: SettingsInputProps, ref: ForwardedRef<HTMLInputEle
                 size: 1,
                 autoComplete,
                 placeholder,
-                onKeyDown,
                 onChange,
-                onBlur: (event) => {
-                  if (!cancelled.current) {
-                    onSubmit?.(event)
-                  }
-                },
               },
               focusChildProps,
             )}
+            ref={ref}
+            onKeyDown={(event) => {
+              onKeyDown(event)
+              focusChildProps.onKeyDown(event)
+            }}
+            onBlur={onBlur}
           />
           {type === 'password' && (
             <Button

@@ -33,6 +33,8 @@ export function useStickyTableHeaderOnScroll(
   const [shadowClassName, setShadowClass] = React.useState('')
   const onScroll = useOnScroll(() => {
     if (rootRef.current != null && bodyRef.current != null) {
+      // Unavoidable. This ref is a DOM element we explicitly want to mutate.
+      // eslint-disable-next-line react-compiler/react-compiler
       bodyRef.current.style.clipPath = `inset(${rootRef.current.scrollTop}px 0 0 0)`
       if (trackShadowClassRef.current) {
         const isAtTop = rootRef.current.scrollTop === 0

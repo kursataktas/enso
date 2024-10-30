@@ -1,14 +1,10 @@
-/**
- * @file
- *
- * This file contains the `useDebouncedCallback` hook which is used to debounce a callback function.
- */
+/** @file A hook to debounce a callback function. */
 import * as React from 'react'
 
 import * as callbackHooks from './eventCallbackHooks'
 import * as unmountEffect from './unmountHooks'
 
-/** Wrap a callback into debounce function */
+/** Wrap a callback into a debounced function */
 export function useDebouncedCallback<Fn extends (...args: never[]) => unknown>(
   callback: Fn,
   deps: React.DependencyList,
@@ -59,10 +55,10 @@ export function useDebouncedCallback<Fn extends (...args: never[]) => unknown>(
       if (delay === 0) {
         execute()
       } else {
-        // plan regular execution
+        // Plan regular execution.
         timeoutIdRef.current = setTimeout(execute, delay)
 
-        // plan maxWait execution if required
+        // Plan `maxWait` execution if required.
         if (maxWait > 0 && !waitTimeoutIdRef.current) {
           waitTimeoutIdRef.current = setTimeout(execute, maxWait)
         }
@@ -75,6 +71,8 @@ export function useDebouncedCallback<Fn extends (...args: never[]) => unknown>(
     })
 
     return wrapped
+    // Not possible to address, as this is a wrapped hook.
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stableCallback, delay, maxWait, ...deps])
 }

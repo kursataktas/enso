@@ -3,20 +3,16 @@ import * as React from 'react'
 
 import * as reactQuery from '@tanstack/react-query'
 
-import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
-
-import * as textProvider from '#/providers/TextProvider'
-
-import AssetVersion from '#/layouts/AssetVersions/AssetVersion'
-import * as useAssetVersions from '#/layouts/AssetVersions/useAssetVersions'
+import * as uniqueString from 'enso-common/src/utilities/uniqueString'
 
 import Spinner, * as spinnerModule from '#/components/Spinner'
-
+import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
+import AssetVersion from '#/layouts/AssetVersions/AssetVersion'
+import { useAssetVersions } from '#/layouts/AssetVersions/useAssetVersions'
+import * as textProvider from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
 import * as backendService from '#/services/Backend'
-
 import * as dateTime from '#/utilities/dateTime'
-import * as uniqueString from 'enso-common/src/utilities/uniqueString'
 
 // ==============================
 // === AddNewVersionVariables ===
@@ -48,7 +44,7 @@ export default function AssetVersions(props: AssetVersionsProps) {
   >([])
   const isCloud = backend.type === backendService.BackendType.remote
   const queryKey = [backend.type, 'listAssetVersions', item.id, item.title]
-  const versionsQuery = useAssetVersions.useAssetVersions({
+  const versionsQuery = useAssetVersions({
     backend,
     queryKey,
     assetId: item.id,
