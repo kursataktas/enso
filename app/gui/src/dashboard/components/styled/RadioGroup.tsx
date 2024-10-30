@@ -112,23 +112,17 @@ function RadioGroup(props: aria.RadioGroupProps, ref: React.ForwardedRef<HTMLDiv
   })
 
   const [labelRef, label] = useSlot()
-  const {
-    // This single line is the reason this file exists!
-    // Omit the default `onKeyDown` handler from the return value of this hook.
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    radioGroupProps: { onKeyDown, ...radioGroupProps },
-    labelProps,
-    descriptionProps,
-    errorMessageProps,
-    ...validation
-  } = aria.useRadioGroup(
-    {
-      ...props,
-      label,
-      validationBehavior: props.validationBehavior ?? 'native',
-    },
-    state,
-  )
+  const { radioGroupProps, labelProps, descriptionProps, errorMessageProps, ...validation } =
+    aria.useRadioGroup(
+      {
+        ...props,
+        label,
+        validationBehavior: props.validationBehavior ?? 'native',
+      },
+      state,
+    )
+  // This single line is the reason this file exists!
+  delete radioGroupProps.onKeyDown
 
   const renderProps = useRenderProps({
     ...props,

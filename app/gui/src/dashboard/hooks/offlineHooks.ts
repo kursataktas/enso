@@ -1,4 +1,8 @@
-/** @file Hooks to work with offline status. */
+/**
+ * @file
+ *
+ * Provides set of hooks to work with offline status
+ */
 import * as React from 'react'
 
 import * as reactQuery from '@tanstack/react-query'
@@ -49,10 +53,7 @@ export function useOfflineChange(
     }
   })
 
-  // Unavoidable.
-  // eslint-disable-next-line react-compiler/react-compiler
   if (!triggeredImmediateRef.current) {
-    // eslint-disable-next-line react-compiler/react-compiler
     triggeredImmediateRef.current = true
 
     if (triggerImmediate === 'if-offline' && isOffline) {

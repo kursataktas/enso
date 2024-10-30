@@ -126,7 +126,6 @@ export function useAssetEventListener(
     const events = initialEventsRef.current
     if (events && !alreadyRun) {
       // Event handlers are not idempotent and MUST NOT be handled twice.
-      // eslint-disable-next-line react-compiler/react-compiler
       // eslint-disable-next-line react-hooks/exhaustive-deps
       alreadyRun = true
       for (const event of events) {
@@ -171,7 +170,6 @@ export function useAssetListEventListener(
     const events = initialEventsRef.current
     if (events && !alreadyRun) {
       // Event handlers are not idempotent and MUST NOT be handled twice.
-      // eslint-disable-next-line react-compiler/react-compiler
       // eslint-disable-next-line react-hooks/exhaustive-deps
       alreadyRun = true
       for (const event of events) {

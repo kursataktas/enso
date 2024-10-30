@@ -11,8 +11,6 @@ import * as navigator2DProvider from '#/providers/Navigator2DProvider'
 
 import * as aria from '#/components/aria'
 import * as withFocusScope from '#/components/styled/withFocusScope'
-import { useSingleUnmount } from '#/hooks/lifecycleHooks'
-import { useSyncRef } from '#/hooks/syncRefHooks'
 
 // =================
 // === FocusArea ===
@@ -47,18 +45,30 @@ function FocusArea(props: FocusAreaProps) {
   const navigator2D = navigator2DProvider.useNavigator2D()
   const rootRef = React.useRef<HTMLElement | SVGElement | null>(null)
   const cleanupRef = React.useRef(() => {})
-  const focusChildClassRef = useSyncRef(focusChildClass)
-  const focusDefaultClassRef = useSyncRef(focusDefaultClass)
+  const focusChildClassRef = React.useRef(focusChildClass)
+  focusChildClassRef.current = focusChildClass
+  const focusDefaultClassRef = React.useRef(focusDefaultClass)
+  focusDefaultClassRef.current = focusDefaultClass
 
-  useSingleUnmount(() => {
-    cleanupRef.current()
-  })
+  let isRealRun = !detect.IS_DEV_MODE
+  React.useEffect(() => {
+    return () => {
+      if (isRealRun) {
+        cleanupRef.current()
+      }
+      // This is INTENTIONAL. It may not be causing problems now, but is a defensive measure
+      // to make the implementation of this function consistent with the implementation of
+      // `FocusRoot`.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      isRealRun = true
+    }
+  }, [])
 
   const cachedChildren = React.useMemo(
     () =>
       // This is REQUIRED, otherwise `useFocusWithin` does not work with components from
       // `react-aria-components`.
-      // eslint-disable-next-line no-restricted-syntax, react-compiler/react-compiler
+      // eslint-disable-next-line no-restricted-syntax
       children({
         ref: (element) => {
           rootRef.current = element
@@ -94,16 +104,7 @@ function FocusArea(props: FocusAreaProps) {
         },
         ...focusWithinProps,
       } as FocusWithinProps),
-    [
-      children,
-      focusWithinProps,
-      active,
-      focusManager,
-      navigator2D,
-      direction,
-      focusChildClassRef,
-      focusDefaultClassRef,
-    ],
+    [active, direction, children, focusManager, focusWithinProps, navigator2D],
   )
 
   const result = (

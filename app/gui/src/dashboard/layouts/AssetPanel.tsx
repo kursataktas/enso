@@ -1,10 +1,9 @@
 /** @file A panel containing the description and settings for an asset. */
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import * as z from 'zod'
 
 import { TabPanel, Tabs } from '#/components/aria'
-import { useSyncRef } from '#/hooks/syncRefHooks'
 import ProjectSessions from '#/layouts/AssetProjectSessions'
 import AssetProperties, { type AssetPropertiesSpotlight } from '#/layouts/AssetProperties'
 import AssetVersions from '#/layouts/AssetVersions/AssetVersions'
@@ -76,7 +75,8 @@ export default function AssetPanel(props: AssetPanelProps) {
   const { getText } = useText()
   const { localStorage } = useLocalStorage()
   const [initialized, setInitialized] = useState(false)
-  const initializedRef = useSyncRef(initialized)
+  const initializedRef = useRef(initialized)
+  initializedRef.current = initialized
   const [tabRaw, setTab] = useState(() => localStorage.get('assetPanelTab') ?? 'settings')
   const tab = (() => {
     if (!isCloud) {
@@ -99,7 +99,7 @@ export default function AssetPanel(props: AssetPanelProps) {
     if (initializedRef.current) {
       localStorage.set('assetPanelTab', tabRaw)
     }
-  }, [tabRaw, localStorage, initializedRef])
+  }, [tabRaw, localStorage])
 
   useEffect(() => {
     setInitialized(true)

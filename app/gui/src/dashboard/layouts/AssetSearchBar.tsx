@@ -100,8 +100,6 @@ function Tags(props: InternalTagsProps) {
                   size="xsmall"
                   className="min-w-12"
                   onPress={() => {
-                    // This ref is intended to be mutated.
-                    // eslint-disable-next-line react-compiler/react-compiler
                     querySource.current = QuerySource.internal
                     setQuery(query.add({ [key]: [[]] }))
                   }}
@@ -196,7 +194,6 @@ export default function AssetSearchBar(props: AssetSearchBarProps) {
       }
     }
     // This effect MUST only run when `selectedIndex` changes.
-    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedIndex])
 

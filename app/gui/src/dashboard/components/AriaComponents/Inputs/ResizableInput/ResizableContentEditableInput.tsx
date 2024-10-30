@@ -139,9 +139,7 @@ export const ResizableContentEditableInput = forwardRef(function ResizableConten
         <div className={styles.inputContainer()}>
           <div
             className={styles.textArea()}
-            ref={(el) => {
-              mergeRefs(inputRef, ref, field.ref)(el)
-            }}
+            ref={mergeRefs(inputRef, ref, field.ref)}
             contentEditable
             suppressContentEditableWarning
             role="textbox"

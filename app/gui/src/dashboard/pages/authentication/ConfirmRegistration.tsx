@@ -38,8 +38,6 @@ export default function ConfirmRegistration() {
       auth.confirmSignUp(params.email, params.verificationCode),
     onSuccess: () => {
       if (redirectUrl != null) {
-        // This is a browser builtin value that needs to be written to.
-        // eslint-disable-next-line react-compiler/react-compiler
         window.location.href = redirectUrl
       } else {
         searchParams.delete('verification_code')

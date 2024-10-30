@@ -7,7 +7,6 @@ import * as navigator2DProvider from '#/providers/Navigator2DProvider'
 
 import * as aria from '#/components/aria'
 import * as withFocusScope from '#/components/styled/withFocusScope'
-import { useSingleUnmount } from '#/hooks/lifecycleHooks'
 
 // =================
 // === FocusRoot ===
@@ -31,9 +30,19 @@ function FocusRoot(props: FocusRootProps) {
   const navigator2D = navigator2DProvider.useNavigator2D()
   const cleanupRef = React.useRef(() => {})
 
-  useSingleUnmount(() => {
-    cleanupRef.current()
-  })
+  let isRealRun = !detect.IS_DEV_MODE
+  React.useEffect(() => {
+    return () => {
+      if (isRealRun) {
+        cleanupRef.current()
+      }
+      // This is INTENTIONAL. The first time this hook runs, when in Strict Mode, is *after* the ref
+      // has already been set. This makes the focus root immediately unset itself,
+      // which is incorrect behavior.
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      isRealRun = true
+    }
+  }, [])
 
   const cachedChildren = React.useMemo(
     () =>

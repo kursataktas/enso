@@ -480,7 +480,6 @@ export default function Chat(props: ChatProps) {
       element.scrollTop = element.scrollHeight - element.clientHeight
     }
     // Auto-scroll MUST only happen when the message list changes.
-    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages])
 

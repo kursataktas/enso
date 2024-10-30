@@ -1,15 +1,9 @@
 /** @file Track changes in intersection ratio between an element and one of its ancestors. */
-import { useSyncRef } from '#/hooks/syncRefHooks'
 import * as React from 'react'
 
 // ============================
 // === useIntersectionRatio ===
 // ============================
-
-// UNSAFE. Only type-safe if the `transform` and `initialValue` arguments below are omitted
-// and the generic parameter is not explicitly specified.
-// eslint-disable-next-line no-restricted-syntax
-const DEFAULT_TRANSFORM = (ratio: number) => ratio as never
 
 export function useIntersectionRatio(
   rootRef: Readonly<React.MutableRefObject<HTMLDivElement | null>> | null,
@@ -41,7 +35,11 @@ export function useIntersectionRatio<T>(
   // `initialValue` is guaranteed to be the right type by the overloads.
   // eslint-disable-next-line no-restricted-syntax
   const [value, setValue] = React.useState((initialValue === undefined ? 0 : initialValue) as T)
-  const transformRef = useSyncRef(transform ?? DEFAULT_TRANSFORM)
+  // eslint-disable-next-line no-restricted-syntax
+  const transformRef = React.useRef(transform ?? ((ratio: number) => ratio as never))
+  if (transform) {
+    transformRef.current = transform
+  }
 
   React.useEffect(() => {
     const root = rootRef?.current ?? document.body
@@ -90,7 +88,7 @@ export function useIntersectionRatio<T>(
     } else {
       return
     }
-  }, [targetRef, rootRef, threshold, transformRef])
+  }, [targetRef, rootRef, threshold])
 
   return value
 }

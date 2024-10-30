@@ -5,7 +5,6 @@ import * as modalProvider from '#/providers/ModalProvider'
 
 import Modal from '#/components/Modal'
 
-import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
 // =================
@@ -46,7 +45,8 @@ export default function DragModal(props: DragModalProps) {
   const { unsetModal } = modalProvider.useSetModal()
   const [left, setLeft] = React.useState(event.pageX - (offsetPx ?? offsetXPx))
   const [top, setTop] = React.useState(event.pageY - (offsetPx ?? offsetYPx))
-  const onDragEndOuter = useEventCallback(onDragEndRaw)
+  const onDragEndRef = React.useRef(onDragEndRaw)
+  onDragEndRef.current = onDragEndRaw
 
   React.useEffect(() => {
     const onDrag = (dragEvent: MouseEvent) => {
@@ -56,7 +56,7 @@ export default function DragModal(props: DragModalProps) {
       }
     }
     const onDragEnd = () => {
-      onDragEndOuter()
+      onDragEndRef.current()
       unsetModal()
     }
     // Update position (non-FF)
@@ -69,7 +69,7 @@ export default function DragModal(props: DragModalProps) {
       document.removeEventListener('dragover', onDrag, { capture: true })
       document.removeEventListener('dragend', onDragEnd, { capture: true })
     }
-  }, [offsetPx, offsetXPx, offsetYPx, onDragEndOuter, unsetModal])
+  }, [offsetPx, offsetXPx, offsetYPx, unsetModal])
 
   return (
     <Modal className="pointer-events-none absolute size-full overflow-hidden">

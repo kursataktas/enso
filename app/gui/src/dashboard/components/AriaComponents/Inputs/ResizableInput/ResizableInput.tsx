@@ -60,9 +60,7 @@ export const ResizableInput = forwardRef(function ResizableInput(
       >
         <div className={inputContainer()}>
           <aria.TextArea
-            ref={(el) => {
-              mergeRefs.mergeRefs(inputRef, ref)(el)
-            }}
+            ref={mergeRefs.mergeRefs(inputRef, ref)}
             onPaste={onPaste}
             className={textArea()}
             placeholder={placeholder}
