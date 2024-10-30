@@ -483,6 +483,12 @@ const rightDockVisible = useSelectRef(
   showRightDock,
 )
 
+/** Show help panel if it is not visible. If it is visible, close the right dock. */
+function toggleRightDockHelpPanel() {
+  rightDockVisible.value = !rightDockVisible.value || rightDockDisplayedTab.value !== 'help'
+  rightDockDisplayedTab.value = 'help'
+}
+
 function editWithComponentBrowser(node: NodeId, cursorPos: number) {
   openComponentBrowser(
     { type: 'editNode', node, cursorPos },
@@ -720,8 +726,9 @@ const documentationEditorFullscreen = ref(false)
       <div ref="viewportNode" class="viewport" @click="handleClick">
         <GraphNodes
           @nodeOutputPortDoubleClick="handleNodeOutputPortDoubleClick"
-          @nodeDoubleClick="(id) => stackNavigator.enterNode(id)"
+          @enterNode="(id) => stackNavigator.enterNode(id)"
           @createNodes="createNodesFromSource"
+          @toggleDocPanel="toggleRightDockHelpPanel"
         />
         <GraphEdges :navigator="graphNavigator" @createNodeFromEdge="handleEdgeDrop" />
         <ComponentBrowser
@@ -779,11 +786,7 @@ const documentationEditorFullscreen = ref(false)
         />
       </template>
       <template #help>
-        <ComponentDocumentation
-          :displayedSuggestionId="displayedDocs"
-          :aiMode="aiMode"
-          @update:displayedSuggestionId="displayedDocs = $event"
-        />
+        <ComponentDocumentation v-model="displayedDocs" :aiMode="aiMode" />
       </template>
     </DockPanel>
   </div>
