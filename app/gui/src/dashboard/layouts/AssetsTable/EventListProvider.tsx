@@ -6,7 +6,6 @@ import * as zustand from 'zustand'
 
 import type * as assetEvent from '#/events/assetEvent'
 import type * as assetListEvent from '#/events/assetListEvent'
-import { useEventCallback } from '#/hooks/eventCallbackHooks'
 
 // ======================
 // === EventListStore ===
@@ -116,21 +115,25 @@ export function useAssetEventListener(
   callback: (event: assetEvent.AssetEvent) => Promise<void> | void,
   initialEvents?: readonly assetEvent.AssetEvent[] | null,
 ) {
-  const stableCallback = useEventCallback(callback)
+  const callbackRef = React.useRef(callback)
+  callbackRef.current = callback
   const store = useEventList()
   const seen = React.useRef(new WeakSet())
   const initialEventsRef = React.useRef(initialEvents)
 
+  let alreadyRun = false
   React.useEffect(() => {
     const events = initialEventsRef.current
-    if (events) {
+    if (events && !alreadyRun) {
+      // Event handlers are not idempotent and MUST NOT be handled twice.
+      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      alreadyRun = true
       for (const event of events) {
-        void stableCallback(event)
+        void callbackRef.current(event)
       }
     }
-    // Clear the events list to avoid handling them twice in dev mode.
-    initialEventsRef.current = undefined
-  }, [stableCallback])
+  }, [])
 
   React.useEffect(
     () =>
@@ -139,12 +142,12 @@ export function useAssetEventListener(
           for (const event of state.assetEvents) {
             if (!seen.current.has(event)) {
               seen.current.add(event)
-              void stableCallback(event)
+              void callbackRef.current(event)
             }
           }
         }
       }),
-    [stableCallback, store],
+    [store],
   )
 }
 
@@ -157,21 +160,25 @@ export function useAssetListEventListener(
   callback: (event: assetListEvent.AssetListEvent) => Promise<void> | void,
   initialEvents?: readonly assetListEvent.AssetListEvent[] | null,
 ) {
-  const stableCallback = useEventCallback(callback)
+  const callbackRef = React.useRef(callback)
+  callbackRef.current = callback
   const store = useEventList()
   const seen = React.useRef(new WeakSet())
   const initialEventsRef = React.useRef(initialEvents)
 
+  let alreadyRun = false
   React.useEffect(() => {
     const events = initialEventsRef.current
-    if (events) {
+    if (events && !alreadyRun) {
+      // Event handlers are not idempotent and MUST NOT be handled twice.
+      // eslint-disable-next-line react-compiler/react-compiler
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      alreadyRun = true
       for (const event of events) {
-        void stableCallback(event)
+        void callbackRef.current(event)
       }
     }
-    // Clear the events list to avoid handling them twice in dev mode.
-    initialEventsRef.current = undefined
-  }, [stableCallback])
+  }, [])
 
   React.useEffect(
     () =>
@@ -180,11 +187,11 @@ export function useAssetListEventListener(
           for (const event of state.assetListEvents) {
             if (!seen.current.has(event)) {
               seen.current.add(event)
-              void stableCallback(event)
+              void callbackRef.current(event)
             }
           }
         }
       }),
-    [stableCallback, store],
+    [store],
   )
 }

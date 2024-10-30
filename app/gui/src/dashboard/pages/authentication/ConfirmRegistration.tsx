@@ -13,7 +13,6 @@ import { Button, ButtonGroup } from '#/components/AriaComponents'
 import { useMounted } from '#/hooks/mountHooks'
 import * as authProvider from '#/providers/AuthProvider'
 import { useText } from '#/providers/TextProvider'
-import { unsafeWriteValue } from '#/utilities/write'
 import { useMutation } from '@tanstack/react-query'
 import AuthenticationPage from './AuthenticationPage'
 
@@ -39,7 +38,9 @@ export default function ConfirmRegistration() {
       auth.confirmSignUp(params.email, params.verificationCode),
     onSuccess: () => {
       if (redirectUrl != null) {
-        unsafeWriteValue(window.location, 'href', redirectUrl)
+        // This is a browser builtin value that needs to be written to.
+        // eslint-disable-next-line react-compiler/react-compiler
+        window.location.href = redirectUrl
       } else {
         searchParams.delete('verification_code')
         searchParams.delete('email')
