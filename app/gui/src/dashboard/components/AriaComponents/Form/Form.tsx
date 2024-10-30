@@ -130,7 +130,6 @@ export const Form = forwardRef(function Form<
   useForm: typeof components.useForm
   useField: typeof components.useField
   Submit: typeof components.Submit
-  DismissDialog: typeof components.DismissDialog
   Reset: typeof components.Reset
   Field: typeof components.Field
   FormError: typeof components.FormError
@@ -150,7 +149,6 @@ Form.useForm = components.useForm
 Form.useField = components.useField
 Form.useFormSchema = components.useFormSchema
 Form.Submit = components.Submit
-Form.DismissDialog = components.DismissDialog
 Form.Reset = components.Reset
 Form.FormError = components.FormError
 Form.useFormContext = components.useFormContext

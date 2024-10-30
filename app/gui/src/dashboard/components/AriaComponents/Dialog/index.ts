@@ -12,5 +12,6 @@ export {
   type DialogStackItem,
 } from './DialogStackProvider'
 export * from './DialogTrigger'
+export * from './Dismiss'
 export * from './Popover'
 export * from './variants'
