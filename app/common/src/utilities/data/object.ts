@@ -1,5 +1,4 @@
 /** @file Functions related to manipulating objects. */
-import fastDeepEqual from 'fast-deep-equal/es6/react'
 
 // ===============
 // === Mutable ===
@@ -9,13 +8,6 @@ import fastDeepEqual from 'fast-deep-equal/es6/react'
 export type Mutable<T> = {
   -readonly [K in keyof T]: T[K]
 }
-
-/**
- * Whether two values are deeply equal. Compares most builtin data types
- * (primitives, `Date`, `RegExp`, `Map`, `Set`, and typed arrays) by value.
- * Considers `NaN` as equal to itself, and `0` as unequal to `-0`.
- */
-export const deepEqual: <T>(a: T, b: T) => boolean = fastDeepEqual
 
 // =============
 // === merge ===
