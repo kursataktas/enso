@@ -1000,7 +1000,7 @@ type DB_Column
     round_integer self decimal_places use_bankers =
         new_name = self.naming_helper.function_name "round" [self]
         scale = 10 ^ -decimal_places
-        halfway = scale.div 2
+        halfway = scale / 2
         remainder = self % scale
         remainder.let "remainer" remainder->
             scaled_down = (self / scale).truncate . cast Value_Type.Integer
