@@ -1,17 +1,12 @@
-/**
- * @file Cancel button for forms.
- * Manages the form state and displays a loading spinner when the form is submitting.
- */
+/** @file Cancel button for forms. */
 import type { JSX } from 'react'
 
 import { Form, useDialogContext, type ButtonProps } from '#/components/AriaComponents'
 import { useText } from '#/providers/TextProvider'
 import type { FormInstance } from './types'
 
-/**
- * Additional props for the Cancel component.
- */
-interface CancelButtonBaseProps {
+/** Additional props for the Cancel component. */
+interface DismissDialogBaseProps {
   readonly variant?: ButtonProps['variant']
   /**
    * Connects the submit button to a form.
@@ -24,17 +19,12 @@ interface CancelButtonBaseProps {
   readonly form?: FormInstance<any>
 }
 
-/**
- * Props for the Cancel component.
- */
-export type CancelProps = CancelButtonBaseProps &
+/** Props for the Cancel component. */
+export type DismissDialogProps = DismissDialogBaseProps &
   Omit<ButtonProps, 'formnovalidate' | 'href' | 'variant'>
 
-/**
- * Cancel button for forms.
- * Manages the form state and displays a loading spinner when the form is submitting.
- */
-export function Cancel(props: CancelProps): JSX.Element {
+/** Cancel button for forms. */
+export function DismissDialog(props: DismissDialogProps): JSX.Element {
   const { getText } = useText()
 
   const { size = 'medium', ...buttonProps } = props

@@ -123,7 +123,7 @@ export default function CaptureKeyboardShortcutModal(props: CaptureKeyboardShort
         </Text>
         <ButtonGroup>
           <Form.Submit isDisabled={!canSubmit}>{getText('confirm')}</Form.Submit>
-          <Form.Cancel />
+          <Form.DismissDialog />
         </ButtonGroup>
       </Form>
     </Dialog>
