@@ -29,6 +29,11 @@ final class ListField implements Field {
   }
 
   @Override
+  public String getTypeParameter() {
+    return typeArgElement.getSimpleName().toString();
+  }
+
+  @Override
   public List<String> getImportedTypes() {
     var typePar = typeArgElement.getQualifiedName().toString();
     return List.of("scala.collection.immutable.List", typePar);

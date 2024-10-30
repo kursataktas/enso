@@ -37,10 +37,9 @@ final class IRNodeClassGenerator {
   private final List<Field> fields;
 
   /**
-   * {@link org.enso.compiler.core.IR#duplicate(boolean, boolean, boolean, boolean) duplicate} method element.
-   * We need to know if there is any override with a different return type in the
-   * interface hierarchy.
-   * If not, this is just a reference to the method from IR.
+   * {@link org.enso.compiler.core.IR#duplicate(boolean, boolean, boolean, boolean) duplicate}
+   * method element. We need to know if there is any override with a different return type in the
+   * interface hierarchy. If not, this is just a reference to the method from IR.
    */
   private final ExecutableElement duplicateMethod;
 
@@ -232,9 +231,12 @@ final class IRNodeClassGenerator {
 
   private String duplicateMethodBody() {
     var nl = System.lineSeparator();
-    var nullableChildrenCode = fields.stream()
-        .filter(field -> field.isChild() && field.isNullable())
-        .map(field -> """
+    var nullableChildrenCode =
+        fields.stream()
+            .filter(field -> field.isChild() && field.isNullable())
+            .map(
+                field ->
+                    """
             IR $childNameDup = null;
             if ($childName != null) {
               $childNameDup = $childName.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
@@ -243,44 +245,58 @@ final class IRNodeClassGenerator {
               }
             }
             """
-            .replace("$childType", field.getSimpleTypeName())
-            .replace("$childName", field.getName())
-            .replace("$childNameDup", field.getName() + "Duplicated"))
-        .collect(Collectors.joining(nl));
+                        .replace("$childType", field.getSimpleTypeName())
+                        .replace("$childName", field.getName())
+                        .replace("$childNameDup", field.getName() + "Duplicated"))
+            .collect(Collectors.joining(nl));
 
-    var notNullableChildrenCode = fields.stream()
-        .filter(field -> field.isChild() && !field.isNullable() && !field.isList())
-        .map(field -> """
+    var notNullableChildrenCode =
+        fields.stream()
+            .filter(field -> field.isChild() && !field.isNullable() && !field.isList())
+            .map(
+                field ->
+                    """
             IR $childNameDup =
               $childName.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
             if (!($childNameDup instanceof $childType)) {
               throw new IllegalStateException("Duplicated child is not of the expected type: " + $childNameDup);
             }
             """
-            .replace("$childType", field.getSimpleTypeName())
-            .replace("$childName", field.getName())
-            .replace("$childNameDup", field.getName() + "Duplicated"))
-        .collect(Collectors.joining(nl));
+                        .replace("$childType", field.getSimpleTypeName())
+                        .replace("$childName", field.getName())
+                        .replace("$childNameDup", field.getName() + "Duplicated"))
+            .collect(Collectors.joining(nl));
 
-    var listChildrenCode = fields.stream()
-        .filter(field -> field.isChild() && field.isList())
-        .map(field -> """
-            $childType $childNameDup =
+    var listChildrenCode =
+        fields.stream()
+            .filter(field -> field.isChild() && field.isList())
+            .map(
+                field ->
+                    """
+            $childListType $childNameDup =
               $childName.map(child -> {
-                return child.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
+                IR dupChild = child.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
+                if (!(dupChild instanceof $childType)) {
+                  throw new IllegalStateException("Duplicated child is not of the expected type: " + dupChild);
+                }
+                return ($childType) dupChild;
               });
             """
-            .replace("$childType", field.getSimpleTypeName())
-            .replace("$childName", field.getName())
-            .replace("$childNameDup", field.getName() + "Duplicated"))
-        .collect(Collectors.joining(nl));
+                        .replace("$childListType", field.getSimpleTypeName())
+                        .replace("$childType", field.getTypeParameter())
+                        .replace("$childName", field.getName())
+                        .replace("$childNameDup", field.getName() + "Duplicated"))
+            .collect(Collectors.joining(nl));
 
-    var code = nullableChildrenCode
-        + nl
-        + notNullableChildrenCode
-        + nl
-        + listChildrenCode;
+    var code = nullableChildrenCode + nl + notNullableChildrenCode + nl + listChildrenCode;
+    if (stripWhitespaces(code).isEmpty()) {
+      code = "return new " + className + "();";
+    }
     return indent(code, 2);
+  }
+
+  private static String stripWhitespaces(String s) {
+    return s.replaceAll("\\s+", "");
   }
 
   /**

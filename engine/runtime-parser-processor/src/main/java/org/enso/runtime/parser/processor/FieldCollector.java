@@ -24,7 +24,6 @@ final class FieldCollector {
   private final Map<String, Field> fields = new LinkedHashMap<>();
 
   /**
-   *
    * @param irNodeInterface For this interface, fields will be collected.
    */
   FieldCollector(ProcessingEnvironment processingEnv, TypeElement irNodeInterface) {
@@ -59,9 +58,7 @@ final class FieldCollector {
     return fields.values().stream().toList();
   }
 
-  /**
-   * Collect only parameterless methods without default implementation.
-   */
+  /** Collect only parameterless methods without default implementation. */
   private void collectFromSingleInterface(TypeElement typeElem) {
     assert typeElem.getKind() == ElementKind.INTERFACE;
     for (var childElem : typeElem.getEnclosedElements()) {

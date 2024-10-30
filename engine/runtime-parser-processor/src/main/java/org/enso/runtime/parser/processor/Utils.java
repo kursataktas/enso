@@ -91,11 +91,12 @@ final class Utils {
   }
 
   /**
-   * Find any override of {@link org.enso.compiler.core.IR#duplicate(boolean, boolean, boolean, boolean) duplicate method}.
-   * Or the duplicate method on the interface itself.
-   * Note that there can be an override with a different return type in a sub interface.
-   * @param interfaceType Interface from where the search is started.
-   *                      All super interfaces are searched transitively.
+   * Find any override of {@link org.enso.compiler.core.IR#duplicate(boolean, boolean, boolean,
+   * boolean) duplicate method}. Or the duplicate method on the interface itself. Note that there
+   * can be an override with a different return type in a sub interface.
+   *
+   * @param interfaceType Interface from where the search is started. All super interfaces are
+   *     searched transitively.
    * @return not null.
    */
   static ExecutableElement findDuplicateMethod(
@@ -114,15 +115,17 @@ final class Utils {
               }
             }
           }
-        }
-    );
-    assert duplicateMethod[0] != null : "Interface " + interfaceType.getQualifiedName() + " must implement IR, so it must declare duplicate method";
+        });
+    assert duplicateMethod[0] != null
+        : "Interface "
+            + interfaceType.getQualifiedName()
+            + " must implement IR, so it must declare duplicate method";
     return duplicateMethod[0];
   }
 
   private static boolean isDuplicateMethod(ExecutableElement executableElement) {
-    return executableElement.getSimpleName().toString().equals("duplicate") &&
-        executableElement.getParameters().size() == 4;
+    return executableElement.getSimpleName().toString().equals("duplicate")
+        && executableElement.getParameters().size() == 4;
   }
 
   private static void iterateSuperInterfaces(

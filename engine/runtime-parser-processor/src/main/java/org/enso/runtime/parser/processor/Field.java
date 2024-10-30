@@ -59,4 +59,9 @@ interface Field {
    * @return true if this field extends {@link org.enso.compiler.core.ir.Expression}
    */
   boolean isExpression();
+
+  /** Returns the type parameter, if this field is a generic type. Otherwise null. */
+  default String getTypeParameter() {
+    return null;
+  }
 }
