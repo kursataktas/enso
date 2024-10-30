@@ -1,4 +1,5 @@
 /** @file Hooks for. */
+import { useSyncRef } from '#/hooks/syncRefHooks'
 import { unsafeWriteValue } from '#/utilities/write'
 import * as React from 'react'
 
@@ -69,8 +70,7 @@ export function useAutoScroll(
   const animationFrameHandle = React.useRef(0)
   const pointerX = React.useRef(0)
   const pointerY = React.useRef(0)
-  const optionsRef = React.useRef(options)
-  optionsRef.current = options
+  const optionsRef = useSyncRef(options)
 
   const onMouseEvent = React.useCallback((event: MouseEvent | React.MouseEvent) => {
     pointerX.current = event.clientX
@@ -108,7 +108,11 @@ export function useAutoScroll(
         if (scrollContainer.scrollTop + rect.height < scrollContainer.scrollHeight) {
           const distanceToBottom = Math.max(0, rect.bottom - pointerY.current - insetBottom)
           if (distanceToBottom < threshold) {
-            scrollContainer.scrollTop += Math.floor(speed / (distanceToBottom + falloff))
+            unsafeWriteValue(
+              scrollContainer,
+              'scrollTop',
+              scrollContainer.scrollTop + Math.floor(speed / (distanceToBottom + falloff)),
+            )
           }
         }
       }
@@ -116,19 +120,27 @@ export function useAutoScroll(
         if (scrollContainer.scrollLeft > 0) {
           const distanceToLeft = Math.max(0, pointerX.current - rect.top - insetLeft)
           if (distanceToLeft < threshold) {
-            scrollContainer.scrollLeft -= Math.floor(speed / (distanceToLeft + falloff))
+            unsafeWriteValue(
+              scrollContainer,
+              'scrollLeft',
+              scrollContainer.scrollLeft - Math.floor(speed / (distanceToLeft + falloff)),
+            )
           }
         }
         if (scrollContainer.scrollLeft + rect.width < scrollContainer.scrollWidth) {
           const distanceToRight = Math.max(0, rect.right - pointerX.current - insetRight)
           if (distanceToRight < threshold) {
-            scrollContainer.scrollLeft += Math.floor(speed / (distanceToRight + falloff))
+            unsafeWriteValue(
+              scrollContainer,
+              'scrollLeft',
+              scrollContainer.scrollLeft + Math.floor(speed / (distanceToRight + falloff)),
+            )
           }
         }
       }
       animationFrameHandle.current = requestAnimationFrame(onAnimationFrame)
     }
-  }, [scrollContainerRef])
+  }, [optionsRef, scrollContainerRef])
 
   const startAutoScroll = React.useCallback(() => {
     if (!isScrolling.current) {
