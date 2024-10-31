@@ -1,15 +1,39 @@
 package org.enso.runtime.parser.processor.test;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 
 import com.google.testing.compile.CompilationSubject;
 import com.google.testing.compile.Compiler;
 import com.google.testing.compile.JavaFileObjects;
+import java.io.IOException;
 import org.enso.runtime.parser.processor.IRProcessor;
 import org.junit.Test;
 
 public class TestIRProcessor {
+  /**
+   * Compiles the code given in {@code src} with {@link IRProcessor} and returns the
+   * contents of the generated java source file.
+   * @param name FQN of the Java source file
+   * @param src
+   * @return
+   */
+  private static String generatedClass(String name, String src) {
+    var srcObject = JavaFileObjects.forSourceString(name, src);
+    var compiler = Compiler.javac().withProcessors(new IRProcessor());
+    var compilation = compiler.compile(srcObject);
+    CompilationSubject.assertThat(compilation).succeeded();
+    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
+    var generatedSrc = compilation.generatedSourceFiles().get(0);
+    try {
+      return generatedSrc.getCharContent(false).toString();
+    } catch (IOException e) {
+      throw new AssertionError(e);
+    }
+  }
+
   @Test
   public void simpleIRNodeWithoutChildren_CompilationSucceeds() {
     var src =
@@ -83,10 +107,7 @@ public class TestIRProcessor {
 
   @Test
   public void simpleIRNodeWithChild() {
-    var src =
-        JavaFileObjects.forSourceString(
-            "MyIR",
-            """
+    var genSrc = generatedClass("MyIR", """
         import org.enso.runtime.parser.dsl.IRNode;
         import org.enso.runtime.parser.dsl.IRChild;
         import org.enso.compiler.core.IR;
@@ -97,22 +118,13 @@ public class TestIRProcessor {
           @IRChild JExpression expression();
         }
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    CompilationSubject.assertThat(compilation).generatedSourceFile("MyIRGen").isNotNull();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("MyIRGen")
-            .contentsAsUtf8String();
-    srcSubject.containsMatch("JExpression expression\\(\\)");
+    assertThat(genSrc, containsString("JExpression expression()"));
   }
 
   @Test
   public void irNodeWithMultipleFields_PrimitiveField() {
-    var src =
-        JavaFileObjects.forSourceString(
+    var genSrc =
+        generatedClass(
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.IRNode;
@@ -125,21 +137,13 @@ public class TestIRProcessor {
           boolean suspended();
         }
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("MyIRGen")
-            .contentsAsUtf8String();
-    srcSubject.containsMatch("boolean suspended\\(\\)");
+    assertThat(genSrc, containsString("boolean suspended()"));
   }
 
   @Test
   public void irNodeWithInheritedField() {
     var src =
-        JavaFileObjects.forSourceString(
+        generatedClass(
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.IRNode;
@@ -156,21 +160,13 @@ public class TestIRProcessor {
         }
 
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("MyIRGen")
-            .contentsAsUtf8String();
-    srcSubject.containsMatch("boolean suspended\\(\\)");
+    assertThat(src, containsString("boolean suspended()"));
   }
 
   @Test
   public void irNodeWithInheritedField_Override() {
     var src =
-        JavaFileObjects.forSourceString(
+        generatedClass(
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.IRNode;
@@ -188,21 +184,13 @@ public class TestIRProcessor {
         }
 
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("MyIRGen")
-            .contentsAsUtf8String();
-    srcSubject.containsMatch("boolean suspended\\(\\)");
+    assertThat(src, containsString("boolean suspended()"));
   }
 
   @Test
   public void irNodeWithInheritedField_Transitive() {
     var src =
-        JavaFileObjects.forSourceString(
+        generatedClass(
             "MyIR",
             """
         import org.enso.runtime.parser.dsl.IRNode;
@@ -220,23 +208,14 @@ public class TestIRProcessor {
         @IRNode
         public interface MyIR extends MySuperIR {
         }
-
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("MyIRGen")
-            .contentsAsUtf8String();
-    srcSubject.containsMatch("boolean suspended\\(\\)");
+    assertThat(src, containsString("boolean suspended()"));
   }
 
   @Test
   public void irNodeAsNestedInterface() {
     var src =
-        JavaFileObjects.forSourceString(
+        generatedClass(
             "JName",
             """
         import org.enso.runtime.parser.dsl.IRNode;
@@ -249,22 +228,14 @@ public class TestIRProcessor {
           interface JBlank extends JName {}
         }
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("JNameGen")
-            .contentsAsUtf8String();
-    srcSubject.contains("public final class JNameGen");
-    srcSubject.contains("public static final class JBlankGen implements JName.JBlank");
+    assertThat(src, containsString("public final class JNameGen"));
+    assertThat(src, containsString("public static final class JBlankGen implements JName.JBlank"));
   }
 
   @Test
   public void returnValueCanBeScalaList() {
     var src =
-        JavaFileObjects.forSourceString(
+        generatedClass(
             "JName",
             """
         import org.enso.runtime.parser.dsl.IRNode;
@@ -278,22 +249,14 @@ public class TestIRProcessor {
           List<IR> expressions();
         }
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("JNameGen")
-            .contentsAsUtf8String();
-    srcSubject.contains("public final class JNameGen");
-    srcSubject.contains("List<IR> expressions");
+    assertThat(src, containsString("public final class JNameGen"));
+    assertThat(src, containsString("List<IR> expressions"));
   }
 
   @Test
   public void processorDoesNotGenerateOverridenMethods() {
     var src =
-        JavaFileObjects.forSourceString(
+        generatedClass(
             "JName",
             """
         import org.enso.runtime.parser.dsl.IRNode;
@@ -311,22 +274,14 @@ public class TestIRProcessor {
           }
         }
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("JNameGen")
-            .contentsAsUtf8String();
-    srcSubject.contains("public final class JNameGen");
-    srcSubject.doesNotContain("String name()");
+    assertThat(src, containsString("public final class JNameGen"));
+    assertThat(src, not(containsString("String name()")));
   }
 
   @Test
   public void overrideCorrectMethods() {
     var src =
-        JavaFileObjects.forSourceString(
+        generatedClass(
             "JExpression",
             """
         import org.enso.runtime.parser.dsl.IRNode;
@@ -344,22 +299,14 @@ public class TestIRProcessor {
           }
         }
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("JExpressionGen")
-            .contentsAsUtf8String();
-    srcSubject.contains("class JBlockGen");
-    srcSubject.contains("class JBindingGen");
+    assertThat(src, containsString("class JBlockGen"));
+    assertThat(src, containsString("class JBindingGen"));
   }
 
   @Test
   public void canOverrideMethodsFromIR() {
     var src =
-        JavaFileObjects.forSourceString(
+        generatedClass(
             "JName",
             """
         import org.enso.runtime.parser.dsl.IRNode;
@@ -373,14 +320,6 @@ public class TestIRProcessor {
           interface JSelf extends JName {}
         }
         """);
-    var compiler = Compiler.javac().withProcessors(new IRProcessor());
-    var compilation = compiler.compile(src);
-    CompilationSubject.assertThat(compilation).succeeded();
-    assertThat("Generated just one source", compilation.generatedSourceFiles().size(), is(1));
-    var srcSubject =
-        CompilationSubject.assertThat(compilation)
-            .generatedSourceFile("JNameGen")
-            .contentsAsUtf8String();
-    srcSubject.contains("JName duplicate");
+    assertThat(src, containsString("JName duplicate"));
   }
 }
