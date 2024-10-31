@@ -89,7 +89,7 @@ export function MarkdownViewer(props: MarkdownViewerProps) {
       markedInstance.parse(text, {
         async: true,
         walkTokens: async (token) => {
-          if (token.type === 'image') {
+          if (token.type === 'image' && 'href' in token && typeof token.href === 'string') {
             token.href = await imgUrlResolver(token.href)
           }
         },
