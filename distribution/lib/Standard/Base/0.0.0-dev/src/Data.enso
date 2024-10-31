@@ -1,5 +1,7 @@
 import project.Any.Any
 import project.Data.Pair.Pair
+import project.Data.Read.Many_Files_List.Many_Files_List
+import project.Data.Read.Return_As.Return_As
 import project.Data.Text.Encoding.Encoding
 import project.Data.Text.Text
 import project.Data.Vector.Vector
@@ -139,6 +141,9 @@ read path=(Missing_Argument.throw "path") format=Auto_Detect (on_problems : Prob
 read_many : Many_Files_List -> File_Format -> Return_As -> Problem_Behavior -> Any ! File_Error
 read_many (paths : Many_Files_List = Missing_Argument.throw "paths") format=Auto_Detect return=..Vector (on_problems : Problem_Behavior = ..Report_Warning) =
     return_as = Return_As.resolve return
+    loaded_objects = paths.paths_to_load.map on_problems=on_problems path->
+        Data.read path format on_problems
+    return_as.make_return paths loaded_objects
 
 ## ALIAS load text, open text
    GROUP Input

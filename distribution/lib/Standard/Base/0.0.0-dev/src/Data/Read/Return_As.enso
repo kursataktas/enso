@@ -22,6 +22,10 @@ type Return_As
     to_display_text self -> Text = self.underlying.to_display_text
 
     ## PRIVATE
+    make_return (input : Many_Files_List) (objects : Vector Any) =
+        self.underlying.make_return input objects
+
+    ## PRIVATE
     private _get_known_return_classes -> Vector =
         Vector.from_polyglot_array (ReadManyReturnSPI.get_types False)
 
@@ -54,6 +58,11 @@ type Return_As_Base
     ## PRIVATE
     get_dropdown_options : Vector Option
     get_dropdown_options = [Option "Vector" "..Vector"]
+
+    ## PRIVATE
+    make_return (input : Many_Files_List) (objects : Vector Any) =
+        _ = input
+        objects
 
 ## PRIVATE
 Return_As.from (that : Return_As_Base) =
