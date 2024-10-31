@@ -71,7 +71,7 @@ pub fn is_github_hosted() -> String {
     "startsWith(runner.name, 'GitHub Actions') || startsWith(runner.name, 'Hosted Agent')".into()
 }
 
-pub fn setup_bazel() -> Step {
+pub fn setup_bazel_non_windows() -> Step {
     Step {
         name: Some("Setup bazel environment".into()),
         uses: Some("bazel-contrib/setup-bazel@0.9.0".into()),
@@ -80,9 +80,28 @@ pub fn setup_bazel() -> Step {
             ("disk-cache".to_string(), serde_yaml::Value::Bool(true)),
             ("repository-cache".to_string(), serde_yaml::Value::Bool(true)),
         ]))),
+        r#if: Some(is_non_windows_runner()),
         ..default()
     }
 }
+
+pub fn setup_bazel_windows() -> Step {
+    Step {
+        name: Some("Setup bazel environment".into()),
+        uses: Some("bazel-contrib/setup-bazel@0.9.0".into()),
+        with: Some(step::Argument::Other(BTreeMap::from([
+            (
+                "bazelrc".to_string(),
+                serde_yaml::Value::String("startup --output_base=c:/_bazel".into()),
+            ),
+            // TODO: We want to have the caches enabled, but for now it won't work with manually
+            // set output base on windows.
+        ]))),
+        r#if: Some(is_windows_runner()),
+        ..default()
+    }
+}
+
 
 pub fn setup_wasm_pack_step() -> Step {
     Step {
