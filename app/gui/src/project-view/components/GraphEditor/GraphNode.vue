@@ -43,10 +43,6 @@ const CONTENT_PADDING = 4
 const CONTENT_PADDING_PX = `${CONTENT_PADDING}px`
 const MENU_CLOSE_TIMEOUT_MS = 300
 
-const contentNodeStyle = {
-  padding: CONTENT_PADDING_PX,
-}
-
 const props = defineProps<{
   node: Node
   edited: boolean
@@ -514,8 +510,8 @@ watchEffect(() => {
     />
     <div
       ref="contentNode"
-      :class="{ content: true, dragged: isDragged }"
-      :style="contentNodeStyle"
+      :class="{ content: true, dragged: isDragged, selected: selected, singleSelected: isOnlyOneSelected }"
+      :style="{ padding: CONTENT_PADDING_PX, color: (selected ? 'var(--node-color-primary)' : 'white') }"
       v-on="dragPointer.events"
       @click="handleNodeClick"
     >
@@ -545,7 +541,7 @@ watchEffect(() => {
       :type="visibleMessage.type"
     />
     <svg class="bgPaths">
-      <rect class="bgFill" />
+      <rect class="bgFill" :style="{fillOpacity: (selected ? 0.2 : 1)}" />
       <GraphNodeOutputPorts
         v-if="props.node.type !== 'output'"
         :nodeId="nodeId"
