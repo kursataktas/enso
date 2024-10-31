@@ -34,7 +34,7 @@ interface AddNewVersionVariables {
 /** Props for a {@link AssetVersions}. */
 export interface AssetVersionsProps {
   readonly backend: Backend
-  readonly item: AssetTreeNode | null
+  readonly item: AnyAsset | null
 }
 
 /**
@@ -82,22 +82,22 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
     readonly backendService.S3ObjectVersion[]
   >([])
 
-  const queryKey = [backend.type, 'listAssetVersions', item.item.id, item.item.title]
+  const queryKey = [backend.type, 'listAssetVersions', item.id, item.title]
 
   const versionsQuery = reactQuery.useSuspenseQuery({
     queryKey,
-    queryFn: () =>
-      backend
-        .listAssetVersions(item.item.id, item.item.title)
-        .then((assetVersions) => assetVersions.versions),
+    assetId: item.id,
+    title: item.title,
+    onError: (backendError) => toastAndLog('listVersionsError', backendError),
+    enabled: isCloud,
   })
 
   const latestVersion = versionsQuery.data.find((version) => version.isLatest)
 
   const restoreMutation = reactQuery.useMutation({
     mutationFn: async (variables: AddNewVersionVariables) => {
-      if (item.item.type === backendService.AssetType.project) {
-        await backend.restoreProject(item.item.id, variables.versionId, item.item.title)
+      if (item.type === backendService.AssetType.project) {
+        await backend.restoreProject(item.id, variables.versionId, item.title)
       }
     },
     onMutate: (variables) => {
@@ -117,7 +117,7 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
       await versionsQuery.refetch()
     },
     onError: (error: unknown) => {
-      toastAndLog('restoreProjectError', error, item.item.title)
+      toastAndLog('restoreProjectError', error, item.title)
     },
     onSettled: (_data, _error, variables) => {
       setPlaceholderVersions((oldVersions) =>
