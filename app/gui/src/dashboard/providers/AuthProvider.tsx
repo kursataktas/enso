@@ -205,6 +205,8 @@ export default function AuthProvider(props: AuthProviderProps) {
     await cognito.signOut()
 
     const parentDomain = location.hostname.replace(/^[^.]*\./, '')
+    // This is a browser builtin value that needs to be written to.
+    // eslint-disable-next-line react-compiler/react-compiler
     document.cookie = `logged_in=no;max-age=0;domain=${parentDomain}`
     gtagEvent('cloud_sign_out')
     cognito.saveAccessToken(null)

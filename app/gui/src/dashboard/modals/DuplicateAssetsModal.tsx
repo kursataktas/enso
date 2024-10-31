@@ -205,6 +205,8 @@ export default function DuplicateAssetsModal(props: DuplicateAssetsModalProps) {
               <aria.Text className="relative">{getText('newColon')}</aria.Text>
               <AssetSummary
                 new
+                // The mutation inside `findNewName` is intentional.
+                // eslint-disable-next-line react-compiler/react-compiler
                 newName={backendModule.stripProjectExtension(findNewName(firstConflict, false))}
                 asset={firstConflict.new}
                 className="relative"

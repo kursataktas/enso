@@ -17,6 +17,7 @@ import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 
 import { useAutoFocus } from '#/hooks/autoFocusHooks'
+import { useSyncRef } from '#/hooks/syncRefHooks'
 
 // =================
 // === Constants ===
@@ -53,8 +54,7 @@ export default function EditableSpan(props: EditableSpanProps) {
   const inputRef = React.useRef<HTMLInputElement | null>(null)
 
   const cancelledRef = React.useRef(false)
-  const checkSubmittableRef = React.useRef(checkSubmittable)
-  checkSubmittableRef.current = checkSubmittable
+  const checkSubmittableRef = useSyncRef(checkSubmittable)
 
   // Make sure that the event callback is stable to prevent the effect from re-running.
   const onCancelEventCallback = eventCallback.useEventCallback(onCancel)
@@ -63,7 +63,7 @@ export default function EditableSpan(props: EditableSpanProps) {
     if (editable) {
       setIsSubmittable(checkSubmittableRef.current?.(inputRef.current?.value ?? '') ?? true)
     }
-  }, [editable])
+  }, [checkSubmittableRef, editable])
 
   React.useEffect(() => {
     if (editable) {

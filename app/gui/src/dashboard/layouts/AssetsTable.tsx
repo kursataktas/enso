@@ -1192,6 +1192,7 @@ export default function AssetsTable(props: AssetsTableProps) {
       }
     }
     // This effect MUST only run when `initialProjectName` is changed.
+    // eslint-disable-next-line react-compiler/react-compiler
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialProjectName])
 
