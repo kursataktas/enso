@@ -3141,6 +3141,11 @@ lazy val `runtime-parser-processor-tests` =
       inConfig(Compile)(truffleRunOptionsSettings),
       frgaalJavaCompilerSetting,
       commands += WithDebugCommand.withDebug,
+      annotationProcSetting,
+      Compile / javacOptions ++= Seq(
+        "-processor",
+        "org.enso.runtime.parser.processor.IRProcessor"
+      ),
       Test / fork := true,
       libraryDependencies ++= Seq(
         "junit"                      % "junit"           % junitVersion    % Test,
@@ -3150,7 +3155,7 @@ lazy val `runtime-parser-processor-tests` =
       )
     )
     .dependsOn(`runtime-parser-processor`)
-    .dependsOn(`runtime-parser` % Test)
+    .dependsOn(`runtime-parser`)
 
 lazy val `runtime-parser-processor` =
   (project in file("engine/runtime-parser-processor"))

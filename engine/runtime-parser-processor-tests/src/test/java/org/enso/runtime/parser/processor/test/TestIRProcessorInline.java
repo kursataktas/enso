@@ -12,7 +12,11 @@ import java.io.IOException;
 import org.enso.runtime.parser.processor.IRProcessor;
 import org.junit.Test;
 
-public class TestIRProcessor {
+/**
+ * Basic tests of {@link IRProcessor} that compiles snippets of annotated code, and checks the
+ * generated classes. The compiler (along with the processor) is invoked in the unit tests.
+ */
+public class TestIRProcessorInline {
   /**
    * Compiles the code given in {@code src} with {@link IRProcessor} and returns the
    * contents of the generated java source file.
