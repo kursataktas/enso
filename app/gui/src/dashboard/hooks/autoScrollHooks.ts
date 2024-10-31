@@ -1,4 +1,5 @@
 /** @file Hooks for. */
+import { unsafeWriteValue } from '#/utilities/write'
 import * as React from 'react'
 
 // =================
@@ -97,9 +98,11 @@ export function useAutoScroll(
         if (scrollContainer.scrollTop > 0) {
           const distanceToTop = Math.max(0, pointerY.current - rect.top - insetTop)
           if (distanceToTop < threshold) {
-            // This is a DOM node that needs to be mutated.
-            // eslint-disable-next-line react-compiler/react-compiler
-            scrollContainer.scrollTop -= Math.floor(speed / (distanceToTop + falloff))
+            unsafeWriteValue(
+              scrollContainer,
+              'scrollTop',
+              scrollContainer.scrollTop - Math.floor(speed / (distanceToTop + falloff)),
+            )
           }
         }
         if (scrollContainer.scrollTop + rect.height < scrollContainer.scrollHeight) {

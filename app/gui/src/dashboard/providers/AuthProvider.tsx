@@ -37,6 +37,7 @@ import * as errorModule from '#/utilities/error'
 
 import * as cognitoModule from '#/authentication/cognito'
 import type * as authServiceModule from '#/authentication/service'
+import { unsafeWriteValue } from '#/utilities/write'
 
 // ===================
 // === UserSession ===
@@ -205,9 +206,7 @@ export default function AuthProvider(props: AuthProviderProps) {
     await cognito.signOut()
 
     const parentDomain = location.hostname.replace(/^[^.]*\./, '')
-    // This is a browser builtin value that needs to be written to.
-    // eslint-disable-next-line react-compiler/react-compiler
-    document.cookie = `logged_in=no;max-age=0;domain=${parentDomain}`
+    unsafeWriteValue(document, 'cookie', `logged_in=no;max-age=0;domain=${parentDomain}`)
     gtagEvent('cloud_sign_out')
     cognito.saveAccessToken(null)
     localStorage.clearUserSpecificEntries()
