@@ -447,12 +447,13 @@ export default class ProjectManager {
     return result
   }
 
+  /**
+   * Return the content of the `Main.enso` file of a project.
+   */
   async getFileContent(projectId: UUID) {
     const path = this.internalProjectPaths.get(projectId)
 
     invariant(path, `Unknown project path for project '${projectId}'.`)
-
-    console.log('path', path)
 
     const res = await this.runStandaloneCommand<string>(
       null,
@@ -460,8 +461,6 @@ export default class ProjectManager {
       'text',
       path + '/src/Main.enso',
     )
-
-    console.log('res', res)
 
     return res
   }
@@ -771,6 +770,8 @@ export default class ProjectManager {
         throw new Error(json.error.message)
       }
     } else {
+      // This is safe, because the response is expected to be text.
+      // eslint-disable-next-line no-restricted-syntax
       return (await response.text()) as T
     }
   }

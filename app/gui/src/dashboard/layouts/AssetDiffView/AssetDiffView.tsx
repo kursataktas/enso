@@ -1,8 +1,6 @@
 /** @file Diff view comparing `Main.enso` of two versions for a specific project. */
 import * as monacoReact from '@monaco-editor/react'
 
-import * as textProvider from '#/providers/TextProvider'
-
 import Spinner, * as spinnerModule from '#/components/Spinner'
 
 import type * as backendService from '#/services/Backend'

@@ -1298,8 +1298,8 @@ export default class RemoteBackend extends Backend {
    * Resolve the path of a project asset relative to the project `src` directory.
    */
   override resolveProjectAssetPath(
-    projectId: backend.ProjectId,
-    relativePath: string,
+    _projectId: backend.ProjectId,
+    _relativePath: string,
   ): Promise<string> {
     return Promise.reject(new Error('Not implemented.'))
   }

@@ -20,9 +20,9 @@ import {
   useSetIsAssetPanelExpanded,
 } from '#/providers/DriveProvider'
 import { useText } from '#/providers/TextProvider'
+import type Backend from '#/services/Backend'
 import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import LocalStorage from '#/utilities/LocalStorage'
-import type Backend from 'enso-common/src/services/Backend'
 import type { BackendType } from 'enso-common/src/services/Backend'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'

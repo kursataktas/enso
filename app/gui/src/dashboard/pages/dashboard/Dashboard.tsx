@@ -4,8 +4,6 @@
  */
 import * as React from 'react'
 
-import * as z from 'zod'
-
 import * as detect from 'enso-common/src/detect'
 
 import DriveIcon from '#/assets/drive.svg'
@@ -59,7 +57,6 @@ import * as projectManager from '#/services/ProjectManager'
 
 import { useSetCategory } from '#/providers/DriveProvider'
 import { baseName } from '#/utilities/fileInfo'
-import LocalStorage from '#/utilities/LocalStorage'
 import * as object from '#/utilities/object'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'

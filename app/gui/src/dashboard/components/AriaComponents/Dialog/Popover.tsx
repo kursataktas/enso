@@ -12,6 +12,7 @@ import * as suspense from '#/components/Suspense'
 
 import * as twv from '#/utilities/tailwindVariants'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as dialogProvider from './DialogProvider'
 import * as dialogStackProvider from './DialogStackProvider'
 import * as utlities from './utilities'
@@ -78,16 +79,30 @@ export function Popover(props: PopoverProps) {
   } = props
 
   const dialogRef = React.useRef<HTMLDivElement>(null)
-  const closeRef = React.useRef<(() => void) | null>(null)
+  // We use as here to make the types more accurate
+  // eslint-disable-next-line no-restricted-syntax
+  const contextState = React.useContext(
+    aria.OverlayTriggerStateContext,
+  ) as aria.OverlayTriggerState | null
 
   const root = portal.useStrictPortalContext()
   const dialogId = aria.useId()
 
+  const close = useEventCallback(() => {
+    contextState?.close()
+  })
+
+  const isOpen = contextState?.isOpen ?? false
+
   utlities.useInteractOutside({
     ref: dialogRef,
     id: dialogId,
-    onInteractOutside: () => closeRef.current?.(),
+    onInteractOutside: close,
   })
+
+  if (!isOpen) {
+    return null
+  }
 
   return (
     <aria.Popover
@@ -110,26 +125,19 @@ export function Popover(props: PopoverProps) {
     >
       {(opts) => (
         <dialogStackProvider.DialogStackRegistrar id={dialogId} type="popover">
-          <aria.Dialog
+          <div
             id={dialogId}
             ref={dialogRef}
             className={POPOVER_STYLES({ ...opts, size, rounded }).dialog()}
-            aria-label="Popover"
           >
-            {({ close }) => {
-              closeRef.current = close
-
-              return (
-                <dialogProvider.DialogProvider value={{ close, dialogId }}>
-                  <errorBoundary.ErrorBoundary>
-                    <suspense.Suspense loaderProps={{ minHeight: 'h32' }}>
-                      {typeof children === 'function' ? children({ ...opts, close }) : children}
-                    </suspense.Suspense>
-                  </errorBoundary.ErrorBoundary>
-                </dialogProvider.DialogProvider>
-              )
-            }}
-          </aria.Dialog>
+            <dialogProvider.DialogProvider value={{ close, dialogId }}>
+              <errorBoundary.ErrorBoundary>
+                <suspense.Suspense loaderProps={{ minHeight: 'h32' }}>
+                  {typeof children === 'function' ? children({ ...opts, close }) : children}
+                </suspense.Suspense>
+              </errorBoundary.ErrorBoundary>
+            </dialogProvider.DialogProvider>
+          </div>
         </dialogStackProvider.DialogStackRegistrar>
       )}
     </aria.Popover>
