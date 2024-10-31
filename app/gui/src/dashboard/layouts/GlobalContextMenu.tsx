@@ -1,9 +1,6 @@
 /** @file A context menu available everywhere in the directory. */
 import { useStore } from 'zustand'
 
-import * as modalProvider from '#/providers/ModalProvider'
-import * as textProvider from '#/providers/TextProvider'
-
 import ContextMenu from '#/components/ContextMenu'
 import ContextMenuEntry from '#/components/ContextMenuEntry'
 
@@ -20,8 +17,10 @@ import {
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import type { Category } from '#/layouts/CategorySwitcher/Category'
 import { useDriveStore } from '#/providers/DriveProvider'
+import { useSetModal } from '#/providers/ModalProvider'
+import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import * as backendModule from '#/services/Backend'
+import { BackendType, type DirectoryId } from '#/services/Backend'
 import { inputFiles } from '#/utilities/input'
 
 /** Props for a {@link GlobalContextMenu}. */
@@ -29,23 +28,34 @@ export interface GlobalContextMenuProps {
   readonly hidden?: boolean
   readonly backend: Backend
   readonly category: Category
-  readonly rootDirectoryId: backendModule.DirectoryId
-  readonly directoryKey: backendModule.DirectoryId | null
-  readonly directoryId: backendModule.DirectoryId | null
+  readonly rootDirectoryId: DirectoryId
+  readonly directoryKey: DirectoryId | null
+  readonly directoryId: DirectoryId | null
   readonly path: string | null
-  readonly doPaste: (
-    newParentKey: backendModule.DirectoryId,
-    newParentId: backendModule.DirectoryId,
-  ) => void
+  readonly doPaste: (newParentKey: DirectoryId, newParentId: DirectoryId) => void
 }
 
 /** A context menu available everywhere in the directory. */
-export default function GlobalContextMenu(props: GlobalContextMenuProps) {
-  const { hidden = false, backend, category, directoryKey, directoryId, rootDirectoryId } = props
-  const { path, doPaste } = props
-  const { setModal, unsetModal } = modalProvider.useSetModal()
-  const { getText } = textProvider.useText()
-  const isCloud = backend.type === backendModule.BackendType.remote
+export const GlobalContextMenu = function GlobalContextMenu(props: GlobalContextMenuProps) {
+  // For some reason, applying the ReactCompiler for this component breaks the copy-paste functionality
+  // eslint-disable-next-line react-compiler/react-compiler
+  'use no memo'
+
+  const {
+    hidden = false,
+    backend,
+    category,
+    directoryKey = null,
+    directoryId = null,
+    path,
+    rootDirectoryId,
+  } = props
+  const { doPaste } = props
+
+  const { getText } = useText()
+  const { setModal, unsetModal } = useSetModal()
+  const isCloud = backend.type === BackendType.remote
+
   const driveStore = useDriveStore()
   const hasPasteData = useStore(
     driveStore,
