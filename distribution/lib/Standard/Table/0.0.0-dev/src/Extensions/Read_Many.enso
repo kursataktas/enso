@@ -1,0 +1,20 @@
+from Standard.Base import all
+import Standard.Base.Data.Read.Many_Files_List.Many_Files_List
+import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
+
+import project.Column.Column
+import project.Table.Table
+
+# TODO what about DB_Table?
+
+Many_Files_List.from (that : Column) =
+    Many_Files_List.Value that that.to_vector
+
+Many_Files_List.from (that : Table) =
+    if that.column_count == 1 then Many_Files_List.Value that (that . at 0 . to_vector) else
+        path_columns = that.select_columns "path" case_sensitivity=..Insensitive on_problems=..Report_Error
+        not_found = path_columns.is_error || (path_columns.column_count == 0)
+        if not_found then Error.throw (Illegal_Argument.Error "To use a Table as a list of fails to read, it either must consist of just a single column or contain a column called 'paths' (case insensitive).") else
+            if path_columns.column_count > 1 then Error.throw (Illegal_Argument.Error "Multiple 'paths' column candidates found: "+path_columns.column_names.to_display_text+".") else
+                path_column_name = path_columns.at 0 . name
+                Many_Files_List.Value that (that.at path_column_name . to_vector)

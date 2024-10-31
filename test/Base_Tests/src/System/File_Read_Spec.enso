@@ -85,6 +85,12 @@ add_specs suite_builder =
             patterns.should_contain "*.txt"
             patterns.should_contain "*.json"
 
+    suite_builder.group "Data.read_many" group_builder->
+        group_builder.specify "should allow to read a list of files and return them as vector" <|
+            files = ["TODO"]
+            r = Data.read_many files return=..Vector
+            r.should_be_a Vector
+
 main filter=Nothing =
     suite = Test.build suite_builder->
         add_specs suite_builder

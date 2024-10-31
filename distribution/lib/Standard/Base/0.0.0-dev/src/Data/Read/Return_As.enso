@@ -1,13 +1,23 @@
+import project.Any.Any
 import project.Data.Text.Text
+import project.Data.Read.Many_Files_List.Many_Files_List
 import project.Data.Vector.Vector
 import project.Error.Error
+import project.Errors.Common.Type_Error
 import project.Errors.Illegal_Argument.Illegal_Argument
 import project.Function.Function
 import project.Metadata.Display
 import project.Metadata.Widget
 import project.Panic.Panic
+from project.Data.Boolean import Boolean, False, True
 from project.Metadata.Choice import Option
 from project.Metadata.Widget import Single_Choice
+
+polyglot java import org.enso.base.read.ReadManyReturnSPI
+
+## PRIVATE
+private _get_known_return_classes -> Vector =
+    Vector.from_polyglot_array (ReadManyReturnSPI.get_types False)
 
 ## A common interface that represents ways to return a list of files that have
    been read.
@@ -22,16 +32,11 @@ type Return_As
     to_display_text self -> Text = self.underlying.to_display_text
 
     ## PRIVATE
-    make_return (input : Many_Files_List) (objects : Vector Any) =
+    make_return self (input : Many_Files_List) (objects : Vector Any) =
         self.underlying.make_return input objects
 
     ## PRIVATE
-    private _get_known_return_classes -> Vector =
-        Vector.from_polyglot_array (ReadManyReturnSPI.get_types False)
-
-    ## PRIVATE
        Resolve an unresolved constructor to the actual type.
-    private resolve : Function -> Return_As
     private resolve value = case value of
         _ : Function ->
             types = _get_known_return_classes

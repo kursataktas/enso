@@ -29,7 +29,7 @@ import project.System.File.Generic.Writable_File.Writable_File
 from project.Data.Boolean import Boolean, False, True
 from project.Meta.Enso_Project import enso_project
 from project.Metadata.Choice import Option
-from project.Metadata.Widget import Folder_Browse, Text_Input
+from project.Metadata.Widget import Folder_Browse, Text_Input, Vector_Editor
 from project.System.File_Format import Auto_Detect, File_Format
 
 ## ALIAS load, open
