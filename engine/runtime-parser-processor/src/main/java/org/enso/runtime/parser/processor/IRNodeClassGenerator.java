@@ -6,7 +6,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ElementKind;
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import org.enso.runtime.parser.dsl.IRChild;
 import org.enso.runtime.parser.dsl.IRNode;
@@ -36,12 +35,7 @@ final class IRNodeClassGenerator {
   /** User defined fields - all the abstract parameterless methods, including the inherited ones. */
   private final List<Field> fields;
 
-  /**
-   * {@link org.enso.compiler.core.IR#duplicate(boolean, boolean, boolean, boolean) duplicate}
-   * method element. We need to know if there is any override with a different return type in the
-   * interface hierarchy. If not, this is just a reference to the method from IR.
-   */
-  private final ExecutableElement duplicateMethod;
+  private final DuplicateMethodGenerator duplicateMethodGenerator;
 
   private static final Set<String> defaultImportedTypes =
       Set.of(
@@ -69,7 +63,9 @@ final class IRNodeClassGenerator {
     this.interfaceType = interfaceType;
     this.className = className;
     this.fields = getAllFields(interfaceType);
-    this.duplicateMethod = Utils.findDuplicateMethod(interfaceType, processingEnv);
+    var duplicateMethod = Utils.findDuplicateMethod(interfaceType, processingEnv);
+    this.duplicateMethodGenerator =
+        new DuplicateMethodGenerator(duplicateMethod, fields, className);
     var nestedTypes =
         interfaceType.getEnclosedElements().stream()
             .filter(
@@ -229,82 +225,11 @@ final class IRNodeClassGenerator {
     return indent(sb.toString(), 2);
   }
 
-  private String duplicateMethodBody() {
-    var nl = System.lineSeparator();
-    var nullableChildrenCode =
-        fields.stream()
-            .filter(field -> field.isChild() && field.isNullable())
-            .map(
-                field ->
-                    """
-            IR $childNameDup = null;
-            if ($childName != null) {
-              $childNameDup = $childName.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
-              if (!($childNameDup instanceof $childType)) {
-                throw new IllegalStateException("Duplicated child is not of the expected type: " + $childNameDup);
-              }
-            }
-            """
-                        .replace("$childType", field.getSimpleTypeName())
-                        .replace("$childName", field.getName())
-                        .replace("$childNameDup", field.getName() + "Duplicated"))
-            .collect(Collectors.joining(nl));
-
-    var notNullableChildrenCode =
-        fields.stream()
-            .filter(field -> field.isChild() && !field.isNullable() && !field.isList())
-            .map(
-                field ->
-                    """
-            IR $childNameDup =
-              $childName.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
-            if (!($childNameDup instanceof $childType)) {
-              throw new IllegalStateException("Duplicated child is not of the expected type: " + $childNameDup);
-            }
-            """
-                        .replace("$childType", field.getSimpleTypeName())
-                        .replace("$childName", field.getName())
-                        .replace("$childNameDup", field.getName() + "Duplicated"))
-            .collect(Collectors.joining(nl));
-
-    var listChildrenCode =
-        fields.stream()
-            .filter(field -> field.isChild() && field.isList())
-            .map(
-                field ->
-                    """
-            $childListType $childNameDup =
-              $childName.map(child -> {
-                IR dupChild = child.duplicate(keepLocations, keepMetadata, keepDiagnostics, keepIdentifiers);
-                if (!(dupChild instanceof $childType)) {
-                  throw new IllegalStateException("Duplicated child is not of the expected type: " + dupChild);
-                }
-                return ($childType) dupChild;
-              });
-            """
-                        .replace("$childListType", field.getSimpleTypeName())
-                        .replace("$childType", field.getTypeParameter())
-                        .replace("$childName", field.getName())
-                        .replace("$childNameDup", field.getName() + "Duplicated"))
-            .collect(Collectors.joining(nl));
-
-    var code = nullableChildrenCode + nl + notNullableChildrenCode + nl + listChildrenCode;
-    if (stripWhitespaces(code).isEmpty()) {
-      code = "return new " + className + "();";
-    }
-    return indent(code, 2);
-  }
-
-  private static String stripWhitespaces(String s) {
-    return s.replaceAll("\\s+", "");
-  }
-
   /**
    * Returns a String representing all the overriden methods from {@link org.enso.compiler.core.IR}.
    * Meant to be inside the generated record definition.
    */
   private String overrideIRMethods() {
-    var duplicateMethodRetType = duplicateMethod.getReturnType().toString();
     var code =
         """
 
@@ -361,15 +286,7 @@ final class IRNodeClassGenerator {
           return diagnostics;
         }
 
-        @Override
-        public $duplicateMethodRetType duplicate(
-          boolean keepLocations,
-          boolean keepMetadata,
-          boolean keepDiagnostics,
-          boolean keepIdentifiers
-        ) {
-          $duplicateMethodBody
-        }
+        $duplicateMethod
 
         @Override
         public String showCode(int indent) {
@@ -377,8 +294,7 @@ final class IRNodeClassGenerator {
         }
         """
             .replace("$childrenMethodBody", childrenMethodBody())
-            .replace("$duplicateMethodRetType", duplicateMethodRetType)
-            .replace("$duplicateMethodBody", duplicateMethodBody());
+            .replace("$duplicateMethod", duplicateMethodGenerator.generateDuplicateMethodCode());
     return indent(code, 2);
   }
 
@@ -482,14 +398,5 @@ final class IRNodeClassGenerator {
     return code.lines()
         .map(line -> " ".repeat(indentation) + line)
         .collect(Collectors.joining(System.lineSeparator()));
-  }
-
-  private void ensureIsSubtypeOfIR(TypeElement typeElem) {
-    if (!Utils.isSubtypeOfIR(typeElem, processingEnv)) {
-      Utils.printError(
-          "Method annotated with @IRChild must return a subtype of IR interface",
-          typeElem,
-          processingEnv.getMessager());
-    }
   }
 }
