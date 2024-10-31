@@ -65,7 +65,6 @@ import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useIntersectionRatio } from '#/hooks/intersectionHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
-import useOnScroll from '#/hooks/useOnScroll'
 import type * as assetSearchBar from '#/layouts/AssetSearchBar'
 import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import AssetsTableContextMenu from '#/layouts/AssetsTableContextMenu'
@@ -197,13 +196,6 @@ const MINIMUM_DROPZONE_INTERSECTION_RATIO = 0.5
 const ROW_HEIGHT_PX = 38
 /** The size of the loading spinner. */
 const LOADING_SPINNER_SIZE_PX = 36
-/**
- * The number of pixels the header bar should shrink when the column selector is visible,
- * assuming 0 icons are visible in the column selector.
- */
-const COLUMNS_SELECTOR_BASE_WIDTH_PX = 4
-/** The number of pixels the header bar should shrink per collapsed column. */
-const COLUMNS_SELECTOR_ICON_WIDTH_PX = 28
 
 const SUGGESTIONS_FOR_NO: assetSearchBar.Suggestion[] = [
   {
@@ -827,7 +819,6 @@ export default function AssetsTable(props: AssetsTableProps) {
   /** Events sent when the asset list was still loading. */
   const queuedAssetListEventsRef = useRef<AssetListEvent[]>([])
   const rootRef = useRef<HTMLDivElement | null>(null)
-  const cleanupRootRef = useRef(() => {})
   const mainDropzoneRef = useRef<HTMLButtonElement | null>(null)
   const lastSelectedIdsRef = useRef<AssetId | ReadonlySet<AssetId> | null>(null)
   const headerRowRef = useRef<HTMLTableRowElement>(null)
