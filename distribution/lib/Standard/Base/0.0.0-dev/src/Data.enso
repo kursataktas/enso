@@ -99,12 +99,14 @@ read path=(Missing_Argument.throw "path") format=Auto_Detect (on_problems : Prob
    TODO DOC
 
    Arguments:
-   - paths: TODO
+   - paths: A list of files to load. It can be a Vector, Column or Table of
+     files, paths or URIs to fetch. If a Table is provided, it must either
+     contain a single column or a column called `path` (case insensitive).
    - format: A `File_Format` object used to read files into memory.
      If `Auto_Detect` is specified; each file determines the specific
      type and configures it appropriately. If there is no matching type then
      a `File_Error.Unsupported_Type` error is returned.
-   - return: TODO
+   - return: Specifies the shape of the data to return.
    - on_problems: Specifies the behavior when a problem occurs during the
      function.
      By default, a warning is issued, but the operation proceeds.
@@ -134,9 +136,9 @@ read path=(Missing_Argument.throw "path") format=Auto_Detect (on_problems : Prob
          example_csv_dir_to_table = Data.read_many files
 @paths (Vector_Editor item_editor=Text_Input item_default='""')
 @format File_Format.default_widget
-read_many : Vector (Text | URI | File) -> File_Format -> Return_As -> Problem_Behavior -> Any ! File_Error
-read_many (paths : Vector = Missing_Argument.throw "paths") format=Auto_Detect return:Return_As=..Merged_Table (on_problems : Problem_Behavior = ..Report_Warning) =
-    "TODO"
+read_many : Many_Files_List -> File_Format -> Return_As -> Problem_Behavior -> Any ! File_Error
+read_many (paths : Many_Files_List = Missing_Argument.throw "paths") format=Auto_Detect return=..Vector (on_problems : Problem_Behavior = ..Report_Warning) =
+    return_as = Return_As.resolve return
 
 ## ALIAS load text, open text
    GROUP Input
