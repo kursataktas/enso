@@ -1,8 +1,6 @@
 /** @file A list of previous versions of an asset. */
 import * as React from 'react'
 
-import * as reactQuery from '@tanstack/react-query'
-
 import * as toastAndLogHooks from '#/hooks/toastAndLogHooks'
 
 import * as textProvider from '#/providers/TextProvider'
@@ -13,9 +11,11 @@ import type Backend from '#/services/Backend'
 import * as backendService from '#/services/Backend'
 
 import { Result } from '#/components/Result'
-import type AssetTreeNode from '#/utilities/AssetTreeNode'
+import type { AnyAsset } from '#/services/Backend'
 import * as dateTime from '#/utilities/dateTime'
+import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
 import * as uniqueString from 'enso-common/src/utilities/uniqueString'
+import { assetVersionsQueryOptions } from './useAssetVersions.ts'
 
 // ==============================
 // === AddNewVersionVariables ===
@@ -66,7 +66,7 @@ export default function AssetVersions(props: AssetVersionsProps) {
  * Props for a {@link AssetVersionsInternal}.
  */
 interface AssetVersionsInternalProps extends AssetVersionsProps {
-  readonly item: AssetTreeNode
+  readonly item: AnyAsset
 }
 
 /**
@@ -82,19 +82,17 @@ function AssetVersionsInternal(props: AssetVersionsInternalProps) {
     readonly backendService.S3ObjectVersion[]
   >([])
 
-  const queryKey = [backend.type, 'listAssetVersions', item.id, item.title]
-
-  const versionsQuery = reactQuery.useSuspenseQuery({
-    queryKey,
-    assetId: item.id,
-    title: item.title,
-    onError: (backendError) => toastAndLog('listVersionsError', backendError),
-    enabled: isCloud,
-  })
+  const versionsQuery = useSuspenseQuery(
+    assetVersionsQueryOptions({
+      assetId: item.id,
+      backend,
+      onError: (backendError) => toastAndLog('listVersionsError', backendError),
+    }),
+  )
 
   const latestVersion = versionsQuery.data.find((version) => version.isLatest)
 
-  const restoreMutation = reactQuery.useMutation({
+  const restoreMutation = useMutation({
     mutationFn: async (variables: AddNewVersionVariables) => {
       if (item.type === backendService.AssetType.project) {
         await backend.restoreProject(item.id, variables.versionId, item.title)

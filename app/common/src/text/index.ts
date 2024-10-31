@@ -77,7 +77,6 @@ interface PlaceholderOverrides {
   readonly listFolderBackendError: [string]
   readonly createFolderBackendError: [string]
   readonly updateFolderBackendError: [string]
-  readonly listAssetVersionsBackendError: [string]
   readonly updateAssetBackendError: [string]
   readonly deleteAssetBackendError: [string]
   readonly undoDeleteAssetBackendError: [string]

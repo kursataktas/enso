@@ -560,14 +560,11 @@ export default class RemoteBackend extends Backend {
   }
 
   /** List all previous versions of an asset. */
-  override async listAssetVersions(
-    assetId: backend.AssetId,
-    title: string,
-  ): Promise<backend.AssetVersions> {
+  override async listAssetVersions(assetId: backend.AssetId): Promise<backend.AssetVersions> {
     const path = remoteBackendPaths.listAssetVersionsPath(assetId)
     const response = await this.get<backend.AssetVersions>(path)
     if (!responseIsSuccessful(response)) {
-      return await this.throw(response, 'listAssetVersionsBackendError', title)
+      return await this.throw(response, 'listAssetVersionsBackendError')
     } else {
       return await response.json()
     }

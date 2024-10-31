@@ -1530,7 +1530,7 @@ export default abstract class Backend {
     title: string,
   ): Promise<UpdatedDirectory>
   /** List previous versions of an asset. */
-  abstract listAssetVersions(assetId: AssetId, title: string | null): Promise<AssetVersions>
+  abstract listAssetVersions(assetId: AssetId): Promise<AssetVersions>
   /** Change the parent directory of an asset. */
   abstract updateAsset(assetId: AssetId, body: UpdateAssetRequestBody, title: string): Promise<void>
   /** Delete an arbitrary asset. */

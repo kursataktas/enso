@@ -7,8 +7,8 @@ import { Result } from '#/components/Result'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import { AssetType, type ProjectAsset } from '#/services/Backend'
-import type AssetTreeNode from '#/utilities/AssetTreeNode'
+import type { AnyAsset, Asset } from '#/services/Backend'
+import { AssetType } from '#/services/Backend'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import * as ast from 'ydoc-shared/ast'
 import { Tree } from 'ydoc-shared/ast/generated/ast'
@@ -20,7 +20,7 @@ import { versionContentQueryOptions } from '../AssetDiffView/useFetchVersionCont
  */
 export interface AssetDocsProps {
   readonly backend: Backend
-  readonly item: AssetTreeNode | null
+  readonly item: AnyAsset | null
 }
 
 /**
@@ -31,13 +31,13 @@ export function AssetDocs(props: AssetDocsProps) {
 
   const { getText } = useText()
 
-  if (item?.item.type !== AssetType.project) {
+  if (item?.type !== AssetType.project) {
     return <Result status="info" title={getText('assetDocs.notProject')} centered />
   }
 
   // This is safe because we already checked that the item is a project above.
-  // eslint-disable-next-line no-restricted-syntax
-  return <AssetDocsContent backend={backend} item={item as AssetTreeNode<ProjectAsset>} />
+
+  return <AssetDocsContent backend={backend} item={item} />
 }
 
 /**
@@ -45,7 +45,7 @@ export function AssetDocs(props: AssetDocsProps) {
  */
 interface AssetDocsContentProps {
   readonly backend: Backend
-  readonly item: AssetTreeNode<ProjectAsset>
+  readonly item: Asset<AssetType.project>
 }
 
 /**
@@ -56,7 +56,7 @@ export function AssetDocsContent(props: AssetDocsContentProps) {
   const { getText } = useText()
 
   const { data: docs } = useSuspenseQuery({
-    ...versionContentQueryOptions({ backend, projectId: item.item.id, metadata: false }),
+    ...versionContentQueryOptions({ backend, projectId: item.id, metadata: false }),
     select: (data) => {
       const withoutMeta = splitFileContents(data)
       // We use the raw parser here because we don't need the whole AST, only the Docs part,
@@ -76,7 +76,7 @@ export function AssetDocsContent(props: AssetDocsContentProps) {
   })
 
   const resolveProjectAssetPath = useEventCallback((relativePath: string) =>
-    backend.resolveProjectAssetPath(item.item.id, relativePath),
+    backend.resolveProjectAssetPath(item.id, relativePath),
   )
 
   if (docs === '') {

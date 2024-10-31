@@ -60,7 +60,7 @@ export type AssetPropertiesSpotlight = 'datalink' | 'description' | 'secret'
 export interface AssetPropertiesProps {
   readonly backend: Backend
   readonly item: AnyAsset | null
-  readonly path: string
+  readonly path: string | null
   readonly category: Category
   readonly isReadonly?: boolean
   readonly spotlightOn?: AssetPropertiesSpotlight | null
@@ -74,7 +74,7 @@ export default function AssetProperties(props: AssetPropertiesProps) {
 
   const { getText } = useText()
 
-  if (item == null) {
+  if (item == null || path == null) {
     return <Result status="info" title={getText('assetProperties.notSelected')} centered />
   }
 
@@ -95,6 +95,7 @@ export default function AssetProperties(props: AssetPropertiesProps) {
  */
 export interface AssetPropertiesInternalProps extends AssetPropertiesProps {
   readonly item: NonNullable<AssetPropertiesProps['item']>
+  readonly path: NonNullable<AssetPropertiesProps['path']>
 }
 
 /**

@@ -4,11 +4,10 @@ import * as reactQuery from '@tanstack/react-query'
 import AssetProjectSession from '#/layouts/AssetProjectSession'
 
 import type Backend from '#/services/Backend'
-import * as backendModule from '#/services/Backend'
 
 import { Result } from '#/components/Result'
 import { useText } from '#/providers/TextProvider'
-import type AssetTreeNode from '#/utilities/AssetTreeNode'
+import { AssetType, BackendType, type AnyAsset, type ProjectAsset } from '#/services/Backend'
 
 // ============================
 // === AssetProjectSessions ===
@@ -17,7 +16,7 @@ import type AssetTreeNode from '#/utilities/AssetTreeNode'
 /** Props for a {@link AssetProjectSessions}. */
 export interface AssetProjectSessionsProps {
   readonly backend: Backend
-  readonly item: AssetTreeNode | null
+  readonly item: AnyAsset | null
 }
 
 /** A list of previous versions of an asset. */
@@ -26,26 +25,19 @@ export default function AssetProjectSessions(props: AssetProjectSessionsProps) {
 
   const { getText } = useText()
 
+  if (backend.type === BackendType.local) {
+    return <Result status="info" centered title={getText('assetProjectSessions.localBackend')} />
+  }
+
   if (item == null) {
     return <Result status="info" centered title={getText('assetProjectSessions.notSelected')} />
   }
 
-  if (backend.type === backendModule.BackendType.local) {
-    return <Result status="info" centered title={getText('assetProjectSessions.localBackend')} />
-  }
-
-  if (item.item.type !== backendModule.AssetType.project) {
+  if (item.type !== AssetType.project) {
     return <Result status="info" centered title={getText('assetProjectSessions.notProjectAsset')} />
   }
 
-  return (
-    <AssetProjectSessionsInternal
-      {...props}
-      // This is safe because we already checked that the asset is a project asset above.
-      // eslint-disable-next-line no-restricted-syntax
-      item={item as AssetTreeNode<backendModule.ProjectAsset>}
-    />
-  )
+  return <AssetProjectSessionsInternal {...props} item={item} />
 }
 
 // ====================================
@@ -54,7 +46,7 @@ export default function AssetProjectSessions(props: AssetProjectSessionsProps) {
 
 /** Props for a {@link AssetProjectSessionsInternal}. */
 interface AssetProjectSessionsInternalProps extends AssetProjectSessionsProps {
-  readonly item: AssetTreeNode<backendModule.ProjectAsset>
+  readonly item: ProjectAsset
 }
 
 /** A list of previous versions of an asset. */

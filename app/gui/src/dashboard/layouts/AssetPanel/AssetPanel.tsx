@@ -21,9 +21,8 @@ import {
 } from '#/providers/DriveProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import type { AnyAssetTreeNode } from '#/utilities/AssetTreeNode'
 import LocalStorage from '#/utilities/LocalStorage'
-import type { BackendType } from 'enso-common/src/services/Backend'
+import type { AnyAsset, BackendType } from 'enso-common/src/services/Backend'
 import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, startTransition } from 'react'
@@ -70,7 +69,8 @@ LocalStorage.register({
 export interface AssetPanelContextProps {
   readonly backend: Backend | null
   readonly selectedTab: AssetPanelTab
-  readonly item: AnyAssetTreeNode | null
+  readonly item: AnyAsset | null
+  readonly path: string | null
   readonly spotlightOn: AssetPropertiesSpotlight | null
 }
 
@@ -136,7 +136,7 @@ export function AssetPanel(props: AssetPanelProps) {
 const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: AssetPanelProps) {
   const { category } = props
 
-  const { item, spotlightOn } = useAssetPanelProps()
+  const { item, spotlightOn, path } = useAssetPanelProps()
 
   const selectedTab = useAssetPanelSelectedTab()
   const setSelectedTab = useSetAssetPanelSelectedTab()
@@ -200,6 +200,7 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
                   isReadonly={isReadonly}
                   category={category}
                   spotlightOn={spotlightOn}
+                  path={path}
                 />
               </AssetPanelTabs.TabPanel>
 
