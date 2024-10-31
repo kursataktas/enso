@@ -14,6 +14,7 @@ from Standard.Table import all
 import Standard.Table.Errors.Invalid_JSON_Format
 
 from Standard.Test import all
+import Standard.Test.Test_Environment
 
 import enso_dev.Base_Tests.Network.Enso_Cloud.Cloud_Tests_Setup.Cloud_Tests_Setup
 from enso_dev.Base_Tests.Network.Http.Http_Test_Setup import base_url_with_slash, pending_has_url
@@ -430,8 +431,12 @@ add_specs suite_builder =
                     HTTP.fetch headers=headers2 uri
                     get_num_response_cache_entries . should_equal 2
 
-        group_builder.specify "Should not be able to set the cache limits higher than the real limits" pending=pending_has_url <| Test.with_retries <|
+        group_builder.specify "Should not be able to set the cache limits higher than the real limits" <|
             Test.expect_panic IllegalArgumentException <|
                 EnsoHTTPResponseCache.getCacheTestParameters.setMaxFileSizeOverrideTestOnly (2 * 1024 * 1024 * 1024 + 1) . should_fail_with Illegal_Argument
             Test.expect_panic IllegalArgumentException <|
                 EnsoHTTPResponseCache.getCacheTestParameters.setMaxTotalCacheSizeOverrideTestOnly (20 * 1024 * 1024 * 1024 + 1) . should_fail_with Illegal_Argument
+
+        group_builder.specify "Should be able to set the max file size via environment variable" <|
+        group_builder.specify "Should be able to set the max total cache size in bytes via environment variable" <|
+        group_builder.specify "Should be able to set the max total cache size as a percentage via environment variable" <|
