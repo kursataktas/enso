@@ -2673,7 +2673,7 @@ export default function AssetsTable(props: AssetsTableProps) {
       }}
     >
       <table className="isolate table-fixed border-collapse rounded-rows">
-        <thead className="bg-dashboard sticky top-0 z-1">{headerRow}</thead>
+        <thead className="sticky top-0 z-1 bg-dashboard">{headerRow}</thead>
         <tbody ref={bodyRef}>
           {itemRows}
           <tr className="hidden h-row first:table-row">
