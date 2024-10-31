@@ -92,6 +92,52 @@ read path=(Missing_Argument.throw "path") format=Auto_Detect (on_problems : Prob
         if file_obj.is_directory then Error.throw (Illegal_Argument.Error "Cannot `read` a directory, use `Data.list`.") else
             file_obj.read format on_problems
 
+## ALIAS load, open
+   GROUP Input
+   ICON data_input
+   Reads a a list of file into Enso.
+   TODO DOC
+
+   Arguments:
+   - paths: TODO
+   - format: A `File_Format` object used to read files into memory.
+     If `Auto_Detect` is specified; each file determines the specific
+     type and configures it appropriately. If there is no matching type then
+     a `File_Error.Unsupported_Type` error is returned.
+   - return: TODO
+   - on_problems: Specifies the behavior when a problem occurs during the
+     function.
+     By default, a warning is issued, but the operation proceeds.
+     If set to `Report_Error`, the operation fails with a dataflow error.
+     If set to `Ignore`, the operation proceeds without errors or warnings.
+
+   ! Request Caching
+
+     Responses to HTTP data requests are cached, and additional requests for the
+     same resources will use the cache, saving a round-trip call to the remote
+     server. Two resources are considered the same if the URIs and request
+     headers are the same. Header order does not affect sameness.
+
+     The cache respects the "max-age" and "Age" response headers; see
+     `Data.fetch` for more details.
+
+     The cached values are retained as long as the project remains open. Closing
+     a project will clear the cache.
+
+   > Example
+     Read all CSV files from a directory into a single merged table.
+
+         from Standard.Table import all
+         import Standard.Examples
+
+         files = Data.list name_filter="*.csv"
+         example_csv_dir_to_table = Data.read_many files
+@paths (Vector_Editor item_editor=Text_Input item_default='""')
+@format File_Format.default_widget
+read_many : Vector (Text | URI | File) -> File_Format -> Return_As -> Problem_Behavior -> Any ! File_Error
+read_many (paths : Vector = Missing_Argument.throw "paths") format=Auto_Detect return:Return_As=..Merged_Table (on_problems : Problem_Behavior = ..Report_Warning) =
+    "TODO"
+
 ## ALIAS load text, open text
    GROUP Input
    ICON data_input
