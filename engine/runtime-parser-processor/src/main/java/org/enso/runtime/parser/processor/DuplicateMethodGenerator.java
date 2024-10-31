@@ -75,8 +75,11 @@ class DuplicateMethodGenerator {
           sb.append(System.lineSeparator());
           duplicatedVars.add(new DuplicateVar(null, dupFieldName(field), false));
         }
+      } else {
+        sb.append(Utils.indent(nonChildCode(field), 2));
+        sb.append(System.lineSeparator());
+        duplicatedVars.add(new DuplicateVar(field.getSimpleTypeName(), dupFieldName(field), false));
       }
-      // TODO: Duplicate non-child fields?
     }
     sb.append(Utils.indent(returnStatement(duplicatedVars), 2));
     sb.append(System.lineSeparator());
@@ -137,6 +140,16 @@ class DuplicateMethodGenerator {
         .replace("$childName", listChild.getName())
         .replace("$dupName", dupFieldName(listChild))
         .replace("$parameterNames", String.join(", ", parameterNames()));
+  }
+
+  private static String nonChildCode(Field field) {
+    assert !field.isChild();
+    return """
+        $childType $dupName = $childName;
+        """
+        .replace("$childType", field.getSimpleTypeName())
+        .replace("$childName", field.getName())
+        .replace("$dupName", dupFieldName(field));
   }
 
   private static List<String> parameterNames() {
