@@ -5,6 +5,7 @@
  */
 export * from './Close'
 export * from './Dialog'
+export * from './DialogDismiss'
 export { useDialogContext, type DialogContextValue } from './DialogProvider'
 export {
   DialogStackProvider,
@@ -12,6 +13,5 @@ export {
   type DialogStackItem,
 } from './DialogStackProvider'
 export * from './DialogTrigger'
-export * from './DialogDismiss'
 export * from './Popover'
 export * from './variants'
