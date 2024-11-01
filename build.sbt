@@ -344,6 +344,7 @@ lazy val enso = (project in file("."))
     `runtime-parser`,
     `runtime-parser-dsl`,
     `runtime-parser-processor`,
+    `runtime-parser-processor-tests`,
     `runtime-language-arrow`,
     `runtime-language-epb`,
     `runtime-instrument-common`,

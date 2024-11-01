@@ -1,5 +1,13 @@
 package org.enso.runtime.parser.processor.test;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.Assert.fail;
+
+import java.util.List;
 import org.enso.compiler.core.ir.DiagnosticStorage;
 import org.enso.compiler.core.ir.IdentifiedLocation;
 import org.enso.compiler.core.ir.Location;
@@ -9,16 +17,7 @@ import org.enso.runtime.parser.processor.test.gen.ir.NameTestIR;
 import org.enso.runtime.parser.processor.test.gen.ir.NameTestIRGen;
 import org.enso.runtime.parser.processor.test.gen.ir.OptNameTestIRGen;
 import org.junit.Test;
-import java.util.List;
 import scala.Option$;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.Assert.fail;
-
 
 public class TestGeneratedIR {
   @Test
@@ -48,19 +47,14 @@ public class TestGeneratedIR {
   public void canDuplicate() {
     NameTestIR myIr = NameTestIRGen.builder().name("name").build();
     var duplicated = myIr.duplicate(true, true, true, true);
-    assertThat("duplicate returns same type",
-        duplicated, instanceOf(NameTestIR.class));
-    assertThat("name was correctly duplicated",
-        ((NameTestIR) duplicated).name(), is("name"));
+    assertThat("duplicate returns same type", duplicated, instanceOf(NameTestIR.class));
+    assertThat("name was correctly duplicated", ((NameTestIR) duplicated).name(), is("name"));
   }
 
   @Test
   public void generatedBuilderCanSetMetadata() {
     var diagnostics = DiagnosticStorage.empty();
-    var nameIR = NameTestIRGen.builder()
-        .name("name")
-        .diagnostics(diagnostics)
-        .build();
+    var nameIR = NameTestIRGen.builder().name("name").diagnostics(diagnostics).build();
     assertThat(nameIR.diagnostics(), is(diagnostics));
   }
 
@@ -105,22 +99,16 @@ public class TestGeneratedIR {
   public void duplicateRespectsParameters() {
     var location = IdentifiedLocation.create(new Location(1, 2), Option$.MODULE$.empty());
     var diagnostics = DiagnosticStorage.empty();
-    var nameIR = NameTestIRGen.builder()
-        .name("name")
-        .location(location)
-        .diagnostics(diagnostics)
-        .build();
+    var nameIR =
+        NameTestIRGen.builder().name("name").location(location).diagnostics(diagnostics).build();
     var duplicated = nameIR.duplicate(true, false, false, false);
-    assertThat("Should have copied location meta",
-        duplicated.location().isDefined(), is(true));
-    assertThat("Should have not copied diagnostics",
-        duplicated.diagnostics(), is(nullValue()));
+    assertThat("Should have copied location meta", duplicated.location().isDefined(), is(true));
+    assertThat("Should have not copied diagnostics", duplicated.diagnostics(), is(nullValue()));
 
     var duplicated_2 = nameIR.duplicate(false, false, true, false);
-    assertThat("Should have not copied location meta",
-        duplicated_2.location().isDefined(), is(false));
-    assertThat("Should have copied diagnostics",
-        duplicated_2.diagnostics(), is(notNullValue()));
+    assertThat(
+        "Should have not copied location meta", duplicated_2.location().isDefined(), is(false));
+    assertThat("Should have copied diagnostics", duplicated_2.diagnostics(), is(notNullValue()));
   }
 
   private static <T> scala.collection.immutable.List<T> asScala(List<T> list) {
