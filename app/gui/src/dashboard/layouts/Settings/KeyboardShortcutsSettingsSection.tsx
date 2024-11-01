@@ -45,7 +45,7 @@ export default function KeyboardShortcutsSettingsSection() {
 
   return (
     <>
-      <ButtonGroup>
+      <ButtonGroup className="grow-0">
         <DialogTrigger>
           <Button size="medium" variant="outline">
             {getText('resetAll')}
@@ -68,7 +68,7 @@ export default function KeyboardShortcutsSettingsSection() {
           <div
             {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
               ref: rootRef,
-              className: 'overflow-auto',
+              className: 'flex-1 min-h-0 overflow-auto',
               onScroll,
             })}
           >
