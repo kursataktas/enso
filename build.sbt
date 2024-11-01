@@ -3683,6 +3683,7 @@ lazy val `engine-runner` = project
   .dependsOn(cli)
   .dependsOn(`profiling-utils`)
   .dependsOn(`library-manager`)
+  .dependsOn(`distribution-manager`)
   .dependsOn(`edition-updater`)
   .dependsOn(`runtime-parser`)
   .dependsOn(`logging-service`)
