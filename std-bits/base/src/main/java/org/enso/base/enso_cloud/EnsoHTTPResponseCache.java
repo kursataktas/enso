@@ -21,15 +21,19 @@ import org.enso.base.cache.ResponseTooLargeException;
  * is no cache hit, the InputStream is connected directly to the remote server.
  */
 public class EnsoHTTPResponseCache {
-  // 1 year.
-  private static final int DEFAULT_TTL_SECONDS = 31536000;
-  private static final long MAX_FILE_SIZE = 2L * 1024 * 1024 * 1024;
-  private static final long MAX_TOTAL_CACHE_SIZE = 20L * 1024 * 1024 * 1024;
+  // Public for testing.
+  public EnsoHTTPResponseCache() {
+  }
 
-  private static final LRUCache<Metadata> lruCache =
+  // 1 year.
+  private final int DEFAULT_TTL_SECONDS = 31536000;
+  private final long MAX_FILE_SIZE = 2L * 1024 * 1024 * 1024;
+  private final long MAX_TOTAL_CACHE_SIZE = 20L * 1024 * 1024 * 1024;
+
+  private final LRUCache<Metadata> lruCache =
       new LRUCache<>(MAX_FILE_SIZE, MAX_TOTAL_CACHE_SIZE);
 
-  public static EnsoHttpResponse makeRequest(RequestMaker requestMaker)
+  public EnsoHttpResponse makeRequest(RequestMaker requestMaker)
       throws IOException, InterruptedException, ResponseTooLargeException {
     var itemBuilder = new ItemBuilder(requestMaker);
 
@@ -39,7 +43,7 @@ public class EnsoHTTPResponseCache {
         cacheResult.inputStream(), cacheResult.metadata());
   }
 
-  public static class ItemBuilder implements LRUCache.ItemBuilder<Metadata> {
+  public class ItemBuilder implements LRUCache.ItemBuilder<Metadata> {
     private final RequestMaker requestMaker;
 
     ItemBuilder(RequestMaker requestMaker) {
@@ -74,7 +78,7 @@ public class EnsoHTTPResponseCache {
   }
 
   /** Get the size of the response data, if available. */
-  private static Optional<Long> getResponseDataSize(HttpHeaders headers) {
+  private Optional<Long> getResponseDataSize(HttpHeaders headers) {
     return headers.firstValue("content-length").map(Long::parseLong);
   }
 
@@ -94,7 +98,7 @@ public class EnsoHTTPResponseCache {
    * <p>If 'max-age' and 'Age' are both present, we set TTL = max-age - Age. If only 'max-age' is
    * present, we set TTL = max-age. If neither are present, we use a default.
    */
-  private static int calculateTTL(HttpHeaders headers) {
+  private int calculateTTL(HttpHeaders headers) {
     Integer maxAge = getMaxAge(headers);
     if (maxAge == null) {
       return DEFAULT_TTL_SECONDS;
@@ -104,7 +108,7 @@ public class EnsoHTTPResponseCache {
     }
   }
 
-  private static Integer getMaxAge(HttpHeaders headers) {
+  private Integer getMaxAge(HttpHeaders headers) {
     var cacheControlMaybe = headers.firstValue("cache-control");
     Integer maxAge = null;
     if (cacheControlMaybe.isPresent()) {
@@ -123,20 +127,20 @@ public class EnsoHTTPResponseCache {
     return maxAge;
   }
 
-  public static void clear() {
+  public void clear() {
     lruCache.clear();
   }
 
-  public static int getNumEntries() {
+  public int getNumEntries() {
     return lruCache.getNumEntries();
   }
 
-  public static List<Long> getFileSizesTestOnly() {
+  public List<Long> getFileSizesTestOnly() {
     return lruCache.getFileSizesTestOnly();
   }
 
   /** Return a set of parameters that can be used to modify settings for testing purposes. */
-  public static LRUCache.CacheTestParameters getCacheTestParameters() {
+  public LRUCache.CacheTestParameters getCacheTestParameters() {
     return lruCache.getCacheTestParameters();
   }
 

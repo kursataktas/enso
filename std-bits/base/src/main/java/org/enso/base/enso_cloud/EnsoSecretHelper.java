@@ -22,6 +22,7 @@ import org.graalvm.collections.Pair;
 
 /** Makes HTTP requests with secrets in either header or query string. */
 public final class EnsoSecretHelper extends SecretValueResolver {
+  private static final EnsoHTTPResponseCache cache = new EnsoHTTPResponseCache();
 
   /** Gets a JDBC connection resolving EnsoKeyValuePair into the properties. */
   public static Connection getJDBCConnection(
@@ -87,7 +88,7 @@ public final class EnsoSecretHelper extends SecretValueResolver {
     if (!useCache) {
       return requestMaker.makeRequest();
     } else {
-      return EnsoHTTPResponseCache.makeRequest(requestMaker);
+      return cache.makeRequest(requestMaker);
     }
   }
 
@@ -173,6 +174,10 @@ public final class EnsoSecretHelper extends SecretValueResolver {
       return new EnsoHttpResponse(
           renderedURI, metadata.headers(), inputStream, metadata.statusCode());
     }
+  }
+
+  public static final clearCache() {
+    cache.clear();
   }
 
   private static final Comparator<Pair<String, String>> headerNameComparator =
