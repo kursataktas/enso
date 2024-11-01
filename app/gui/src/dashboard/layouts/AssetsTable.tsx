@@ -875,10 +875,7 @@ export default function AssetsTable(props: AssetsTableProps) {
             if (item != null && item.isType(AssetType.directory)) {
               setTargetDirectory(item)
             }
-            if (
-              item != null &&
-              item.item.id !== driveStore.getState().assetPanelProps.item?.id
-            ) {
+            if (item != null && item.item.id !== driveStore.getState().assetPanelProps.item?.id) {
               setAssetPanelProps({ backend, item: item.item, path: item.path })
               setIsAssetPanelTemporarilyVisible(false)
             }
@@ -2567,7 +2564,12 @@ export default function AssetsTable(props: AssetsTableProps) {
         const Heading = COLUMN_HEADING[column]
         return (
           <th key={column} className={COLUMN_CSS_CLASS[column]}>
-            <Heading state={state} />
+            <Heading
+              sortInfo={state.sortInfo}
+              hideColumn={state.hideColumn}
+              setSortInfo={state.setSortInfo}
+              category={state.category}
+            />
           </th>
         )
       })}
