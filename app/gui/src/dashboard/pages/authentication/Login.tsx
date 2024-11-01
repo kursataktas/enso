@@ -14,6 +14,7 @@ import type { CognitoUser } from '#/authentication/cognito'
 import { Button, Form, Input, OTPInput, Password, Text } from '#/components/AriaComponents'
 import Link from '#/components/Link'
 import { Stepper } from '#/components/Stepper'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import AuthenticationPage from '#/pages/authentication/AuthenticationPage'
 import { passwordSchema } from '#/pages/authentication/schemas'
 import { useAuth } from '#/providers/AuthProvider'
@@ -79,6 +80,14 @@ export default function Login() {
     defaultStep: 0,
   })
 
+  const handleGooglePress = useEventCallback(async () => {
+    await signInWithGoogle()
+  })
+
+  const handleGitHubPress = useEventCallback(async () => {
+    await signInWithGitHub()
+  })
+
   return (
     <AuthenticationPage
       title={getText('loginToYourAccount')}
@@ -101,10 +110,10 @@ export default function Login() {
         <Stepper.StepContent index={0}>
           {() => (
             <div className="flex flex-col gap-auth">
-              <Button size="large" variant="outline" icon={GOOGLE_ICON} onPress={signInWithGoogle}>
+              <Button size="large" variant="outline" icon={GOOGLE_ICON} onPress={handleGooglePress}>
                 {getText('signUpOrLoginWithGoogle')}
               </Button>
-              <Button size="large" variant="outline" icon={GITHUB_ICON} onPress={signInWithGitHub}>
+              <Button size="large" variant="outline" icon={GITHUB_ICON} onPress={handleGitHubPress}>
                 {getText('signUpOrLoginWithGitHub')}
               </Button>
 
