@@ -481,9 +481,9 @@ export namespace settings {
         .getByRole('textbox')
     }
 
-    /** Find a "change" button. */
-    export function locateChangeButton(page: test.Page) {
-      return locate(page).getByRole('button', { name: 'Change' }).getByText('Change')
+    /** Find a "save" button. */
+    export function locateSaveButton(page: test.Page) {
+      return locate(page).getByRole('button', { name: 'Save' }).getByText('Save')
     }
   }
 
