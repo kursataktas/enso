@@ -2,7 +2,6 @@ package org.enso.runtime.parser.processor;
 
 import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
-import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.ProcessingEnvironment;
@@ -12,25 +11,27 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
+import org.enso.runtime.parser.processor.InterfaceHierarchyVisitor.Continue;
+import org.enso.runtime.parser.processor.InterfaceHierarchyVisitor.Stop;
 
 final class Utils {
   private Utils() {}
 
   /** Returns true if the given {@code type} is a subtype of {@code org.enso.compiler.core.IR}. */
   static boolean isSubtypeOfIR(TypeElement type, ProcessingEnvironment processingEnv) {
-    boolean irEncountered[] = {false};
-    iterateSuperInterfaces(
+    return iterateSuperInterfaces(
         type,
         processingEnv,
-        superInterface -> {
+        (TypeElement iface, Boolean currResult) -> {
           // current.getQualifiedName().toString() returns only "IR" as well, so we can't use it.
           // This is because runtime-parser-processor project does not depend on runtime-parser and
           // so the org.enso.compiler.core.IR interface is not available in the classpath.
-          if (superInterface.getSimpleName().toString().equals("IR")) {
-            irEncountered[0] = true;
+          if (iface.getSimpleName().toString().equals("IR")) {
+            return new Stop<>(true);
           }
-        });
-    return irEncountered[0];
+          return new Continue<>(currResult);
+        },
+        false);
   }
 
   /** Returns true if the given {@code type} is an {@code org.enso.compiler.core.IR} interface. */
@@ -74,21 +75,21 @@ final class Utils {
    */
   static boolean hasDefaultImplementation(
       ExecutableElement method, TypeElement interfaceType, ProcessingEnvironment procEnv) {
-    boolean defaultMethodEncountered[] = {false};
-    iterateSuperInterfaces(
+    return iterateSuperInterfaces(
         interfaceType,
         procEnv,
-        superInterface -> {
+        (TypeElement superInterface, Boolean currResult) -> {
           for (var enclosedElem : superInterface.getEnclosedElements()) {
             if (enclosedElem instanceof ExecutableElement executableElem) {
               if (executableElem.getSimpleName().equals(method.getSimpleName())
                   && executableElem.isDefault()) {
-                defaultMethodEncountered[0] = true;
+                return new Stop<>(true);
               }
             }
           }
-        });
-    return defaultMethodEncountered[0];
+          return new Continue<>(currResult);
+        },
+        false);
   }
 
   /**
@@ -102,26 +103,27 @@ final class Utils {
    */
   static ExecutableElement findDuplicateMethod(
       TypeElement interfaceType, ProcessingEnvironment procEnv) {
-    ExecutableElement[] duplicateMethod = {null};
-    iterateSuperInterfaces(
-        interfaceType,
-        procEnv,
-        superInterface -> {
-          for (var enclosedElem : superInterface.getEnclosedElements()) {
-            if (enclosedElem instanceof ExecutableElement execElem) {
-              if (isDuplicateMethod(execElem)) {
-                if (duplicateMethod[0] == null) {
-                  duplicateMethod[0] = execElem;
+    var duplicateMethod =
+        iterateSuperInterfaces(
+            interfaceType,
+            procEnv,
+            (TypeElement superInterface, ExecutableElement ignored) -> {
+              for (var enclosedElem : superInterface.getEnclosedElements()) {
+                if (enclosedElem instanceof ExecutableElement execElem) {
+                  if (isDuplicateMethod(execElem)) {
+                    return new Stop<>(execElem);
+                  }
                 }
               }
-            }
-          }
-        });
-    assert duplicateMethod[0] != null
-        : "Interface "
+              return new Continue<>(ignored);
+            },
+            null);
+    hardAssert(
+        duplicateMethod != null,
+        "Interface "
             + interfaceType.getQualifiedName()
-            + " must implement IR, so it must declare duplicate method";
-    return duplicateMethod[0];
+            + " must implement IR, so it must declare duplicate method");
+    return duplicateMethod;
   }
 
   static void hardAssert(boolean condition, String msg) {
@@ -139,30 +141,21 @@ final class Utils {
         && executableElement.getParameters().size() == 4;
   }
 
-  static void iterateSuperInterfaces(
-      TypeElement type, ProcessingEnvironment processingEnv, Consumer<TypeElement> consumer) {
-    var interfacesToProcess = new ArrayDeque<TypeElement>();
-    interfacesToProcess.add(type);
-    while (!interfacesToProcess.isEmpty()) {
-      var current = interfacesToProcess.pop();
-      consumer.accept(current);
-      // Add all super interfaces to the queue
-      for (var superInterface : current.getInterfaces()) {
-        var superInterfaceElem = processingEnv.getTypeUtils().asElement(superInterface);
-        if (superInterfaceElem instanceof TypeElement superInterfaceTypeElem) {
-          interfacesToProcess.add(superInterfaceTypeElem);
-        }
-      }
-    }
-  }
-
+  /**
+   * @param type Type from which the iterations starts.
+   * @param processingEnv
+   * @param ifaceVisitor Visitor that is called for each interface.
+   * @param initialResult Initial result set for the visitor. May be null.
+   * @param <T>
+   */
   static <T> T iterateSuperInterfaces(
       TypeElement type,
       ProcessingEnvironment processingEnv,
-      InterfaceHierarchyVisitor<T> ifaceVisitor) {
+      InterfaceHierarchyVisitor<T> ifaceVisitor,
+      T initialResult) {
     var interfacesToProcess = new ArrayDeque<TypeElement>();
     interfacesToProcess.add(type);
-    T visitResult = null;
+    T visitResult = initialResult;
     while (!interfacesToProcess.isEmpty()) {
       var current = interfacesToProcess.pop();
       var iterationResult = ifaceVisitor.visitInterface(current, visitResult);

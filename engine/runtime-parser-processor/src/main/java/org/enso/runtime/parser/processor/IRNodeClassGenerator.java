@@ -111,7 +111,7 @@ final class IRNodeClassGenerator {
             return new Continue<>(ignored);
           }
         };
-    return Utils.iterateSuperInterfaces(interfaceType, processingEnv, ifaceVisitor);
+    return Utils.iterateSuperInterfaces(interfaceType, processingEnv, ifaceVisitor, null);
   }
 
   /** Returns simple name of the generated class. */
