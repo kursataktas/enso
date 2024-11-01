@@ -423,14 +423,13 @@ case object AliasAnalysis extends IRPass {
             case _                                         => false
           }
           val occurrenceId = graph.nextId()
-          val occurrence =
-            GraphOccurrence.Def(
-              occurrenceId,
-              name.name,
-              binding.getId(),
-              binding.getExternalId,
-              isSuspended
-            )
+          val occurrence = new GraphOccurrence.Def(
+            occurrenceId,
+            name.name,
+            binding.getId(),
+            binding.getExternalId,
+            isSuspended
+          )
 
           parentScope.add(occurrence)
           parentScope.addDefinition(occurrence)
@@ -492,13 +491,12 @@ case object AliasAnalysis extends IRPass {
         }
 
         val labelId = graph.nextId()
-        val definition =
-          GraphOccurrence.Def(
-            labelId,
-            label.name,
-            label.getId,
-            label.getExternalId
-          )
+        val definition = new GraphOccurrence.Def(
+          labelId,
+          label.name,
+          label.getId,
+          label.getExternalId
+        )
         parentScope.add(definition)
         parentScope.addDefinition(definition)
 
@@ -551,7 +549,7 @@ case object AliasAnalysis extends IRPass {
         // Synthetic `self` must not be added to the scope, but it has to be added as a
         // definition for frame index metadata
         val occurrenceId = graph.nextId()
-        val definition = GraphOccurrence.Def(
+        val definition = new GraphOccurrence.Def(
           occurrenceId,
           selfName.name,
           arg.getId(),
@@ -590,7 +588,7 @@ case object AliasAnalysis extends IRPass {
             )
 
           val occurrenceId = graph.nextId()
-          val definition = GraphOccurrence.Def(
+          val definition = new GraphOccurrence.Def(
             occurrenceId,
             name.name,
             arg.getId(),
@@ -767,18 +765,17 @@ case object AliasAnalysis extends IRPass {
     val occurrenceId = graph.nextId()
 
     if (isInPatternContext && !isConstructorNameInPatternContext) {
-      val definition =
-        GraphOccurrence.Def(
-          occurrenceId,
-          name.name,
-          name.getId,
-          name.getExternalId
-        )
+      val definition = new GraphOccurrence.Def(
+        occurrenceId,
+        name.name,
+        name.getId,
+        name.getExternalId
+      )
       parentScope.add(definition)
       parentScope.addDefinition(definition)
     } else {
       val occurrence =
-        GraphOccurrence.Use(
+        new GraphOccurrence.Use(
           occurrenceId,
           name.name,
           name.getId,
