@@ -3,6 +3,13 @@ package org.enso.runtime.parser.processor;
 import java.util.stream.Collectors;
 import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
 
+/**
+ * Code generator for builder. Builder is a nested static class inside the generated class. Builder
+ * has a validation code that is invoked in {@code build()} method that ensures that all the
+ * required fields are set. Builder has a copy constructor - a constructor that takes the generated
+ * class object and prefills all the fields with the values from the object. This copy constructor
+ * is called from either the {@code duplicate} method or from copy methods.
+ */
 class BuilderMethodGenerator {
   private final GeneratedClassContext generatedClassContext;
 

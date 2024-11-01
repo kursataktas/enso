@@ -9,6 +9,7 @@ import javax.lang.model.type.TypeKind;
 
 /**
  * Code generator for {@code org.enso.compiler.core.ir.IR#duplicate} method or any of its override.
+ * Note that in the interface hierarchy, there can be an override with a different return type.
  */
 class DuplicateMethodGenerator {
   private final ExecutableElement duplicateMethod;

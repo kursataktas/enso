@@ -7,8 +7,8 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
 
 /**
- * A context created for the generated class. Everything that is needed for the code generation is
- * contained in this class.
+ * A context created for the generated class. Everything that is needed for the code generation of a
+ * single class is contained in this class.
  */
 final class GeneratedClassContext {
   private final String className;
@@ -82,6 +82,7 @@ final class GeneratedClassContext {
     return userFields;
   }
 
+  /** Returns simple name of the class that is being generated. */
   String getClassName() {
     return className;
   }

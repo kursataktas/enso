@@ -71,6 +71,9 @@ final class Utils {
    * Returns true if the method has an implementation (is default or static) in some of the super
    * interfaces.
    *
+   * <p>If the method is implemented in some of the super interfaces, there must not be generated an
+   * override for it - that would result in compilation error.
+   *
    * @param method the method to check
    * @param interfaceType the interface that declares the method to check for the implementation.
    * @param procEnv

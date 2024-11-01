@@ -9,6 +9,7 @@ import javax.lang.model.element.VariableElement;
 import org.enso.runtime.parser.dsl.IRCopyMethod;
 import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
 
+/** Code generator for methods annotated with {@link IRCopyMethod}. */
 class CopyMethodGenerator {
   private final ExecutableElement copyMethod;
   private final GeneratedClassContext ctx;

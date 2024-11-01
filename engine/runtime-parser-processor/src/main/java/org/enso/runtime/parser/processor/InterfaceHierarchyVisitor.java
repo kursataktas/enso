@@ -4,7 +4,9 @@ import javax.lang.model.element.TypeElement;
 
 /**
  * A visitor for traversing the interface hierarchy of an interface - it iterates over all the super
- * interfaces until it encounters {@code org.enso.compiler.ir.IR} interface.
+ * interfaces until it encounters {@code org.enso.compiler.ir.IR} interface. The iteration can be
+ * stopped by returning a non-null value from the visitor. Follows a similar pattern as {@link
+ * com.oracle.truffle.api.frame.FrameInstanceVisitor}.
  */
 @FunctionalInterface
 interface InterfaceHierarchyVisitor<T> {
