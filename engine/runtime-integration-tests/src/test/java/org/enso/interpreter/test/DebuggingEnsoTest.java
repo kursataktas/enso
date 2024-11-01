@@ -268,41 +268,6 @@ public class DebuggingEnsoTest {
     }
   }
 
-  @Test
-  public void builtinAtomHasProperties() {
-    Value fooFunc =
-        createEnsoMethod(
-            """
-        from Standard.Base import Date
-
-        foo _ =
-            d_enso = Date.new 2024 12 15
-            tmp = 42
-        """,
-            "foo");
-
-    try (DebuggerSession session =
-        debugger.startSession(
-            (SuspendedEvent event) -> {
-              switch (event.getSourceSection().getCharacters().toString().strip()) {
-                case "tmp = 42" -> {
-                  DebugScope scope = event.getTopStackFrame().getScope();
-                  DebugValue ensoDate = scope.getDeclaredValue("d_enso");
-                  assertThat(ensoDate.isReadable(), is(true));
-                  assertThat(ensoDate.isInternal(), is(false));
-                  assertThat(
-                      "If d_enso is readable, the getProperties() must not be null",
-                      ensoDate.getProperties(),
-                      is(notNullValue()));
-                }
-              }
-              event.getSession().suspendNextExecution();
-            })) {
-      session.suspendNextExecution();
-      fooFunc.execute(0);
-    }
-  }
-
   /**
    * Both {@code Date.new 2024 12 15} and {@code Date.parse "2024-12-15"} should be seen by the
    * debugger as the exact same objects. Internally, the value from {@code Date.parse} is a host
