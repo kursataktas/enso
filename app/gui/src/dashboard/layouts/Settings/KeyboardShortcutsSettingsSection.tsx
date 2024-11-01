@@ -86,7 +86,7 @@ export default function KeyboardShortcutsSettingsSection() {
                 {visibleBindings.map((kv) => {
                   const [action, info] = kv
                   return (
-                    <tr key={action}>
+                    <tr key={action} className="rounded-rows-child">
                       <td className="flex h-row items-center rounded-l-full bg-clip-padding pl-cell-x pr-1.5">
                         <SvgMask
                           src={info.icon ?? BlankIcon}
