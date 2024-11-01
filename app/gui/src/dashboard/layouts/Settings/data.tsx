@@ -385,6 +385,7 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
     sections: [
       {
         nameId: 'keyboardShortcutsSettingsSection',
+        columnClassName: 'h-full overflow-auto',
         entries: [
           {
             type: SettingsEntryType.custom,

@@ -68,8 +68,7 @@ export default function KeyboardShortcutsSettingsSection() {
           <div
             {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
               ref: rootRef,
-              // There is a horizontal scrollbar for some reason without `px-px`.
-              className: 'overflow-auto px-px',
+              className: 'overflow-auto',
               onScroll,
             })}
           >
