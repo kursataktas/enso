@@ -24,6 +24,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query'
+import { useVirtualizer } from '@tanstack/react-virtual'
 import { toast } from 'react-toastify'
 import invariant from 'tiny-invariant'
 import * as z from 'zod'
@@ -2569,6 +2570,13 @@ export default function AssetsTable(props: AssetsTableProps) {
     setAsset,
   }))
 
+  const virtualizer = useVirtualizer({
+    count: displayItems.length,
+    getScrollElement: () => rootRef.current,
+    estimateSize: () => ROW_HEIGHT_PX,
+    overscan: 20,
+  })
+
   const columns = useMemo(
     () =>
       getColumnList(user, backend.type, category).filter((column) => enabledColumns.has(column)),
@@ -2598,10 +2606,18 @@ export default function AssetsTable(props: AssetsTableProps) {
           </div>
         </td>
       </tr>
-    : displayItems.map((item) => {
+    : virtualizer.getVirtualItems().map((virtualRow, index) => {
+        const item = displayItems[virtualRow.index]
+
+        if (!item) {
+          return null
+        }
+
         return (
           <AssetRow
             key={item.key + item.path}
+            rowHeight={virtualRow.size}
+            rowOffset={virtualRow.start - index * virtualRow.size}
             isOpened={openedProjects.some(({ id }) => item.item.id === id)}
             visibility={visibilities.get(item.key)}
             columns={columns}
@@ -2636,6 +2652,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   const table = (
     <div
       className="flex grow flex-col"
+      style={{ height: virtualizer.getTotalSize() }}
       onContextMenu={(event) => {
         if (isAssetContextMenuVisible) {
           event.preventDefault()

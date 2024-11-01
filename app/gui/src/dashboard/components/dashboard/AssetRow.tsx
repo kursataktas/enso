@@ -113,12 +113,15 @@ export interface AssetRowProps {
     event: React.DragEvent<HTMLTableRowElement>,
     item: backendModule.AnyAsset,
   ) => void
+  readonly rowHeight: number
+  readonly rowOffset: number
 }
 
 /** A row containing an {@link backendModule.AnyAsset}. */
 export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
   const { id, parentId, isKeyboardSelected, isOpened, select, state, columns, onClick } = props
   const { path, hidden: hiddenRaw, grabKeyboardFocus, visibility: visibilityRaw, depth } = props
+  const { rowHeight, rowOffset } = props
   const { initialAssetEvents } = props
   const { nodeMap, doCopy, doCut, doPaste, doDelete: doDeleteRaw } = state
   const { doRestore, doMove, category, scrollContainerRef, rootDirectoryId, backend } = state
@@ -509,6 +512,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
               <tr
                 data-testid="asset-row"
                 tabIndex={0}
+                style={{ maxHeight: rowHeight, transform: `translateY(${rowOffset}px)` }}
                 ref={(element) => {
                   rootRef.current = element
 
