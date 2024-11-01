@@ -12,8 +12,7 @@ import javax.lang.model.type.TypeKind;
  */
 class DuplicateMethodGenerator {
   private final ExecutableElement duplicateMethod;
-  private final List<Field> fields;
-  private final String className;
+  private final GeneratedClassContext ctx;
   private static final List<Parameter> parameters =
       List.of(
           new Parameter("boolean", "keepLocations"),
@@ -23,15 +22,11 @@ class DuplicateMethodGenerator {
 
   /**
    * @param duplicateMethod ExecutableElement representing the duplicate method (or its override).
-   * @param fields List of the fields of the generated class
-   * @param className Name of the generated class
    */
-  DuplicateMethodGenerator(
-      ExecutableElement duplicateMethod, List<Field> fields, String className) {
+  DuplicateMethodGenerator(ExecutableElement duplicateMethod, GeneratedClassContext ctx) {
     ensureDuplicateMethodHasExpectedSignature(duplicateMethod);
+    this.ctx = Objects.requireNonNull(ctx);
     this.duplicateMethod = Objects.requireNonNull(duplicateMethod);
-    this.fields = Objects.requireNonNull(fields);
-    this.className = Objects.requireNonNull(className);
   }
 
   private static void ensureDuplicateMethodHasExpectedSignature(ExecutableElement duplicateMethod) {
@@ -58,7 +53,47 @@ class DuplicateMethodGenerator {
         .append(") {")
         .append(System.lineSeparator());
     var duplicatedVars = new ArrayList<DuplicateVar>();
-    for (var field : fields) {
+
+    var duplicateMetaFieldsCode =
+        """
+        $diagType diagnosticsDuplicated;
+        if (keepDiagnostics) {
+          diagnosticsDuplicated = this.diagnostics;
+        } else {
+          diagnosticsDuplicated = null;
+        }
+        $metaType passDataDuplicated;
+        if (keepMetadata) {
+          passDataDuplicated = this.passData;
+        } else {
+          passDataDuplicated = null;
+        }
+        $locType locationDuplicated;
+        if (keepLocations) {
+          locationDuplicated = this.location;
+        } else {
+          locationDuplicated = null;
+        }
+        $idType idDuplicated;
+        if (keepIdentifiers) {
+          idDuplicated = this.id;
+        } else {
+          idDuplicated = null;
+        }
+        """
+            .replace("$locType", ctx.getLocationMetaField().type())
+            .replace("$metaType", ctx.getPassDataMetaField().type())
+            .replace("$diagType", ctx.getDiagnosticsMetaField().type())
+            .replace("$idType", ctx.getIdMetaField().type());
+    sb.append(Utils.indent(duplicateMetaFieldsCode, 2));
+    sb.append(System.lineSeparator());
+    for (var dupMetaVarName :
+        List.of(
+            "diagnosticsDuplicated", "passDataDuplicated", "locationDuplicated", "idDuplicated")) {
+      duplicatedVars.add(new DuplicateVar(null, dupMetaVarName, false));
+    }
+
+    for (var field : ctx.getUserFields()) {
       if (field.isChild()) {
         if (field.isNullable()) {
           sb.append(Utils.indent(nullableChildCode(field), 2));
@@ -81,6 +116,7 @@ class DuplicateMethodGenerator {
         duplicatedVars.add(new DuplicateVar(field.getSimpleTypeName(), dupFieldName(field), false));
       }
     }
+
     sb.append(Utils.indent(returnStatement(duplicatedVars), 2));
     sb.append(System.lineSeparator());
     sb.append("}");
@@ -157,6 +193,9 @@ class DuplicateMethodGenerator {
   }
 
   private String returnStatement(List<DuplicateVar> duplicatedVars) {
+    Utils.hardAssert(
+        duplicatedVars.size() == ctx.getConstructorParameters().size(),
+        "Number of duplicated variables must be equal to the number of constructor parameters");
     var argList =
         duplicatedVars.stream()
             .map(
@@ -168,7 +207,7 @@ class DuplicateMethodGenerator {
                   }
                 })
             .collect(Collectors.joining(", "));
-    return "return new " + className + "(" + argList + ");";
+    return "return new " + ctx.getClassName() + "(" + argList + ");";
   }
 
   private String dupMethodRetType() {

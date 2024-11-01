@@ -123,6 +123,12 @@ final class Utils {
     return duplicateMethod[0];
   }
 
+  static void hardAssert(boolean condition, String msg) {
+    if (!condition) {
+      throw new AssertionError(msg);
+    }
+  }
+
   private static boolean isDuplicateMethod(ExecutableElement executableElement) {
     return executableElement.getSimpleName().toString().equals("duplicate")
         && executableElement.getParameters().size() == 4;

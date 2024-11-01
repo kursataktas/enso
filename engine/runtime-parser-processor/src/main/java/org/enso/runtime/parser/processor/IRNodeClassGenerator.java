@@ -32,9 +32,7 @@ final class IRNodeClassGenerator {
   /** Name of the class that is being generated */
   private final String className;
 
-  /** User defined fields - all the abstract parameterless methods, including the inherited ones. */
-  private final List<Field> fields;
-
+  private final GeneratedClassContext generatedClassContext;
   private final DuplicateMethodGenerator duplicateMethodGenerator;
 
   private static final Set<String> defaultImportedTypes =
@@ -62,10 +60,12 @@ final class IRNodeClassGenerator {
     this.processingEnv = processingEnv;
     this.interfaceType = interfaceType;
     this.className = className;
-    this.fields = getAllFields(interfaceType);
+    var fields = getAllUserFields(interfaceType);
     var duplicateMethod = Utils.findDuplicateMethod(interfaceType, processingEnv);
+    this.generatedClassContext =
+        new GeneratedClassContext(className, fields, processingEnv, interfaceType);
     this.duplicateMethodGenerator =
-        new DuplicateMethodGenerator(duplicateMethod, fields, className);
+        new DuplicateMethodGenerator(duplicateMethod, generatedClassContext);
     var nestedTypes =
         interfaceType.getEnclosedElements().stream()
             .filter(
@@ -92,7 +92,7 @@ final class IRNodeClassGenerator {
   /** Returns set of import statements that should be included in the generated class. */
   Set<String> imports() {
     var importsForFields =
-        fields.stream()
+        generatedClassContext.getUserFields().stream()
             .flatMap(field -> field.getImportedTypes().stream())
             .collect(Collectors.toUnmodifiableSet());
     var allImports = new HashSet<String>();
@@ -136,7 +136,7 @@ final class IRNodeClassGenerator {
    * @param irNodeInterface Type element of the interface annotated with {@link IRNode}.
    * @return List of fields
    */
-  private List<Field> getAllFields(TypeElement irNodeInterface) {
+  private List<Field> getAllUserFields(TypeElement irNodeInterface) {
     var fieldCollector = new FieldCollector(processingEnv, irNodeInterface);
     return fieldCollector.collectFields();
   }
@@ -147,7 +147,7 @@ final class IRNodeClassGenerator {
    */
   private String fieldsCode() {
     var userDefinedFields =
-        fields.stream()
+        generatedClassContext.getUserFields().stream()
             .map(field -> "private final " + field.getSimpleTypeName() + " " + field.getName())
             .collect(Collectors.joining(";" + System.lineSeparator()));
     var code =
@@ -171,17 +171,17 @@ final class IRNodeClassGenerator {
     var sb = new StringBuilder();
     sb.append("private ").append(className).append("(");
     var inParens =
-        fields.stream()
+        generatedClassContext.getConstructorParameters().stream()
             .map(
-                field ->
-                    "$fieldType $fieldName"
-                        .replace("$fieldType", field.getSimpleTypeName())
-                        .replace("$fieldName", field.getName()))
+                consParam ->
+                    "$consType $consName"
+                        .replace("$consType", consParam.type())
+                        .replace("$consName", consParam.name()))
             .collect(Collectors.joining(", "));
     sb.append(inParens).append(") {").append(System.lineSeparator());
     var ctorBody =
-        fields.stream()
-            .map(field -> "  this.$fieldName = $fieldName;".replace("$fieldName", field.getName()))
+        generatedClassContext.getAllFields().stream()
+            .map(field -> "  this.$fieldName = $fieldName;".replace("$fieldName", field.name()))
             .collect(Collectors.joining(System.lineSeparator()));
     sb.append(indent(ctorBody, 2));
     sb.append(System.lineSeparator());
@@ -193,7 +193,7 @@ final class IRNodeClassGenerator {
     var sb = new StringBuilder();
     var nl = System.lineSeparator();
     sb.append("var list = new ArrayList<IR>();").append(nl);
-    fields.stream()
+    generatedClassContext.getUserFields().stream()
         .filter(Field::isChild)
         .forEach(
             childField -> {
@@ -306,7 +306,7 @@ final class IRNodeClassGenerator {
    */
   private String overrideUserDefinedMethods() {
     var code =
-        fields.stream()
+        generatedClassContext.getUserFields().stream()
             .map(
                 field ->
                     """
