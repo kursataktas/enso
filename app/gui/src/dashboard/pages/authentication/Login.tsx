@@ -21,6 +21,11 @@ import { useLocalBackend } from '#/providers/BackendProvider'
 import { useText } from '#/providers/TextProvider'
 import { useState } from 'react'
 
+// eslint-disable-next-line no-restricted-syntax
+const GOOGLE_ICON = <img src={GoogleIcon} alt="" />
+// eslint-disable-next-line no-restricted-syntax
+const GITHUB_ICON = <img src={GithubIcon} alt="" />
+
 // =============
 // === Login ===
 // =============
@@ -96,24 +101,10 @@ export default function Login() {
         <Stepper.StepContent index={0}>
           {() => (
             <div className="flex flex-col gap-auth">
-              <Button
-                size="large"
-                variant="outline"
-                icon={<img src={GoogleIcon} alt={getText('googleIcon')} />}
-                onPress={async () => {
-                  await signInWithGoogle()
-                }}
-              >
+              <Button size="large" variant="outline" icon={GOOGLE_ICON} onPress={signInWithGoogle}>
                 {getText('signUpOrLoginWithGoogle')}
               </Button>
-              <Button
-                size="large"
-                variant="outline"
-                icon={<img src={GithubIcon} alt={getText('gitHubIcon')} />}
-                onPress={async () => {
-                  await signInWithGitHub()
-                }}
-              >
+              <Button size="large" variant="outline" icon={GITHUB_ICON} onPress={signInWithGitHub}>
                 {getText('signUpOrLoginWithGitHub')}
               </Button>
 

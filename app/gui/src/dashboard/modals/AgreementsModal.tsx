@@ -71,11 +71,11 @@ LocalStorage.registerKey('privacyPolicy', { schema: PRIVACY_POLICY_SCHEMA })
 /** Modal for accepting the terms of service. */
 export function AgreementsModal() {
   const { getText } = useText()
-  const { localStorage } = useLocalStorage()
   const { session } = useAuth()
 
-  const [cachedTosHash] = useLocalStorageState('termsOfService')
-  const [cachedPrivacyPolicyHash] = useLocalStorageState('privacyPolicy')
+  const [cachedTosHash, setCachedTosHash] = useLocalStorageState('termsOfService')
+  const [cachedPrivacyPolicyHash, setCachedPrivacyPolicyHash] =
+    useLocalStorageState('privacyPolicy')
 
   const { data: tosHash } = useSuspenseQuery({
     ...latestTermsOfServiceQueryOptions,
@@ -102,6 +102,16 @@ export function AgreementsModal() {
 
   const isAccepted = cachedTosHash != null
   const shouldDisplay = !(isAccepted && isLatest)
+
+  console.log('shouldDisplay', {
+    shouldDisplay,
+    isAccepted,
+    isLatest,
+    tosHash,
+    privacyPolicyHash,
+    cachedTosHash,
+    cachedPrivacyPolicyHash,
+  })
 
   if (shouldDisplay) {
     // Note that this produces warnings about missing a `<Heading slot="title">`, even though
@@ -137,8 +147,8 @@ export function AgreementsModal() {
           testId="agreements-form"
           method="dialog"
           onSubmit={() => {
-            localStorage.set('termsOfService', { versionHash: tosHash })
-            localStorage.set('privacyPolicy', { versionHash: privacyPolicyHash })
+            setCachedTosHash({ versionHash: tosHash })
+            setCachedPrivacyPolicyHash({ versionHash: privacyPolicyHash })
           }}
         >
           {({ form }) => (
