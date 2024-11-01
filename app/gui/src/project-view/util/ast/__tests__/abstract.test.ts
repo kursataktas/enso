@@ -622,7 +622,9 @@ test('Tree repair: Non-canonical block line attribution', () => {
 
   const repair = edit.edit()
   Ast.repair(editedRoot, repair)
-  const afterRepair = findExpressions(repair.root()!, {
+  const repairedRoot = repair.root()
+  assertDefined(repairedRoot)
+  const afterRepair = findExpressions(repairedRoot, {
     'func a b =': Ast.FunctionDef,
     'c = a + b': Ast.Assignment,
     'main =': Ast.FunctionDef,
@@ -840,8 +842,8 @@ describe('Code edit', () => {
   })
 
   test('No-op block change', () => {
-    const code = 'a = 1\nb = 2\n'
-    const block = Ast.parseBlock(code)
+    const code = 'main =\n    a = 1\n    b = 2\n'
+    const block = Ast.parseModule(code)
     const module = block.module
     module.setRoot(block)
     block.syncToCode(code)

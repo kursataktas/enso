@@ -13,7 +13,7 @@ test('Main method documentation', async ({ page }) => {
   await expect(locate.rightDock(page)).toBeVisible()
 
   // Right-dock displays main method documentation.
-  await expect(locate.lexicalContent(locate.rightDock(page))).toHaveText('The main method')
+  await expect(locate.editorRoot(locate.rightDock(page))).toHaveText('The main method')
 
   // Documentation hotkey closes right-dock.p
   await page.keyboard.press(`${CONTROL_KEY}+D`)

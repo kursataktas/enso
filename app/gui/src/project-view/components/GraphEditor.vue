@@ -9,7 +9,7 @@ import {
 import BottomPanel from '@/components/BottomPanel.vue'
 import CodeEditor from '@/components/CodeEditor.vue'
 import ComponentBrowser from '@/components/ComponentBrowser.vue'
-import { type Usage } from '@/components/ComponentBrowser/input'
+import { Usage } from '@/components/ComponentBrowser/input'
 import { usePlacement } from '@/components/ComponentBrowser/placement'
 import ComponentDocumentation from '@/components/ComponentDocumentation.vue'
 import DockPanel from '@/components/DockPanel.vue'
@@ -18,9 +18,9 @@ import GraphEdges from '@/components/GraphEditor/GraphEdges.vue'
 import GraphNodes from '@/components/GraphEditor/GraphNodes.vue'
 import { useGraphEditorClipboard } from '@/components/GraphEditor/clipboard'
 import { performCollapse, prepareCollapsedInfo } from '@/components/GraphEditor/collapsing'
-import type { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
+import { NodeCreationOptions } from '@/components/GraphEditor/nodeCreation'
 import { useGraphEditorToasts } from '@/components/GraphEditor/toasts'
-import { Uploader, uploadedExpression } from '@/components/GraphEditor/upload'
+import { uploadedExpression, Uploader } from '@/components/GraphEditor/upload'
 import GraphMissingView from '@/components/GraphMissingView.vue'
 import GraphMouse from '@/components/GraphMouse.vue'
 import PlusButton from '@/components/PlusButton.vue'
@@ -31,10 +31,10 @@ import { useAstDocumentation } from '@/composables/astDocumentation'
 import { useDoubleClick } from '@/composables/doubleClick'
 import { keyboardBusy, keyboardBusyExceptIn, unrefElement, useEvent } from '@/composables/events'
 import { groupColorVar } from '@/composables/nodeColors'
-import type { PlacementStrategy } from '@/composables/nodeCreation'
+import { PlacementStrategy } from '@/composables/nodeCreation'
 import { useSyncLocalStorage } from '@/composables/syncLocalStorage'
 import { provideFullscreenContext } from '@/providers/fullscreenContext'
-import { provideGraphNavigator, type GraphNavigator } from '@/providers/graphNavigator'
+import { GraphNavigator, provideGraphNavigator } from '@/providers/graphNavigator'
 import { provideNodeColors } from '@/providers/graphNodeColors'
 import { provideNodeCreation } from '@/providers/graphNodeCreation'
 import { provideGraphSelection } from '@/providers/graphSelection'
@@ -43,22 +43,24 @@ import { provideInteractionHandler } from '@/providers/interactionHandler'
 import { provideKeyboard } from '@/providers/keyboard'
 import { injectVisibility } from '@/providers/visibility'
 import { provideWidgetRegistry } from '@/providers/widgetRegistry'
-import { provideGraphStore, type NodeId } from '@/stores/graph'
-import type { RequiredImport } from '@/stores/graph/imports'
+import { NodeId, provideGraphStore } from '@/stores/graph'
+import { RequiredImport } from '@/stores/graph/imports'
 import { useProjectStore } from '@/stores/project'
 import { useSettings } from '@/stores/settings'
 import { provideSuggestionDbStore } from '@/stores/suggestionDatabase'
-import type { SuggestionId } from '@/stores/suggestionDatabase/entry'
-import { suggestionDocumentationUrl, type Typename } from '@/stores/suggestionDatabase/entry'
+import {
+  suggestionDocumentationUrl,
+  SuggestionId,
+  Typename,
+} from '@/stores/suggestionDatabase/entry'
 import { provideVisualizationStore } from '@/stores/visualization'
 import { bail } from '@/util/assert'
 import { Ast } from '@/util/ast'
-import type { AstId } from '@/util/ast/abstract'
 import { colorFromString } from '@/util/colors'
 import { partition } from '@/util/data/array'
 import { every, filterDefined } from '@/util/data/iterable'
 import { Rect } from '@/util/data/rect'
-import { Err, Ok, unwrapOr } from '@/util/data/result'
+import { Err, Ok } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
 import { computedFallback, useSelectRef } from '@/util/reactivity'
 import { until } from '@vueuse/core'
@@ -77,7 +79,6 @@ import {
 import { encodeMethodPointer } from 'ydoc-shared/languageServerTypes'
 import * as iterable from 'ydoc-shared/util/data/iterable'
 import { isDevMode } from 'ydoc-shared/util/detect'
-import * as Y from 'yjs'
 
 const rootNode = ref<HTMLElement>()
 
@@ -417,7 +418,7 @@ const documentationEditorArea = computed(() => unrefElement(docEditor))
 const showRightDock = computedFallback(
   storedShowRightDock,
   // Show documentation editor when documentation exists on first graph visit.
-  () => !!documentation.state.value,
+  () => (markdownDocs.value?.length ?? 0) > 0,
 )
 const rightDockTab = computedFallback(storedRightDockTab, () => 'docs')
 
@@ -431,10 +432,11 @@ const documentationEditorHandler = documentationEditorBindings.handler({
   },
 })
 
-const { documentation } = useAstDocumentation(graphStore, () =>
-  unwrapOr(graphStore.methodAst, undefined),
-)
-const mainMarkdownDocs = new Y.Doc().getText() // TODO
+const markdownDocs = computed(() => {
+  const currentMethod = graphStore.methodAst
+  if (!currentMethod.ok) return
+  return currentMethod.value.mutableDocumentationMarkdown()
+})
 
 // === Component Browser ===
 
@@ -552,7 +554,7 @@ const componentBrowserElements = computed(() => [
 
 interface NewNodeOptions {
   placement: PlacementStrategy
-  sourcePort?: AstId | undefined
+  sourcePort?: Ast.AstId | undefined
 }
 
 function addNodeDisconnected() {
@@ -594,7 +596,7 @@ function createNodesFromSource(sourceNode: NodeId, options: NodeCreationOptions[
     createWithComponentBrowser({ placement: { type: 'source', node: sourceNode }, sourcePort })
 }
 
-function handleNodeOutputPortDoubleClick(id: AstId) {
+function handleNodeOutputPortDoubleClick(id: Ast.AstId) {
   const srcNode = graphStore.db.getPatternExpressionNodeId(id)
   if (srcNode == null) {
     console.error('Impossible happened: Double click on port not belonging to any node: ', id)
@@ -603,7 +605,7 @@ function handleNodeOutputPortDoubleClick(id: AstId) {
   createWithComponentBrowser({ placement: { type: 'source', node: srcNode }, sourcePort: id })
 }
 
-function handleEdgeDrop(source: AstId, position: Vec2) {
+function handleEdgeDrop(source: Ast.AstId, position: Vec2) {
   createWithComponentBrowser({ placement: { type: 'fixed', position }, sourcePort: source })
 }
 
@@ -787,9 +789,9 @@ const documentationEditorFullscreen = ref(false)
     >
       <template #docs>
         <DocumentationEditor
-          v-if="mainMarkdownDocs"
+          v-if="markdownDocs"
           ref="docEditor"
-          :yText="mainMarkdownDocs"
+          :yText="markdownDocs"
           @update:fullscreen="documentationEditorFullscreen = $event"
         />
       </template>

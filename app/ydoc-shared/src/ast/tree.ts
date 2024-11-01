@@ -7,6 +7,7 @@ import type { SourceRangeEdit } from '../util/data/text'
 import { allKeys } from '../util/types'
 import type { ExternalId, VisualizationMetadata } from '../yjsModel'
 import { visMetadataEquals } from '../yjsModel'
+import { functionDocsToConcrete } from './documentation'
 import { is_numeric_literal } from './ffi'
 import { SpanMap, newExternalId } from './idMap'
 import { Module, MutableModule, ROOT_ID } from './mutableModule'
@@ -66,8 +67,8 @@ type Builtin = Primitive | Function | Date | Error | RegExp
 type DeepReadonlyExceptY<T> =
   T extends Builtin ? T
   : // Allow mutation
-  T extends FixedMap<unknown> ? T
-  : T extends Y.Map<unknown> ? T
+  T extends Y.Map<unknown> ? T
+  : T extends Y.Text ? T
   : // Same as DeepReadonly
   T extends Map<infer K, infer V> ? ReadonlyMap<DeepReadonly<K>, DeepReadonlyExceptY<V>>
   : T extends ReadonlyMap<infer K, infer V> ? ReadonlyMap<DeepReadonly<K>, DeepReadonlyExceptY<V>>
@@ -552,9 +553,20 @@ export function rewriteRefs(ast: MutableAst, f: (id: AstId) => AstId | undefined
  */
 export function syncFields(ast1: MutableAst, ast2: Ast, f: (id: AstId) => AstId | undefined) {
   for (const [key, value] of fieldDataEntries(ast2.fields)) {
+    if (value instanceof Y.Text) {
+      const ast1Value = ast1.fields.get(key as any)
+      assert(ast1Value instanceof Y.Text)
+      syncYText(ast1Value, value)
+      continue
+    }
     const newValue = mapRefs(value, idRewriter(f))
     if (!fieldEqual(ast1.fields.get(key as any), newValue)) ast1.fields.set(key as any, newValue)
   }
+}
+
+function syncYText(target: Y.Text, source: Y.Text) {
+  target.delete(0, target.length)
+  target.insert(0, source.toJSON())
 }
 
 /** TODO: Add docs */
@@ -2000,21 +2012,6 @@ export class MutableExpressionStatement extends ExpressionStatement implements M
   setExpression<T extends MutableExpression>(value: Owned<T>) {
     this.fields.set('expression', unspaced(this.claimChild(value)))
   }
-
-  /* TODO
-  yText(bless: (text: Y.Text) => void) {
-    let yText = this.fields.get('yText')
-    if (!yText) {
-      const raw = uninterpolatedText(this.fields.get('elements'), this.module)
-      const trimmed = raw.startsWith(' ') ? raw.slice(1) : raw
-      yText = new Y.Text(trimmed)
-      bless(yText)
-      this.fields.set('yText', yText)
-      this.fields.set('elements', [])
-    }
-    return yText
-  }
-   */
 }
 export interface MutableExpressionStatement extends ExpressionStatement, MutableAst {
   isAllowedInStatementContext(): true
@@ -2334,6 +2331,9 @@ export class FunctionDef extends BaseStatement {
     if (parsed instanceof MutableFunctionDef) return parsed
   }
 
+  mutableDocumentationMarkdown(): Y.Text {
+    return (this.fields as FixedMap<AstFields & FunctionDefFields>).get('docMarkdown')
+  }
   /** TODO: Add docs */
   get name(): Expression {
     return this.module.get(this.fields.get('name').node) as Expression
@@ -2355,7 +2355,6 @@ export class FunctionDef extends BaseStatement {
     fields: Partial<FunctionDefFields<OwnedRefs>> & {
       name: object
       equals: object
-      docLineMarkdownHash: string
       docMarkdown: object
     },
   ) {
@@ -2394,20 +2393,20 @@ export class FunctionDef extends BaseStatement {
     const argumentDefinitions = args.map(arg =>
       typeof arg === 'string' || isToken(arg) ?
         {
-          pattern: spaced(Ident.new(module, arg)),
+          pattern: autospaced(Ident.new(module, arg)),
         }
       : arg,
     )
     return MutableFunctionDef.concrete(module, {
       docLine: undefined,
-      docLineMarkdownHash: '', // TODO
-      docMarkdown: new Y.Text(), // TODO
+      docLineMarkdownHash: undefined,
+      docMarkdown: new Y.Text(options.documentation ?? ''),
       // Note that a function name may not be an operator if the function is not in the body of a type definition, but
       // we can't easily enforce that because we don't currently make a syntactic distinction between top-level
       // functions and type methods.
-      name: unspaced(Ident.newAllowingOperators(module, name)),
+      name: autospaced(Ident.newAllowingOperators(module, name)),
       argumentDefinitions,
-      equals: spaced(makeEquals()),
+      equals: autospaced(makeEquals()),
       body: autospaced(body),
     })
   }
@@ -2426,6 +2425,8 @@ export class FunctionDef extends BaseStatement {
   *concreteChildren({ indent, verbatim }: PrintContext): IterableIterator<RawConcreteChild> {
     const {
       docLine,
+      docLineMarkdownHash,
+      docMarkdown,
       annotationLines,
       signatureLine,
       private_,
@@ -2447,8 +2448,9 @@ export class FunctionDef extends BaseStatement {
         return preferUnspaced(nodeChild)
       }
     }
-    if (docLine) {
-      yield* docLineToConcrete(docLine, indent || '')
+    const docs = functionDocsToConcrete(docMarkdown.toJSON(), docLineMarkdownHash, docLine, indent)
+    if (docs) {
+      yield* docs
       prevIsNewline = true
     }
     for (const anno of annotationLines) {
@@ -2470,40 +2472,7 @@ export class FunctionDef extends BaseStatement {
     }
     if (private_) yield maybeIndented(private_)
     yield maybeIndented(name)
-    for (const def of argumentDefinitions) {
-      const { open, open2, suspension, pattern, type, close2, defaultValue, close } = def
-      if (open) yield ensureSpaced(open, verbatim)
-      const spacedInsideParen1 = open && ((open2 ?? suspension ?? pattern).whitespace ?? '') !== ''
-      if (open2) yield ensureSpacedOnlyIf(open2, spacedInsideParen1 ?? true, verbatim)
-      const spacedInsideParen2 = open2 && ((suspension ?? pattern).whitespace ?? '') !== ''
-      if (suspension) {
-        yield ensureSpacedOnlyIf(
-          suspension,
-          spacedInsideParen2 ?? spacedInsideParen1 ?? true,
-          verbatim,
-        )
-        yield ensureUnspaced(pattern, verbatim)
-      } else {
-        yield ensureSpacedOnlyIf(
-          pattern,
-          spacedInsideParen2 ?? spacedInsideParen1 ?? true,
-          verbatim,
-        )
-      }
-      if (type) {
-        const spaced = (type.operator.whitespace ?? type.type.whitespace ?? ' ') !== ''
-        yield ensureSpacedOnlyIf(type.operator, spaced, verbatim)
-        yield ensureSpacedOnlyIf(type.type, spaced, verbatim)
-      }
-      if (defaultValue) {
-        const spaced =
-          (defaultValue.equals.whitespace ?? defaultValue.expression.whitespace ?? ' ') !== ''
-        yield ensureSpacedOnlyIf(defaultValue.equals, spaced, verbatim)
-        yield ensureSpacedOnlyIf(defaultValue.expression, spaced, verbatim)
-      }
-      if (close2) yield ensureSpacedOnlyIf(close2, spacedInsideParen2 ?? false, verbatim)
-      if (close) yield ensureSpacedOnlyIf(close, spacedInsideParen1 ?? false, verbatim)
-    }
+    for (const def of argumentDefinitions) yield* argumentDefinitionToConcrete(def, verbatim)
     yield { whitespace: equals.whitespace ?? ' ', node: this.module.getToken(equals.node) }
     if (body)
       yield preferSpacedIf(
@@ -2516,6 +2485,32 @@ export class FunctionDef extends BaseStatement {
   override documentationText(): string | undefined {
     return docLineToText(this.fields.get('docLine'), this.module)
   }
+}
+function* argumentDefinitionToConcrete(def: DeepReadonly<ArgumentDefinition>, verbatim: boolean) {
+  const { open, open2, suspension, pattern, type, close2, defaultValue, close } = def
+  if (open) yield ensureSpaced(open, verbatim)
+  const spacedInsideParen1 = open && ((open2 ?? suspension ?? pattern).whitespace ?? '') !== ''
+  if (open2) yield ensureSpacedOnlyIf(open2, spacedInsideParen1 ?? true, verbatim)
+  const spacedInsideParen2 = open2 && ((suspension ?? pattern).whitespace ?? '') !== ''
+  if (suspension) {
+    yield ensureSpacedOnlyIf(suspension, spacedInsideParen2 ?? spacedInsideParen1 ?? true, verbatim)
+    yield ensureUnspaced(pattern, verbatim)
+  } else {
+    yield ensureSpacedOnlyIf(pattern, spacedInsideParen2 ?? spacedInsideParen1 ?? true, verbatim)
+  }
+  if (type) {
+    const spaced = (type.operator.whitespace ?? type.type.whitespace ?? ' ') !== ''
+    yield ensureSpacedOnlyIf(type.operator, spaced, verbatim)
+    yield ensureSpacedOnlyIf(type.type, spaced, verbatim)
+  }
+  if (defaultValue) {
+    const spaced =
+      (defaultValue.equals.whitespace ?? defaultValue.expression.whitespace ?? ' ') !== ''
+    yield ensureSpacedOnlyIf(defaultValue.equals, spaced, verbatim)
+    yield ensureSpacedOnlyIf(defaultValue.expression, spaced, verbatim)
+  }
+  if (close2) yield ensureSpacedOnlyIf(close2, spacedInsideParen2 ?? false, verbatim)
+  if (close) yield ensureSpacedOnlyIf(close, spacedInsideParen1 ?? false, verbatim)
 }
 /** TODO: Add docs */
 export class MutableFunctionDef extends FunctionDef implements MutableStatement {

@@ -1,5 +1,5 @@
 import * as map from 'lib0/map'
-import { assertDefined } from '../util/assert'
+import { assert, assertDefined } from '../util/assert'
 import { tryGetSoleValue, zip } from '../util/data/iterable'
 import {
   applyTextEdits,
@@ -146,10 +146,12 @@ function calculateCorrespondence(
     const unmatchedNewAsts = newAsts.filter(ast => !newIdsMatched.has(ast.id))
     const unmatchedOldAsts = oldHashes.get(hash)?.filter(ast => !oldIdsMatched.has(ast.id)) ?? []
     for (const [unmatchedNew, unmatchedOld] of zip(unmatchedNewAsts, unmatchedOldAsts)) {
-      toSync.set(unmatchedOld.id, unmatchedNew)
-      // Update the matched-IDs indices.
-      oldIdsMatched.add(unmatchedOld.id)
-      newIdsMatched.add(unmatchedNew.id)
+      if (unmatchedNew.typeName() === unmatchedOld.typeName()) {
+        toSync.set(unmatchedOld.id, unmatchedNew)
+        // Update the matched-IDs indices.
+        oldIdsMatched.add(unmatchedOld.id)
+        newIdsMatched.add(unmatchedNew.id)
+      }
     }
   }
 
@@ -157,9 +159,13 @@ function calculateCorrespondence(
   // movement-matching.
   for (const [beforeId, after] of candidates) {
     if (oldIdsMatched.has(beforeId) || newIdsMatched.has(after.id)) continue
-    toSync.set(beforeId, after)
+    if (after.typeName() === ast.module.get(beforeId).typeName()) {
+      toSync.set(beforeId, after)
+    }
   }
 
+  for (const [idBefore, astAfter] of toSync.entries())
+    assert(ast.module.get(idBefore).typeName() === astAfter.typeName())
   return toSync
 }
 

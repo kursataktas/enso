@@ -1,9 +1,3 @@
-// Normalized representations:
-// - Eagerly attach during parsing
-// - Parser also attaches concrete representation
-//   - Concrete representation is tagged with a hash of the abstract representation; concrete representation supersedes
-//     abstract if hash matches.
-
 import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
 import { xxHash128 } from './ffi'
 import {
@@ -15,25 +9,12 @@ import {
   unspaced,
 } from './print'
 import { Token, TokenType } from './token'
-import { DocLine, OwnedRefs, TextToken } from './tree'
+import { DeepReadonly, DocLine, OwnedRefs, TextToken } from './tree'
 
-function* yTextToTokens(yText: string, indent: string): IterableIterator<ConcreteChild<Token>> {
-  const lines = yText.split(LINE_BOUNDARIES)
-  for (const [i, value] of lines.entries()) {
-    if (i) yield unspaced(Token.new('\n', TokenType.Newline))
-    yield { whitespace: indent, node: Token.new(value, TokenType.TextSection) }
-  }
-}
-export function markdownToConcrete(
-  markdown: string,
-  hash: string,
-  indent: string,
-): IterableIterator<ConcreteChild<Token>> | undefined {
-  return xxHash128(markdown) === hash ? undefined : yTextToTokens(markdown, indent)
-}
+/** Render a documentation line to concrete tokens. */
 export function* docLineToConcrete(
-  docLine: DocLine,
-  indent: string,
+  docLine: DeepReadonly<DocLine>,
+  indent: string | null,
 ): IterableIterator<RawConcreteChild> {
   yield firstChild(docLine.docs.open)
   let prevType = undefined
@@ -57,24 +38,100 @@ export function* docLineToConcrete(
   for (const newline of docLine.newlines) yield preferUnspaced(newline)
 }
 
+/**
+ * Render function documentation to concrete tokens. If the `markdown` content has the same value as when `docLine` was
+ * parsed (as indicated by `hash`), the `docLine` will be used (preserving concrete formatting). If it is different, the
+ * `markdown` text will be converted to source tokens.
+ */
+export function functionDocsToConcrete(
+  markdown: string,
+  hash: string | undefined,
+  docLine: DeepReadonly<DocLine> | undefined,
+  indent: string | null,
+): IterableIterator<RawConcreteChild> | undefined {
+  return (
+    hash && docLine && xxHash128(markdown) === hash ? docLineToConcrete(docLine, indent)
+    : markdown ? yTextToTokens(markdown, (indent || '') + '   ')
+    : undefined
+  )
+}
+
 export function abstractMarkdown(elements: undefined | TextToken<OwnedRefs>[]) {
   let markdown = ''
   let newlines = 0
+  let readingTags = true
+  let elidedNewline = false
   ;(elements ?? []).forEach(({ token: { node } }, i) => {
     if (node.tokenType_ === TokenType.Newline) {
-      if (newlines > 0) {
+      if (readingTags || newlines > 0) {
         markdown += '\n'
+        elidedNewline = false
+      } else {
+        elidedNewline = true
       }
       newlines += 1
     } else {
-      if (i >= 0) {
-        markdown += node.code()
-      } else {
-        markdown += node.code().trimStart()
-      }
+      let nodeCode = node.code()
+      if (i === 0) nodeCode = nodeCode.trimStart()
+      if (elidedNewline) markdown += ' '
+      markdown += nodeCode
       newlines = 0
+      if (readingTags) {
+        if (!nodeCode.startsWith('ICON ')) {
+          readingTags = false
+        }
+      }
     }
   })
   const hash = xxHash128(markdown)
   return { markdown, hash }
+}
+
+// TODO: Paragraphs should be hard-wrapped to fit within the column limit, but this requires:
+//  - Recognizing block elements other than paragraphs; we must not split non-paragraph elements.
+//  - Recognizing inline elements; some cannot be split (e.g. links), while some can be broken into two (e.g. bold).
+//    If we break inline elements, we must also combine them when encountered during parsing.
+const ENABLE_INCOMPLETE_WORD_WRAP_SUPPORT = false
+
+function* yTextToTokens(yText: string, indent: string): IterableIterator<ConcreteChild<Token>> {
+  yield unspaced(Token.new('##', TokenType.TextStart))
+  const lines = yText.split(LINE_BOUNDARIES)
+  let printingTags = true
+  for (const [i, value] of lines.entries()) {
+    if (i) {
+      yield unspaced(Token.new('\n', TokenType.Newline))
+      if (value && !printingTags) yield unspaced(Token.new('\n', TokenType.Newline))
+    }
+    printingTags = printingTags && value.startsWith('ICON ')
+    let offset = 0
+    while (offset < value.length) {
+      if (offset !== 0) yield unspaced(Token.new('\n', TokenType.Newline))
+      let wrappedLineEnd = value.length
+      let printableOffset = offset
+      if (i !== 0) {
+        while (printableOffset < value.length && value[printableOffset] === ' ')
+          printableOffset += 1
+      }
+      if (ENABLE_INCOMPLETE_WORD_WRAP_SUPPORT && !printingTags) {
+        const ENSO_SOURCE_MAX_COLUMNS = 100
+        const MIN_DOC_COLUMNS = 40
+        const availableWidth = Math.max(
+          ENSO_SOURCE_MAX_COLUMNS - indent.length - (i === 0 && offset === 0 ? '## '.length : 0),
+          MIN_DOC_COLUMNS,
+        )
+        if (availableWidth < wrappedLineEnd - printableOffset) {
+          const wrapIndex = value.lastIndexOf(' ', printableOffset + availableWidth)
+          if (printableOffset < wrapIndex) {
+            wrappedLineEnd = wrapIndex
+          }
+        }
+      }
+      while (printableOffset < value.length && value[printableOffset] === ' ') printableOffset += 1
+      const whitespace = i === 0 && offset === 0 ? ' ' : indent
+      const wrappedLine = value.substring(printableOffset, wrappedLineEnd)
+      yield { whitespace, node: Token.new(wrappedLine, TokenType.TextSection) }
+      offset = wrappedLineEnd
+    }
+  }
+  yield unspaced(Token.new('\n', TokenType.Newline))
 }

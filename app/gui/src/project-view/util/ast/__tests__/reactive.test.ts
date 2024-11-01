@@ -1,3 +1,4 @@
+import { assert, assertDefined } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import { reactiveModule } from '@/util/ast/reactive'
 import { expect, test } from 'vitest'
@@ -38,6 +39,7 @@ test('Module reactivity: applyEdit', async () => {
 
 test('Module reactivity: Direct Edit', async () => {
   const beforeEdit = Ast.parseExpression('func arg1 arg2')
+  assertDefined(beforeEdit)
   beforeEdit.module.setRoot(beforeEdit)
 
   const module = reactiveModule(new Y.Doc(), () => {})
@@ -66,9 +68,12 @@ test('Module reactivity: Tracking access to ancestors', async () => {
   module.applyEdit(beforeEdit.module)
   expect(module.root()!.code()).toBe(beforeEdit.code())
 
-  const block = module.root() as any as Ast.BodyBlock
+  const block = module.root()
+  assertDefined(block)
 
-  const [func, otherFunc] = block.statements() as [Ast.FunctionDef, Ast.FunctionDef]
+  const [func, otherFunc] = block.statements()
+  assert(func instanceof Ast.MutableFunctionDef)
+  assert(otherFunc instanceof Ast.MutableFunctionDef)
   expect(func.name.code()).toBe('main')
   expect(otherFunc.name.code()).toBe('other')
   const expression = Array.from(func.bodyExpressions())[0]!
@@ -84,7 +89,9 @@ test('Module reactivity: Tracking access to ancestors', async () => {
   expect(parentAccesses).toBe(1)
 
   const edit = beforeEdit.module.edit()
-  const taken = edit.getVersion(expression).replaceValue(Ast.parseExpression('replacement', edit))
+  const replacementValue = Ast.parseExpression('replacement', edit)
+  assertDefined(replacementValue)
+  const taken = edit.getVersion(expression).replaceValue(replacementValue)
   edit.getVersion(otherExpression).updateValue((oe) => Ast.App.positional(oe, taken, edit))
   module.applyEdit(edit)
 
