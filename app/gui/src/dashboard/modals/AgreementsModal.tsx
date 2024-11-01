@@ -5,7 +5,7 @@ import * as z from 'zod'
 
 import { Button, Checkbox, Dialog, Form, Text } from '#/components/AriaComponents'
 import { useAuth } from '#/providers/AuthProvider'
-import { useLocalStorage, useLocalStorageState } from '#/providers/LocalStorageProvider'
+import { useLocalStorageState } from '#/providers/LocalStorageProvider'
 import { useText } from '#/providers/TextProvider'
 import LocalStorage from '#/utilities/LocalStorage'
 
@@ -102,16 +102,6 @@ export function AgreementsModal() {
 
   const isAccepted = cachedTosHash != null
   const shouldDisplay = !(isAccepted && isLatest)
-
-  console.log('shouldDisplay', {
-    shouldDisplay,
-    isAccepted,
-    isLatest,
-    tosHash,
-    privacyPolicyHash,
-    cachedTosHash,
-    cachedPrivacyPolicyHash,
-  })
 
   if (shouldDisplay) {
     // Note that this produces warnings about missing a `<Heading slot="title">`, even though
