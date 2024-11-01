@@ -29,6 +29,8 @@ type UnwrapFactoryElement<F> = F extends DetailedHTMLFactory<any, infer P> ? P :
 /** Get the inner type of a {@link SVGProps}. */
 type UnwrapSVGFactoryElement<F> = F extends SVGProps<infer P> ? P : never
 
+export * from 'framer-motion'
+
 /**
  * HTML & SVG components, optimised for use with gestures and animation.
  * These can be used as drop-in replacements for any HTML & SVG component -

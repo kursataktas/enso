@@ -13,6 +13,7 @@ import * as suspense from '#/components/Suspense'
 import * as mergeRefs from '#/utilities/mergeRefs'
 
 import { useDimensions } from '#/hooks/dimensionsHooks'
+import type { Spring } from '#/utilities/motion'
 import { motion } from '#/utilities/motion'
 import type { VariantProps } from '#/utilities/tailwindVariants'
 import { tv } from '#/utilities/tailwindVariants'
@@ -143,6 +144,15 @@ const DIALOG_STYLES = tv({
   },
 })
 
+const RESIZE_TRANSITION_STYLES: Spring = {
+  type: 'spring',
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  stiffness: 300,
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  damping: 25,
+  mass: 1,
+}
+
 // ==============
 // === Dialog ===
 // ==============
@@ -260,6 +270,7 @@ export function Dialog(props: DialogProps) {
                 layout
                 layoutId={dialogLayoutId}
                 animate={{ width: dialogWidth, height: dialogHeight }}
+                transition={RESIZE_TRANSITION_STYLES}
                 id={dialogId}
                 ref={mergeRefs.mergeRefs(dialogRef, (element) => {
                   if (element) {
