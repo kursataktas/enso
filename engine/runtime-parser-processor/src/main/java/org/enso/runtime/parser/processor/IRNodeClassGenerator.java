@@ -97,21 +97,18 @@ final class IRNodeClassGenerator {
    * @return null if non found.
    */
   private ExecutableElement findCopyMethod() {
-    var ifaceVisitor =
-        new InterfaceHierarchyVisitor<ExecutableElement>() {
-          @Override
-          public IterationResult<ExecutableElement> visitInterface(
-              TypeElement interfaceElem, ExecutableElement ignored) {
-            for (var enclosedElem : interfaceElem.getEnclosedElements()) {
-              if (enclosedElem instanceof ExecutableElement executableElem
-                  && Utils.hasAnnotation(executableElem, IRCopyMethod.class)) {
-                return new Stop<>(executableElem);
-              }
+    return Utils.iterateSuperInterfaces(
+        interfaceType,
+        processingEnv,
+        (TypeElement iface) -> {
+          for (var enclosedElem : iface.getEnclosedElements()) {
+            if (enclosedElem instanceof ExecutableElement executableElem
+                && Utils.hasAnnotation(executableElem, IRCopyMethod.class)) {
+              return executableElem;
             }
-            return new Continue<>(ignored);
           }
-        };
-    return Utils.iterateSuperInterfaces(interfaceType, processingEnv, ifaceVisitor, null);
+          return null;
+        });
   }
 
   /** Returns simple name of the generated class. */

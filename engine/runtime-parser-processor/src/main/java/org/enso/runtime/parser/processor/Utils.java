@@ -11,27 +11,28 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
-import org.enso.runtime.parser.processor.InterfaceHierarchyVisitor.Continue;
-import org.enso.runtime.parser.processor.InterfaceHierarchyVisitor.Stop;
 
 final class Utils {
   private Utils() {}
 
   /** Returns true if the given {@code type} is a subtype of {@code org.enso.compiler.core.IR}. */
   static boolean isSubtypeOfIR(TypeElement type, ProcessingEnvironment processingEnv) {
-    return iterateSuperInterfaces(
-        type,
-        processingEnv,
-        (TypeElement iface, Boolean currResult) -> {
-          // current.getQualifiedName().toString() returns only "IR" as well, so we can't use it.
-          // This is because runtime-parser-processor project does not depend on runtime-parser and
-          // so the org.enso.compiler.core.IR interface is not available in the classpath.
-          if (iface.getSimpleName().toString().equals("IR")) {
-            return new Stop<>(true);
-          }
-          return new Continue<>(currResult);
-        },
-        false);
+    var irIfaceFound =
+        iterateSuperInterfaces(
+            type,
+            processingEnv,
+            (TypeElement iface) -> {
+              // current.getQualifiedName().toString() returns only "IR" as well, so we can't use
+              // it.
+              // This is because runtime-parser-processor project does not depend on runtime-parser
+              // and
+              // so the org.enso.compiler.core.IR interface is not available in the classpath.
+              if (iface.getSimpleName().toString().equals("IR")) {
+                return true;
+              }
+              return null;
+            });
+    return irIfaceFound != null;
   }
 
   /** Returns true if the given {@code type} is an {@code org.enso.compiler.core.IR} interface. */
@@ -75,21 +76,22 @@ final class Utils {
    */
   static boolean hasDefaultImplementation(
       ExecutableElement method, TypeElement interfaceType, ProcessingEnvironment procEnv) {
-    return iterateSuperInterfaces(
-        interfaceType,
-        procEnv,
-        (TypeElement superInterface, Boolean currResult) -> {
-          for (var enclosedElem : superInterface.getEnclosedElements()) {
-            if (enclosedElem instanceof ExecutableElement executableElem) {
-              if (executableElem.getSimpleName().equals(method.getSimpleName())
-                  && executableElem.isDefault()) {
-                return new Stop<>(true);
+    var defImplFound =
+        iterateSuperInterfaces(
+            interfaceType,
+            procEnv,
+            (TypeElement superInterface) -> {
+              for (var enclosedElem : superInterface.getEnclosedElements()) {
+                if (enclosedElem instanceof ExecutableElement executableElem) {
+                  if (executableElem.getSimpleName().equals(method.getSimpleName())
+                      && executableElem.isDefault()) {
+                    return true;
+                  }
+                }
               }
-            }
-          }
-          return new Continue<>(currResult);
-        },
-        false);
+              return null;
+            });
+    return defImplFound != null;
   }
 
   /**
@@ -107,17 +109,16 @@ final class Utils {
         iterateSuperInterfaces(
             interfaceType,
             procEnv,
-            (TypeElement superInterface, ExecutableElement ignored) -> {
+            (TypeElement superInterface) -> {
               for (var enclosedElem : superInterface.getEnclosedElements()) {
                 if (enclosedElem instanceof ExecutableElement execElem) {
                   if (isDuplicateMethod(execElem)) {
-                    return new Stop<>(execElem);
+                    return execElem;
                   }
                 }
               }
-              return new Continue<>(ignored);
-            },
-            null);
+              return null;
+            });
     hardAssert(
         duplicateMethod != null,
         "Interface "
@@ -145,23 +146,19 @@ final class Utils {
    * @param type Type from which the iterations starts.
    * @param processingEnv
    * @param ifaceVisitor Visitor that is called for each interface.
-   * @param initialResult Initial result set for the visitor. May be null.
    * @param <T>
    */
   static <T> T iterateSuperInterfaces(
       TypeElement type,
       ProcessingEnvironment processingEnv,
-      InterfaceHierarchyVisitor<T> ifaceVisitor,
-      T initialResult) {
+      InterfaceHierarchyVisitor<T> ifaceVisitor) {
     var interfacesToProcess = new ArrayDeque<TypeElement>();
     interfacesToProcess.add(type);
-    T visitResult = initialResult;
     while (!interfacesToProcess.isEmpty()) {
       var current = interfacesToProcess.pop();
-      var iterationResult = ifaceVisitor.visitInterface(current, visitResult);
-      visitResult = iterationResult.value;
-      if (iterationResult.shouldStop()) {
-        break;
+      var iterationResult = ifaceVisitor.visitInterface(current);
+      if (iterationResult != null) {
+        return iterationResult;
       }
       // Add all super interfaces to the queue
       for (var superInterface : current.getInterfaces()) {
@@ -171,6 +168,6 @@ final class Utils {
         }
       }
     }
-    return visitResult;
+    return null;
   }
 }
