@@ -34,6 +34,7 @@ final class IRNodeClassGenerator {
 
   private final GeneratedClassContext generatedClassContext;
   private final DuplicateMethodGenerator duplicateMethodGenerator;
+  private final BuilderMethodGenerator builderMethodGenerator;
 
   private static final Set<String> defaultImportedTypes =
       Set.of(
@@ -66,6 +67,7 @@ final class IRNodeClassGenerator {
         new GeneratedClassContext(className, fields, processingEnv, interfaceType);
     this.duplicateMethodGenerator =
         new DuplicateMethodGenerator(duplicateMethod, generatedClassContext);
+    this.builderMethodGenerator = new BuilderMethodGenerator(generatedClassContext);
     var nestedTypes =
         interfaceType.getEnclosedElements().stream()
             .filter(
@@ -124,7 +126,7 @@ final class IRNodeClassGenerator {
         .replace("$constructor", constructor())
         .replace("$overrideUserDefinedMethods", overrideUserDefinedMethods())
         .replace("$overrideIRMethods", overrideIRMethods())
-        .replace("$builder", builder());
+        .replace("$builder", builderMethodGenerator.generateBuilder());
   }
 
   /**
@@ -318,79 +320,6 @@ final class IRNodeClassGenerator {
                         .replace("$returnType", field.getSimpleTypeName())
                         .replace("$fieldName", field.getName()))
             .collect(Collectors.joining(System.lineSeparator()));
-    return indent(code, 2);
-  }
-
-  /**
-   * Returns string representation of the code for the builder - that is a nested class that allows
-   * to build the record.
-   *
-   * @return Code of the builder
-   */
-  private String builder() {
-    var fieldDeclarations =
-        fields.stream()
-            .map(
-                field ->
-                    """
-            private $fieldType $fieldName;
-            """
-                        .replace("$fieldName", field.getName())
-                        .replace("$fieldType", field.getSimpleTypeName()))
-            .collect(Collectors.joining(System.lineSeparator()));
-
-    var fieldSetters =
-        fields.stream()
-            .map(
-                field ->
-                    """
-        public Builder $fieldName($fieldType $fieldName) {
-          this.$fieldName = $fieldName;
-          return this;
-        }
-        """
-                        .replace("$fieldName", field.getName())
-                        .replace("$fieldType", field.getSimpleTypeName()))
-            .collect(Collectors.joining(System.lineSeparator()));
-
-    // Validation code for all non-nullable fields
-    var validationCode =
-        fields.stream()
-            .filter(field -> !field.isNullable() && !field.isPrimitive())
-            .map(
-                field ->
-                    """
-            if (this.$fieldName == null) {
-              throw new IllegalArgumentException("$fieldName is required");
-            }
-            """
-                        .replace("$fieldName", field.getName()))
-            .collect(Collectors.joining(System.lineSeparator()));
-
-    var fieldList = fields.stream().map(Field::getName).collect(Collectors.joining(", "));
-
-    var code =
-        """
-        public static final class Builder {
-          $fieldDeclarations
-
-          $fieldSetters
-
-          public $className build() {
-            validate();
-            return new $className($fieldList);
-          }
-
-          private void validate() {
-            $validationCode
-          }
-        }
-        """
-            .replace("$fieldDeclarations", fieldDeclarations)
-            .replace("$fieldSetters", fieldSetters)
-            .replace("$className", className)
-            .replace("$fieldList", fieldList)
-            .replace("$validationCode", indent(validationCode, 2));
     return indent(code, 2);
   }
 
