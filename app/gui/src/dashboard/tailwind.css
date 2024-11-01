@@ -88,8 +88,6 @@
   --spinner-fast-transition-duration: 1s;
   --spinner-medium-transition-duration: 5s;
   --spinner-slow-transition-duration: 90s;
-  --modifiers-gap: 0.1875rem;
-  --modifiers-macos-gap: 0.125rem;
   --cell-padding-x: 0.5rem;
   --plus-icon-size: 1.125rem;
   /* The horizontal gap between adjacent context menus. */

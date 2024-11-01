@@ -107,7 +107,10 @@ export default function KeyboardShortcutsSettingsSection() {
                               <div className="gap-buttons flex items-center pr-4">
                                 {info.bindings.map((binding, j) => (
                                   <div key={j} className="inline-flex shrink-0 items-center gap-1">
-                                    <KeyboardShortcut shortcut={binding} />
+                                    <KeyboardShortcut
+                                      shortcut={binding}
+                                      className="rounded-lg border-0.5 border-primary/10 px-1"
+                                    />
                                     <Button
                                       variant="ghost"
                                       size="medium"

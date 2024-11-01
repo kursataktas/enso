@@ -219,8 +219,6 @@ export default /** @satisfies {import('tailwindcss').Config} */ ({
         'settings-entry': 'var(--settings-entry-gap)',
         'settings-sidebar': 'var(--settings-sidebar-gap)',
         'new-empty-project': 'var(--new-empty-project-gap)',
-        modifiers: 'var(--modifiers-gap)',
-        'modifiers-macos': 'var(--modifiers-macos-gap)',
         'side-panel': 'var(--side-panel-gap)',
         'side-panel-section': 'var(--side-panel-section-gap)',
         'asset-search-bar': 'var(--asset-search-bar-gap)',
