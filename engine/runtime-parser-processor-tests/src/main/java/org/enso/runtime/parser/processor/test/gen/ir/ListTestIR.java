@@ -9,4 +9,7 @@ import scala.collection.immutable.List;
 public interface ListTestIR extends IR {
   @IRChild
   List<NameTestIR> names();
+
+  @IRChild(required = false)
+  NameTestIR originalName();
 }

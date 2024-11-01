@@ -5,5 +5,6 @@ import org.enso.runtime.parser.dsl.IRNode;
 
 @IRNode
 public interface NameTestIR extends IR {
+
   String name();
 }

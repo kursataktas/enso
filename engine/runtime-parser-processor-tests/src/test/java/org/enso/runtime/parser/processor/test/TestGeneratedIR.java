@@ -11,6 +11,7 @@ import java.util.List;
 import org.enso.compiler.core.ir.DiagnosticStorage;
 import org.enso.compiler.core.ir.IdentifiedLocation;
 import org.enso.compiler.core.ir.Location;
+import org.enso.runtime.parser.processor.test.gen.ir.CopyNameTestIRGen;
 import org.enso.runtime.parser.processor.test.gen.ir.ListTestIR;
 import org.enso.runtime.parser.processor.test.gen.ir.ListTestIRGen;
 import org.enso.runtime.parser.processor.test.gen.ir.NameTestIR;
@@ -109,6 +110,17 @@ public class TestGeneratedIR {
     assertThat(
         "Should have not copied location meta", duplicated_2.location().isDefined(), is(false));
     assertThat("Should have copied diagnostics", duplicated_2.diagnostics(), is(notNullValue()));
+  }
+
+  @Test
+  public void copyMethod() {
+    var diagnostics = DiagnosticStorage.empty();
+    var nameIR = NameTestIRGen.builder().name("name").build();
+    var copyNameIR = CopyNameTestIRGen.builder().diagnostics(diagnostics).name(nameIR).build();
+    var otherNameIR = NameTestIRGen.builder().name("other_name").build();
+    var copied = copyNameIR.copy(otherNameIR);
+    assertThat(copied.name().name(), is("other_name"));
+    assertThat("Diagnostics should have been copied", copied.diagnostics(), is(diagnostics));
   }
 
   private static <T> scala.collection.immutable.List<T> asScala(List<T> list) {
