@@ -8,6 +8,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
@@ -67,14 +68,15 @@ final class Utils {
   }
 
   /**
-   * Returns true if the method has a default implementation in some of the super interfaces.
+   * Returns true if the method has an implementation (is default or static) in some of the super
+   * interfaces.
    *
    * @param method the method to check
-   * @param interfaceType the interface that declares the method
+   * @param interfaceType the interface that declares the method to check for the implementation.
    * @param procEnv
    * @return
    */
-  static boolean hasDefaultImplementation(
+  static boolean hasImplementation(
       ExecutableElement method, TypeElement interfaceType, ProcessingEnvironment procEnv) {
     var defImplFound =
         iterateSuperInterfaces(
@@ -83,15 +85,21 @@ final class Utils {
             (TypeElement superInterface) -> {
               for (var enclosedElem : superInterface.getEnclosedElements()) {
                 if (enclosedElem instanceof ExecutableElement executableElem) {
-                  if (executableElem.getSimpleName().equals(method.getSimpleName())
-                      && executableElem.isDefault()) {
-                    return true;
+                  if (executableElem.getSimpleName().equals(method.getSimpleName())) {
+                    if (hasModifier(executableElem, Modifier.DEFAULT)
+                        || hasModifier(executableElem, Modifier.STATIC)) {
+                      return true;
+                    }
                   }
                 }
               }
               return null;
             });
     return defImplFound != null;
+  }
+
+  static boolean hasModifier(ExecutableElement method, Modifier modifier) {
+    return method.getModifiers().contains(modifier);
   }
 
   /**

@@ -64,7 +64,7 @@ final class FieldCollector {
     for (var childElem : typeElem.getEnclosedElements()) {
       if (childElem instanceof ExecutableElement methodElement) {
         if (methodElement.getParameters().isEmpty()
-            && !Utils.hasDefaultImplementation(methodElement, irNodeInterface, processingEnv)) {
+            && !Utils.hasImplementation(methodElement, irNodeInterface, processingEnv)) {
           var name = methodElement.getSimpleName().toString();
           if (!fields.containsKey(name)) {
             var field = methodToField(methodElement);

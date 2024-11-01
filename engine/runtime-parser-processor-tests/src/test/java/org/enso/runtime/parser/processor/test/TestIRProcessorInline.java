@@ -111,6 +111,25 @@ public class TestIRProcessorInline {
   }
 
   @Test
+  public void doesNotOverrideStaticParameterlessMethod() {
+    var src =
+        generatedClass(
+            "Hello",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.compiler.core.IR;
+
+        @IRNode
+        public interface Hello extends IR {
+          static String name() {
+            return "Hello";
+          }
+        }
+        """);
+    assertThat(src, not(containsString("\"Hello\"")));
+  }
+
+  @Test
   public void simpleIRNodeWithChild() {
     var genSrc =
         generatedClass(
