@@ -1,5 +1,6 @@
 package org.enso.runtime.parser.processor;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayDeque;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -129,12 +130,16 @@ final class Utils {
     }
   }
 
+  static boolean hasAnnotation(Element element, Class<? extends Annotation> annotationClass) {
+    return element.getAnnotation(annotationClass) != null;
+  }
+
   private static boolean isDuplicateMethod(ExecutableElement executableElement) {
     return executableElement.getSimpleName().toString().equals("duplicate")
         && executableElement.getParameters().size() == 4;
   }
 
-  private static void iterateSuperInterfaces(
+  static void iterateSuperInterfaces(
       TypeElement type, ProcessingEnvironment processingEnv, Consumer<TypeElement> consumer) {
     var interfacesToProcess = new ArrayDeque<TypeElement>();
     interfacesToProcess.add(type);
@@ -149,5 +154,30 @@ final class Utils {
         }
       }
     }
+  }
+
+  static <T> T iterateSuperInterfaces(
+      TypeElement type,
+      ProcessingEnvironment processingEnv,
+      InterfaceHierarchyVisitor<T> ifaceVisitor) {
+    var interfacesToProcess = new ArrayDeque<TypeElement>();
+    interfacesToProcess.add(type);
+    T visitResult = null;
+    while (!interfacesToProcess.isEmpty()) {
+      var current = interfacesToProcess.pop();
+      var iterationResult = ifaceVisitor.visitInterface(current, visitResult);
+      visitResult = iterationResult.value;
+      if (iterationResult.shouldStop()) {
+        break;
+      }
+      // Add all super interfaces to the queue
+      for (var superInterface : current.getInterfaces()) {
+        var superInterfaceElem = processingEnv.getTypeUtils().asElement(superInterface);
+        if (superInterfaceElem instanceof TypeElement superInterfaceTypeElem) {
+          interfacesToProcess.add(superInterfaceTypeElem);
+        }
+      }
+    }
+    return visitResult;
   }
 }

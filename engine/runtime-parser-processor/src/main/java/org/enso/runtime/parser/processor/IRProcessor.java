@@ -19,7 +19,8 @@ import org.enso.runtime.parser.dsl.IRNode;
 
 @SupportedAnnotationTypes({
   "org.enso.runtime.parser.dsl.IRNode",
-  "org.enso.runtime.parser.dsl.IRChild"
+  "org.enso.runtime.parser.dsl.IRChild",
+  "org.enso.runtime.parser.dsl.IRCopyMethod",
 })
 public class IRProcessor extends AbstractProcessor {
 

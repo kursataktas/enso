@@ -6,8 +6,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import org.enso.runtime.parser.dsl.IRChild;
+import org.enso.runtime.parser.dsl.IRCopyMethod;
 import org.enso.runtime.parser.dsl.IRNode;
 
 /**
@@ -36,6 +38,12 @@ final class IRNodeClassGenerator {
   private final DuplicateMethodGenerator duplicateMethodGenerator;
   private final BuilderMethodGenerator builderMethodGenerator;
 
+  /**
+   * Can be null if there is no method annotated with {@link
+   * org.enso.runtime.parser.dsl.IRCopyMethod}.
+   */
+  private final CopyMethodGenerator copyMethodGenerator;
+
   private static final Set<String> defaultImportedTypes =
       Set.of(
           "java.util.UUID",
@@ -61,13 +69,19 @@ final class IRNodeClassGenerator {
     this.processingEnv = processingEnv;
     this.interfaceType = interfaceType;
     this.className = className;
-    var fields = getAllUserFields(interfaceType);
+    var userFields = getAllUserFields(interfaceType);
     var duplicateMethod = Utils.findDuplicateMethod(interfaceType, processingEnv);
+    var copyMethod = findCopyMethod();
     this.generatedClassContext =
-        new GeneratedClassContext(className, fields, processingEnv, interfaceType);
+        new GeneratedClassContext(className, userFields, processingEnv, interfaceType);
     this.duplicateMethodGenerator =
         new DuplicateMethodGenerator(duplicateMethod, generatedClassContext);
     this.builderMethodGenerator = new BuilderMethodGenerator(generatedClassContext);
+    if (copyMethod != null) {
+      this.copyMethodGenerator = new CopyMethodGenerator(copyMethod, userFields);
+    } else {
+      this.copyMethodGenerator = null;
+    }
     var nestedTypes =
         interfaceType.getEnclosedElements().stream()
             .filter(
@@ -77,6 +91,27 @@ final class IRNodeClassGenerator {
     if (!nestedTypes.isEmpty()) {
       throw new RuntimeException("Nested types must be handled separately: " + nestedTypes);
     }
+  }
+
+  /**
+   * @return null if non found.
+   */
+  private ExecutableElement findCopyMethod() {
+    var ifaceVisitor =
+        new InterfaceHierarchyVisitor<ExecutableElement>() {
+          @Override
+          public IterationResult<ExecutableElement> visitInterface(
+              TypeElement interfaceElem, ExecutableElement ignored) {
+            for (var enclosedElem : interfaceElem.getEnclosedElements()) {
+              if (enclosedElem instanceof ExecutableElement executableElem
+                  && Utils.hasAnnotation(executableElem, IRCopyMethod.class)) {
+                return new Stop<>(executableElem);
+              }
+            }
+            return new Continue<>(ignored);
+          }
+        };
+    return Utils.iterateSuperInterfaces(interfaceType, processingEnv, ifaceVisitor);
   }
 
   /** Returns simple name of the generated class. */
@@ -120,12 +155,15 @@ final class IRNodeClassGenerator {
 
         $overrideIRMethods
 
+        $copyMethod
+
         $builder
         """
         .replace("$fields", fieldsCode())
         .replace("$constructor", constructor())
         .replace("$overrideUserDefinedMethods", overrideUserDefinedMethods())
         .replace("$overrideIRMethods", overrideIRMethods())
+        .replace("$copyMethod", copyMethod())
         .replace("$builder", builderMethodGenerator.generateBuilder());
   }
 
@@ -321,6 +359,19 @@ final class IRNodeClassGenerator {
                         .replace("$fieldName", field.getName()))
             .collect(Collectors.joining(System.lineSeparator()));
     return indent(code, 2);
+  }
+
+  /**
+   * Generates the code for the copy method. The method is generated only if the interface contains
+   * a method annotated with {@link IRCopyMethod}. In that case, returns an empty string.
+   *
+   * @return Code of the copy method or an empty string if the method is not present.
+   */
+  private String copyMethod() {
+    if (copyMethodGenerator != null) {
+      copyMethodGenerator.generateCopyMethod();
+    }
+    return "";
   }
 
   private static String indent(String code, int indentation) {
