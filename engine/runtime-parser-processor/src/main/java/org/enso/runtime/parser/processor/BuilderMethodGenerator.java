@@ -60,6 +60,10 @@ class BuilderMethodGenerator {
         public static final class Builder {
           $fieldDeclarations
 
+          Builder() {}
+
+          $copyConstructor
+
           $fieldSetters
 
           public $className build() {
@@ -73,10 +77,30 @@ class BuilderMethodGenerator {
         }
         """
             .replace("$fieldDeclarations", fieldDeclarations)
+            .replace("$copyConstructor", copyConstructor())
             .replace("$fieldSetters", fieldSetters)
             .replace("$className", generatedClassContext.getClassName())
             .replace("$fieldList", fieldList)
             .replace("$validationCode", Utils.indent(validationCode, 2));
     return Utils.indent(code, 2);
+  }
+
+  private String copyConstructor() {
+    var sb = new StringBuilder();
+    sb.append("/** Copy constructor */").append(System.lineSeparator());
+    sb.append("Builder(")
+        .append(generatedClassContext.getClassName())
+        .append(" from) {")
+        .append(System.lineSeparator());
+    for (var classField : generatedClassContext.getAllFields()) {
+      sb.append("  this.")
+          .append(classField.name())
+          .append(" = from.")
+          .append(classField.name())
+          .append(";")
+          .append(System.lineSeparator());
+    }
+    sb.append("}").append(System.lineSeparator());
+    return sb.toString();
   }
 }
