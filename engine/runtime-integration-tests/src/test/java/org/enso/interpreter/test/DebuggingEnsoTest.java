@@ -17,6 +17,8 @@ import com.oracle.truffle.api.debug.DebuggerSession;
 import com.oracle.truffle.api.debug.SuspendedCallback;
 import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.api.nodes.LanguageInfo;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Paths;
 import java.util.ArrayDeque;
@@ -42,15 +44,20 @@ import org.graalvm.polyglot.io.IOAccess;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestWatcher;
+import org.junit.runner.Description;
 
 public class DebuggingEnsoTest {
   private Context context;
   private Engine engine;
   private Debugger debugger;
+  private final ByteArrayOutputStream out = new ByteArrayOutputStream();
 
   @Before
   public void initContext() {
+    out.reset();
     engine =
         Engine.newBuilder()
             .allowExperimentalOptions(true)
@@ -58,7 +65,9 @@ public class DebuggingEnsoTest {
                 RuntimeOptions.LANGUAGE_HOME_OVERRIDE,
                 Paths.get("../../distribution/component").toFile().getAbsolutePath())
             .option(RuntimeOptions.LOG_LEVEL, Level.WARNING.getName())
-            .logHandler(System.err)
+            .logHandler(out)
+            .err(out)
+            .out(out)
             .build();
 
     context =
@@ -76,12 +85,25 @@ public class DebuggingEnsoTest {
   }
 
   @After
-  public void disposeContext() {
+  public void disposeContext() throws IOException {
     context.close();
     context = null;
     engine.close();
     engine = null;
   }
+
+  /** Only print warnings from the compiler if a test fails. */
+  @Rule
+  public TestWatcher testWatcher =
+      new TestWatcher() {
+        @Override
+        protected void failed(Throwable e, Description description) {
+          System.err.println("Test failed: " + description.getMethodName());
+          System.err.println("Error: " + e.getMessage());
+          System.err.println("Logs from the compiler and the engine: ");
+          System.err.println(out);
+        }
+      };
 
   private static void expectStackFrame(
       DebugStackFrame actualFrame, Map<String, String> expectedValues) {
@@ -254,7 +276,7 @@ public class DebuggingEnsoTest {
         from Standard.Base import Date
 
         foo _ =
-            d_java = Date.parse "2024-12-15"
+            d_enso = Date.new 2024 12 15
             tmp = 42
         """,
             "foo");
