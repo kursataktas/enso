@@ -119,7 +119,7 @@
           "title": "Path",
           "description": "Must start with \"enso://Users/<username>/\" or \"enso://Teams/<team name>/\".",
           "type": "string",
-          "pattern": "^enso://(?:Users|Teams)/.*$",
+          "pattern": "^enso://(?:Users|Teams)/.*/.*$",
           "format": "enso-file"
         },
         "format": { "title": "Format", "$ref": "#/$defs/Format" }
