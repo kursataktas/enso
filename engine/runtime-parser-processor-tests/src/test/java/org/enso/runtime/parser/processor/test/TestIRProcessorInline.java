@@ -18,8 +18,9 @@ import org.junit.Test;
  */
 public class TestIRProcessorInline {
   /**
-   * Compiles the code given in {@code src} with {@link IRProcessor} and returns the
-   * contents of the generated java source file.
+   * Compiles the code given in {@code src} with {@link IRProcessor} and returns the contents of the
+   * generated java source file.
+   *
    * @param name FQN of the Java source file
    * @param src
    * @return
@@ -111,7 +112,10 @@ public class TestIRProcessorInline {
 
   @Test
   public void simpleIRNodeWithChild() {
-    var genSrc = generatedClass("MyIR", """
+    var genSrc =
+        generatedClass(
+            "MyIR",
+            """
         import org.enso.runtime.parser.dsl.IRNode;
         import org.enso.runtime.parser.dsl.IRChild;
         import org.enso.compiler.core.IR;
@@ -269,7 +273,7 @@ public class TestIRProcessorInline {
         @IRNode
         public interface JName extends IR {
           String name();
-        
+
           interface JQualified extends JName {
             @Override
             default String name() {
@@ -293,11 +297,11 @@ public class TestIRProcessorInline {
 
         @IRNode
         public interface JExpression extends IR {
-        
+
           interface JBlock extends JExpression {
             boolean suspended();
           }
-        
+
           interface JBinding extends JExpression {
             String name();
           }
@@ -320,10 +324,54 @@ public class TestIRProcessorInline {
         public interface JName extends IR {
           @Override
           JName duplicate(boolean keepLocations, boolean keepMetadata, boolean keepDiagnostics, boolean keepIdentifiers);
-        
+
           interface JSelf extends JName {}
         }
         """);
     assertThat(src, containsString("JName duplicate"));
+    assertThat(src, containsString("JSelfGen"));
+  }
+
+  @Test
+  public void canDefineCopyMethod_WithUserDefinedField() {
+    var genSrc =
+        generatedClass(
+            "JName",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.runtime.parser.dsl.IRCopyMethod;
+        import org.enso.compiler.core.IR;
+
+        @IRNode
+        public interface JName extends IR {
+          String nameField();
+
+          @IRCopyMethod
+          JName copy(String nameField);
+        }
+        """);
+    assertThat(genSrc, containsString("JName copy(String nameField"));
+  }
+
+  @Test
+  public void canDefineCopyMethod_WithMetaField() {
+    var genSrc =
+        generatedClass(
+            "JName",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.runtime.parser.dsl.IRCopyMethod;
+        import org.enso.compiler.core.IR;
+        import org.enso.compiler.core.ir.MetadataStorage;
+
+        @IRNode
+        public interface JName extends IR {
+          String nameField();
+
+          @IRCopyMethod
+          JName copy(MetadataStorage passData);
+        }
+        """);
+    assertThat(genSrc, containsString("JName copy(MetadataStorage"));
   }
 }
