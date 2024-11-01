@@ -78,7 +78,7 @@ final class IRNodeClassGenerator {
         new DuplicateMethodGenerator(duplicateMethod, generatedClassContext);
     this.builderMethodGenerator = new BuilderMethodGenerator(generatedClassContext);
     if (copyMethod != null) {
-      this.copyMethodGenerator = new CopyMethodGenerator(copyMethod, userFields);
+      this.copyMethodGenerator = new CopyMethodGenerator(copyMethod, generatedClassContext);
     } else {
       this.copyMethodGenerator = null;
     }
@@ -366,7 +366,7 @@ final class IRNodeClassGenerator {
    */
   private String copyMethod() {
     if (copyMethodGenerator != null) {
-      copyMethodGenerator.generateCopyMethod();
+      return copyMethodGenerator.generateCopyMethod();
     }
     return "";
   }

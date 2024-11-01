@@ -1,21 +1,48 @@
 package org.enso.runtime.parser.processor;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.VariableElement;
 import org.enso.runtime.parser.dsl.IRCopyMethod;
+import org.enso.runtime.parser.processor.GeneratedClassContext.ClassField;
 
 class CopyMethodGenerator {
   private final ExecutableElement copyMethod;
-  private final List<Field> userDefinedFields;
+  private final GeneratedClassContext ctx;
+  private final Map<VariableElement, ClassField> parameterMapping = new HashMap<>();
 
-  CopyMethodGenerator(ExecutableElement copyMethod, List<Field> userDefinedFields) {
+  CopyMethodGenerator(ExecutableElement copyMethod, GeneratedClassContext ctx) {
+    this.ctx = ctx;
     ensureIsAnnotated(copyMethod);
     this.copyMethod = Objects.requireNonNull(copyMethod);
-    this.userDefinedFields = Objects.requireNonNull(userDefinedFields);
     for (var parameter : copyMethod.getParameters()) {
-      throw new UnsupportedOperationException("unimplemented");
+      var parName = parameter.getSimpleName();
+      var parType = simpleTypeName(parameter);
+      ctx.getAllFields().stream()
+          .filter(field -> field.type().equals(parType))
+          .filter(field -> field.name().equals(parName.toString()))
+          .findFirst()
+          .ifPresentOrElse(
+              field -> parameterMapping.put(parameter, field),
+              () -> {
+                var msg =
+                    "Parameter "
+                        + parName
+                        + " of type "
+                        + parType
+                        + " in the copy method "
+                        + "does not have a corresponding field in the interface "
+                        + ctx.getIrNodeInterface().getQualifiedName().toString()
+                        + ". Ensure there is a parameterless abstract method of the same return"
+                        + " type. For more information, see @IRNode annotation docs.";
+                Utils.printError(msg, parameter, ctx.getProcessingEnvironment().getMessager());
+                throw new IllegalArgumentException(msg);
+              });
     }
+    Utils.hardAssert(parameterMapping.size() == copyMethod.getParameters().size());
   }
 
   private static void ensureIsAnnotated(ExecutableElement copyMethod) {
@@ -24,7 +51,44 @@ class CopyMethodGenerator {
     }
   }
 
+  private String simpleTypeName(VariableElement parameter) {
+    return ctx.getProcessingEnvironment()
+        .getTypeUtils()
+        .asElement(parameter.asType())
+        .getSimpleName()
+        .toString();
+  }
+
   String generateCopyMethod() {
-    throw new UnsupportedOperationException("unimplemented");
+    var sb = new StringBuilder();
+    sb.append("@Override").append(System.lineSeparator());
+    var argList =
+        parameterMapping.keySet().stream()
+            .map(
+                parameter -> simpleTypeName(parameter) + " " + parameter.getSimpleName().toString())
+            .collect(Collectors.joining(", "));
+    sb.append("public ")
+        .append(copyMethod.getReturnType())
+        .append(" ")
+        .append(copyMethod.getSimpleName())
+        .append("(")
+        .append(argList)
+        .append(") {")
+        .append(System.lineSeparator());
+    sb.append("  var builder = new Builder(this);").append(System.lineSeparator());
+    for (var entry : parameterMapping.entrySet()) {
+      var parameter = entry.getKey();
+      var classField = entry.getValue();
+      sb.append("  builder.")
+          .append(classField.name())
+          .append(" = ")
+          .append(parameter.getSimpleName())
+          .append(";")
+          .append(System.lineSeparator());
+    }
+    sb.append("  var ret = builder.build();").append(System.lineSeparator());
+    sb.append("  return ret;").append(System.lineSeparator());
+    sb.append("}").append(System.lineSeparator());
+    return sb.toString();
   }
 }

@@ -127,6 +127,10 @@ final class Utils {
     return duplicateMethod;
   }
 
+  static void hardAssert(boolean condition) {
+    hardAssert(condition, "Assertion failed");
+  }
+
   static void hardAssert(boolean condition, String msg) {
     if (!condition) {
       throw new AssertionError(msg);
