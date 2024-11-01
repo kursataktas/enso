@@ -20,6 +20,7 @@ import * as backendModule from '#/services/Backend'
 import { useBackendQuery } from '#/hooks/backendHooks'
 import * as tailwindMerge from '#/utilities/tailwindMerge'
 import { useMemo } from 'react'
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 
 // =================
 // === Constants ===
@@ -137,15 +138,15 @@ export default function ProjectIcon(props: ProjectIconProps) {
     }
   })()
 
-  const doOpenProject = () => {
+  const doOpenProject = useEventCallback(() => {
     openProject({ ...item, type: backend.type })
-  }
-  const doCloseProject = () => {
+  })
+  const doCloseProject = useEventCallback(() => {
     closeProject({ ...item, type: backend.type })
-  }
-  const doOpenProjectTab = () => {
+  })
+  const doOpenProjectTab = useEventCallback(() => {
     openProjectTab(item.id)
-  }
+  })
 
   switch (state) {
     case backendModule.ProjectState.new:

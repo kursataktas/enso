@@ -2574,7 +2574,7 @@ export default function AssetsTable(props: AssetsTableProps) {
     count: displayItems.length,
     getScrollElement: () => rootRef.current,
     estimateSize: () => ROW_HEIGHT_PX,
-    overscan: 20,
+    overscan: 0,
   })
 
   const columns = useMemo(
@@ -2614,31 +2614,38 @@ export default function AssetsTable(props: AssetsTableProps) {
         }
 
         return (
-          <AssetRow
-            key={item.key + item.path}
-            rowHeight={virtualRow.size}
-            rowOffset={virtualRow.start - index * virtualRow.size}
-            isOpened={openedProjects.some(({ id }) => item.item.id === id)}
-            visibility={visibilities.get(item.key)}
-            columns={columns}
-            id={item.item.id}
-            parentId={item.directoryId}
-            path={item.path}
-            initialAssetEvents={item.initialAssetEvents}
-            depth={item.depth}
-            state={state}
-            hidden={hidden || visibilities.get(item.key) === Visibility.hidden}
-            isKeyboardSelected={
-              keyboardSelectedIndex != null && item === visibleItems[keyboardSelectedIndex]
-            }
-            grabKeyboardFocus={grabRowKeyboardFocus}
-            onClick={onRowClick}
-            select={selectRow}
-            onDragStart={onRowDragStart}
-            onDragOver={onRowDragOver}
-            onDragEnd={onRowDragEnd}
-            onDrop={onRowDrop}
-          />
+          <tr
+            key={index}
+            data-testid="asset-row"
+            tabIndex={0}
+            style={{
+              maxHeight: virtualRow.size,
+              transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
+            }}
+          >
+            <AssetRow
+              isOpened={openedProjects.some(({ id }) => item.item.id === id)}
+              visibility={visibilities.get(item.key)}
+              columns={columns}
+              id={item.item.id}
+              parentId={item.directoryId}
+              path={item.path}
+              initialAssetEvents={item.initialAssetEvents}
+              depth={item.depth}
+              state={state}
+              hidden={hidden || visibilities.get(item.key) === Visibility.hidden}
+              isKeyboardSelected={
+                keyboardSelectedIndex != null && item === visibleItems[keyboardSelectedIndex]
+              }
+              grabKeyboardFocus={grabRowKeyboardFocus}
+              onClick={onRowClick}
+              select={selectRow}
+              onDragStart={onRowDragStart}
+              onDragOver={onRowDragOver}
+              onDragEnd={onRowDragEnd}
+              onDrop={onRowDrop}
+            />
+          </tr>
         )
       })
 
@@ -2690,7 +2697,7 @@ export default function AssetsTable(props: AssetsTableProps) {
       }}
     >
       <table className="isolate table-fixed border-collapse rounded-rows">
-        <thead className="sticky top-0 z-1 bg-dashboard">{headerRow}</thead>
+        <thead className="bg-dashboard sticky top-0 z-1">{headerRow}</thead>
         <tbody ref={bodyRef}>
           {itemRows}
           <tr className="hidden h-row first:table-row">
@@ -2792,6 +2799,7 @@ export default function AssetsTable(props: AssetsTableProps) {
               {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
                 className: 'flex-1 overflow-auto container-size w-full h-full',
                 onKeyDown,
+                ref: rootRef,
                 onBlur: (event) => {
                   if (
                     event.relatedTarget instanceof HTMLElement &&

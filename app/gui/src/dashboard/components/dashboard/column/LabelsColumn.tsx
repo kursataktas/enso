@@ -20,6 +20,7 @@ import ManageLabelsModal from '#/modals/ManageLabelsModal'
 
 import * as backendModule from '#/services/Backend'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as permissions from '#/utilities/permissions'
 
 // ====================
@@ -43,6 +44,12 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
     category.type !== 'trash' &&
     (self?.permission === permissions.PermissionAction.own ||
       self?.permission === permissions.PermissionAction.admin)
+
+  const onPress = useEventCallback(() => {})
+
+  const renderManageLabelsModal = useEventCallback(() => (
+    <ManageLabelsModal backend={backend} item={item} />
+  ))
 
   return (
     <div className="group flex items-center gap-column-items">
@@ -93,7 +100,7 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
             isDisabled
             key={label}
             color={labelsByName.get(label)?.color ?? backendModule.COLORS[0]}
-            onPress={() => {}}
+            onPress={onPress}
           >
             {label}
           </Label>
@@ -101,7 +108,7 @@ export default function LabelsColumn(props: column.AssetColumnProps) {
       {managesThisAsset && (
         <DialogTrigger>
           <Button variant="ghost" showIconOnHover icon={Plus2Icon} />
-          <ManageLabelsModal backend={backend} item={item} />
+          {renderManageLabelsModal}
         </DialogTrigger>
       )}
     </div>

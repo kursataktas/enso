@@ -113,15 +113,12 @@ export interface AssetRowProps {
     event: React.DragEvent<HTMLTableRowElement>,
     item: backendModule.AnyAsset,
   ) => void
-  readonly rowHeight: number
-  readonly rowOffset: number
 }
 
 /** A row containing an {@link backendModule.AnyAsset}. */
 export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
   const { id, parentId, isKeyboardSelected, isOpened, select, state, columns, onClick } = props
   const { path, hidden: hiddenRaw, grabKeyboardFocus, visibility: visibilityRaw, depth } = props
-  const { rowHeight, rowOffset } = props
   const { initialAssetEvents } = props
   const { nodeMap, doCopy, doCut, doPaste, doDelete: doDeleteRaw } = state
   const { doRestore, doMove, category, scrollContainerRef, rootDirectoryId, backend } = state
@@ -509,10 +506,9 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
         <>
           {!hidden && (
             <FocusRing>
-              <tr
+              <div
                 data-testid="asset-row"
                 tabIndex={0}
-                style={{ maxHeight: rowHeight, transform: `translateY(${rowOffset}px)` }}
                 ref={(element) => {
                   rootRef.current = element
 
@@ -699,7 +695,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
                     </td>
                   )
                 })}
-              </tr>
+              </div>
             </FocusRing>
           )}
           {selected && allowContextMenu && !hidden && (
@@ -724,7 +720,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
     }
     case backendModule.AssetType.specialLoading: {
       return hidden ? null : (
-          <tr>
+          <div>
             <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
               <div
                 className={tailwindMerge.twMerge(
@@ -735,12 +731,12 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
                 <StatelessSpinner size={24} state={statelessSpinner.SpinnerState.loadingMedium} />
               </div>
             </td>
-          </tr>
+          </div>
         )
     }
     case backendModule.AssetType.specialEmpty: {
       return hidden ? null : (
-          <tr>
+          <div>
             <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
               <div
                 className={tailwindMerge.twMerge(
@@ -754,12 +750,12 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
                 </Text>
               </div>
             </td>
-          </tr>
+          </div>
         )
     }
     case backendModule.AssetType.specialError: {
       return hidden ? null : (
-          <tr>
+          <div>
             <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
               <div
                 className={tailwindMerge.twMerge(
@@ -776,7 +772,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
                 </Text>
               </div>
             </td>
-          </tr>
+          </div>
         )
     }
   }

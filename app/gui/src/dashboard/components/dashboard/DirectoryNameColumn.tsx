@@ -16,6 +16,7 @@ import SvgMask from '#/components/SvgMask'
 
 import * as backendModule from '#/services/Backend'
 
+import { useEventCallback } from '#/hooks/eventCallbackHooks'
 import * as eventModule from '#/utilities/event'
 import * as indent from '#/utilities/indent'
 import * as object from '#/utilities/object'
@@ -46,7 +47,7 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
 
   const updateDirectoryMutation = useMutation(backendMutationOptions(backend, 'updateDirectory'))
 
-  const setIsEditing = (isEditingName: boolean) => {
+  const setIsEditing = useEventCallback((isEditingName: boolean) => {
     if (isEditable) {
       setRowState(object.merger({ isEditingName }))
     }
@@ -54,20 +55,38 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
     if (!isEditingName) {
       driveStore.setState({ newestFolderId: null })
     }
-  }
+  })
 
-  const doRename = async (newTitle: string) => {
+  const doRename = useEventCallback(async (newTitle: string) => {
     if (isEditable) {
       setIsEditing(false)
       if (!string.isWhitespaceOnly(newTitle) && newTitle !== item.title) {
         await updateDirectoryMutation.mutateAsync([item.id, { title: newTitle }, item.title])
       }
     }
-  }
+  })
+
+  const toggleExpanded = useEventCallback(() => {
+    doToggleDirectoryExpansion(item.id, item.id)
+  })
+
+  const checkSubmittable = useEventCallback(
+    (newTitle: string) =>
+      validation.DIRECTORY_NAME_REGEX.test(newTitle) &&
+      backendModule.isNewTitleValid(
+        item,
+        newTitle,
+        nodeMap.current.get(item.parentId)?.children?.map((child) => child.item),
+      ),
+  )
+
+  const onCancel = useEventCallback(() => {
+    setIsEditing(false)
+  })
 
   return (
     <div
-      className={tailwindMerge.twMerge(
+      className={tailwindMerge.twJoin(
         'group flex h-table-row min-w-max items-center gap-name-column-icon whitespace-nowrap rounded-l-full px-name-column-x py-name-column-y',
         indent.indentClass(depth),
       )}
@@ -93,34 +112,23 @@ export default function DirectoryNameColumn(props: DirectoryNameColumnProps) {
         variant="custom"
         aria-label={isExpanded ? getText('collapse') : getText('expand')}
         tooltipPlacement="left"
-        className={tailwindMerge.twMerge(
+        className={tailwindMerge.twJoin(
           'm-0 hidden cursor-pointer border-0 transition-transform duration-arrow group-hover:m-name-column-icon group-hover:inline-block',
           isExpanded && 'rotate-90',
         )}
-        onPress={() => {
-          doToggleDirectoryExpansion(item.id, item.id)
-        }}
+        onPress={toggleExpanded}
       />
       <SvgMask src={FolderIcon} className="m-name-column-icon size-4 group-hover:hidden" />
       <EditableSpan
         data-testid="asset-row-name"
         editable={rowState.isEditingName}
-        className={tailwindMerge.twMerge(
+        className={tailwindMerge.twJoin(
           'grow cursor-pointer bg-transparent font-naming',
           rowState.isEditingName ? 'cursor-text' : 'cursor-pointer',
         )}
-        checkSubmittable={(newTitle) =>
-          validation.DIRECTORY_NAME_REGEX.test(newTitle) &&
-          backendModule.isNewTitleValid(
-            item,
-            newTitle,
-            nodeMap.current.get(item.parentId)?.children?.map((child) => child.item),
-          )
-        }
+        checkSubmittable={checkSubmittable}
         onSubmit={doRename}
-        onCancel={() => {
-          setIsEditing(false)
-        }}
+        onCancel={onCancel}
       >
         {item.title}
       </EditableSpan>

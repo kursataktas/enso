@@ -67,10 +67,21 @@ export function DialogTrigger(props: DialogTriggerProps) {
   } satisfies DialogTriggerRenderProps
 
   return (
-    <aria.DialogTrigger {...state} onOpenChange={onOpenChangeInternal}>
+    <DialogTriggerInner {...state} onOpenChange={onOpenChangeInternal}>
       {trigger}
 
-      {typeof dialog === 'function' ? dialog(renderProps) : dialog}
-    </aria.DialogTrigger>
+      {state.isOpen ?
+        typeof dialog === 'function' ?
+          dialog(renderProps)
+        : dialog
+      : null}
+    </DialogTriggerInner>
   )
+}
+
+/**
+ * A DialogTriggerInner is a DialogTrigger that has a stable reference.
+ */
+function DialogTriggerInner(props: aria.DialogTriggerProps) {
+  return <aria.DialogTrigger {...props} />
 }
