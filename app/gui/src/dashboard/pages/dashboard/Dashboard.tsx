@@ -56,7 +56,6 @@ import * as projectManager from '#/services/ProjectManager'
 
 import { useSetCategory } from '#/providers/DriveProvider'
 import { baseName } from '#/utilities/fileInfo'
-import * as object from '#/utilities/object'
 import { tryFindSelfPermission } from '#/utilities/permissions'
 import { STATIC_QUERY_OPTIONS } from '#/utilities/reactQuery'
 import * as sanitizedEventTargets from '#/utilities/sanitizedEventTargets'
