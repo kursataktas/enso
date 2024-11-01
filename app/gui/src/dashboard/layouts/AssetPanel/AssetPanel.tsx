@@ -193,7 +193,7 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
               className="absolute left-0 top-0 h-full w-full bg-background"
               style={{ width: ASSET_PANEL_WIDTH }}
             >
-              <AssetPanelTabs.TabPanel id="settings">
+              <AssetPanelTabs.TabPanel id="settings" resetKeys={[item?.id]}>
                 <AssetProperties
                   backend={backend}
                   item={item}
@@ -204,15 +204,15 @@ const InternalAssetPanelTabs = memo(function InternalAssetPanelTabs(props: Asset
                 />
               </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="versions">
+              <AssetPanelTabs.TabPanel id="versions" resetKeys={[item?.id]}>
                 <AssetVersions backend={backend} item={item} />
               </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="sessions">
+              <AssetPanelTabs.TabPanel id="sessions" resetKeys={[item?.id]}>
                 <AssetProjectSessions backend={backend} item={item} />
               </AssetPanelTabs.TabPanel>
 
-              <AssetPanelTabs.TabPanel id="docs">
+              <AssetPanelTabs.TabPanel id="docs" resetKeys={[item?.id]}>
                 <AssetDocs backend={backend} item={item} />
               </AssetPanelTabs.TabPanel>
             </motion.div>

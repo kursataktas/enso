@@ -52,15 +52,19 @@ export interface Options {
     | number
     | { readonly scroll: number; readonly resize: number; readonly frame: number }
   readonly scroll?: boolean
-  readonly polyfill?: { new (cb: ResizeObserverCallback): ResizeObserver }
   readonly offsetSize?: boolean
+  readonly onResize?: (bounds: RectReadOnly) => void
+  readonly maxWait?:
+    | number
+    | { readonly scroll: number; readonly resize: number; readonly frame: number }
 }
 
 /**
  * Custom hook to measure the size and position of an element
  */
 export function useMeasure(options: Options = {}): Result {
-  const { debounce = 0, scroll = false, offsetSize = false } = options
+  // eslint-disable-next-line @typescript-eslint/no-magic-numbers
+  const { debounce = 0, scroll = false, offsetSize = false, onResize, maxWait = 500 } = options
 
   const [bounds, set] = useState<RectReadOnly>(() => ({
     left: 0,
@@ -80,6 +84,10 @@ export function useMeasure(options: Options = {}): Result {
     lastBounds: bounds,
   })
 
+  const scrollMaxWait = typeof maxWait === 'number' ? maxWait : maxWait.scroll
+  const resizeMaxWait = typeof maxWait === 'number' ? maxWait : maxWait.resize
+  const frameMaxWait = typeof maxWait === 'number' ? maxWait : maxWait.frame
+
   // set actual debounce values early, so effects know if they should react accordingly
   const scrollDebounce = typeof debounce === 'number' ? debounce : debounce.scroll
   const resizeDebounce = typeof debounce === 'number' ? debounce : debounce.resize
@@ -97,16 +105,7 @@ export function useMeasure(options: Options = {}): Result {
       const { left, top, width, height, bottom, right, x, y } =
         state.current.element.getBoundingClientRect()
 
-      const size = {
-        left,
-        top,
-        width,
-        height,
-        bottom,
-        right,
-        x,
-        y,
-      }
+      const size = { left, top, width, height, bottom, right, x, y }
 
       if (state.current.element instanceof HTMLElement && offsetSize) {
         size.height = state.current.element.offsetHeight
@@ -116,6 +115,7 @@ export function useMeasure(options: Options = {}): Result {
       if (mounted.current && !areBoundsEqual(state.current.lastBounds, size)) {
         startTransition(() => {
           set((unsafeMutable(state.current).lastBounds = size))
+          onResize?.(size)
         })
       }
     })
@@ -124,11 +124,11 @@ export function useMeasure(options: Options = {}): Result {
   const [resizeObserver] = useState(() => new ResizeObserver(callback))
   const [mutationObserver] = useState(() => new MutationObserver(callback))
 
-  const frameDebounceCallback = useDebouncedCallback(callback, [], frameDebounce)
-  const resizeDebounceCallback = useDebouncedCallback(callback, [], resizeDebounce)
-  const scrollDebounceCallback = useDebouncedCallback(callback, [], scrollDebounce)
+  const frameDebounceCallback = useDebouncedCallback(callback, frameDebounce, frameMaxWait)
+  const resizeDebounceCallback = useDebouncedCallback(callback, resizeDebounce, resizeMaxWait)
+  const scrollDebounceCallback = useDebouncedCallback(callback, scrollDebounce, scrollMaxWait)
 
-  const forceRefresh = useDebouncedCallback(callback, [], 0)
+  const forceRefresh = useDebouncedCallback(callback, 0)
 
   // cleanup current scroll-listeners / observers
   const removeListeners = useEventCallback(() => {
@@ -165,7 +165,7 @@ export function useMeasure(options: Options = {}): Result {
   })
 
   // the ref we expose to the user
-  const ref = (node: HTMLOrSVGElement | null) => {
+  const ref = useEventCallback((node: HTMLOrSVGElement | null) => {
     mounted.current = node != null
 
     if (!node || node === state.current.element) return
@@ -174,7 +174,7 @@ export function useMeasure(options: Options = {}): Result {
     unsafeMutable(state.current).element = node
     unsafeMutable(state.current).scrollContainers = findScrollContainers(node)
     addListeners()
-  }
+  })
 
   // add general event listeners
   useOnWindowScroll(scrollDebounceCallback, Boolean(scroll))

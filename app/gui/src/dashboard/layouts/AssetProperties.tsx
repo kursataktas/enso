@@ -227,7 +227,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   }, [datalinkQuery.data, editDatalinkFormRef])
 
   return (
-    <>
+    <div className="flex w-full flex-col gap-8">
       {descriptionSpotlight.spotlightElement}
       {secretSpotlight.spotlightElement}
       {datalinkSpotlight.spotlightElement}
@@ -384,6 +384,6 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
           }
         </div>
       )}
-    </>
+    </div>
   )
 }

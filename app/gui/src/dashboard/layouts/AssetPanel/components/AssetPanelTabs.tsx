@@ -113,10 +113,17 @@ const DEFAULT_TRANSITION_OPTIONS: Spring = {
 }
 
 /**
+ *
+ */
+export interface AssetPanelTabPanelProps extends TabPanelProps {
+  readonly resetKeys?: unknown[]
+}
+
+/**
  * Display a tab panel.
  */
-export function AssetPanelTabPanel(props: TabPanelProps) {
-  const { children, id = '' } = props
+export function AssetPanelTabPanel(props: AssetPanelTabPanelProps) {
+  const { children, id = '', resetKeys = [] } = props
 
   return (
     <TabPanel className="contents" shouldForceMount {...props}>
@@ -136,8 +143,8 @@ export function AssetPanelTabPanel(props: TabPanelProps) {
                 className="flex h-full w-full flex-col overflow-y-auto scroll-offset-edge-3xl"
               >
                 <Suspense loaderProps={{ className: 'my-auto' }}>
-                  <ErrorBoundary resetKeys={[renderProps.state.selectedItem]}>
-                    <div className="pointer-events-auto flex h-fit min-h-full w-full shrink-0 flex-col px-4 py-5">
+                  <ErrorBoundary resetKeys={[renderProps.state.selectedItem, ...resetKeys]}>
+                    <div className="pointer-events-auto flex h-fit min-h-full w-full shrink-0 px-4 py-5">
                       {typeof children === 'function' ? children(renderProps) : children}
                     </div>
                   </ErrorBoundary>
