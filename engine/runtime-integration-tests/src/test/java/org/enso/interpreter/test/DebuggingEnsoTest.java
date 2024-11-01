@@ -303,10 +303,10 @@ public class DebuggingEnsoTest {
                   assertThat(javaDate.isInternal(), is(false));
                   assertThat(javaDate.isDate(), is(true));
 
-                  assertThat(
-                      "Number of properties for d_enso and d_java should be the same",
-                      ensoDate.getProperties().size(),
-                      is(javaDate.getProperties().size()));
+                  assertThat("ensoDate has no members (properties)",
+                      ensoDate.getProperties(), is(nullValue()));
+                  assertThat("javaDate's properties is either null or empty",
+                      javaDate.getProperties(), isOneOf(nullValue(), hasSize(0)));
                 }
               }
               event.getSession().suspendNextExecution();
