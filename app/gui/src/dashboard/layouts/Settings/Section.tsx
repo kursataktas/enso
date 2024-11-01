@@ -27,7 +27,7 @@ export default function SettingsSection(props: SettingsSectionProps) {
   return !isVisible ? null : (
       <FocusArea active={focusArea} direction="vertical">
         {(innerProps) => (
-          <div className="flex w-full flex-col gap-settings-section-header" {...innerProps}>
+          <div className="flex w-full flex-col gap-2.5" {...innerProps}>
             {!heading ? null : (
               <Text.Heading level={2} weight="bold">
                 {getText(nameId)}

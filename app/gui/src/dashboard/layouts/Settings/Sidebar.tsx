@@ -36,7 +36,7 @@ export default function SettingsSidebar(props: SettingsSidebarProps) {
         <div
           aria-label={getText('settingsSidebarLabel')}
           className={twMerge(
-            'w-settings-sidebar shrink-0 flex-col gap-settings-sidebar overflow-y-auto',
+            'w-settings-sidebar shrink-0 flex-col gap-4 overflow-y-auto',
             !isMenu ? 'hidden sm:flex' : (
               'relative rounded-default p-modal text-xs text-primary before:absolute before:inset before:rounded-default before:bg-frame before:backdrop-blur-default sm:hidden'
             ),
