@@ -102,6 +102,7 @@ export default function DriveProvider(props: ProjectsProviderProps) {
               backend: null,
               item: null,
               spotlightOn: null,
+              path: null,
             },
           })
         }
@@ -190,6 +191,7 @@ export default function DriveProvider(props: ProjectsProviderProps) {
         backend: null,
         item: null,
         spotlightOn: null,
+        path: null,
       },
       setAssetPanelProps: (assetPanelProps) => {
         const current = get().assetPanelProps
@@ -427,6 +429,7 @@ export function useResetAssetPanelProps() {
           backend: null,
           item: null,
           spotlightOn: null,
+          path: null,
         },
       })
     }
