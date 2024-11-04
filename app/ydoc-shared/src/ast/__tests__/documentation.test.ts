@@ -195,4 +195,17 @@ describe('Markdown documentation', () => {
     module.syncToCode(moduleEditedSource)
     expect(module.root()?.code()).toBe(moduleEditedSource)
   })
+
+  test('Setting empty markdown content removes comment', () => {
+    const functionCodeWithoutDocs = `main =\n    x = 1`
+    const originalSourceWithDocComment = '## Some docs\n' + functionCodeWithoutDocs
+    const topLevel = parseModule(originalSourceWithDocComment)
+    expect(topLevel.code()).toBe(originalSourceWithDocComment)
+
+    const main = [...topLevel.statements()][0]
+    assert(main instanceof MutableFunctionDef)
+    const markdownYText = main.mutableDocumentationMarkdown()
+    markdownYText.delete(0, markdownYText.length)
+    expect(topLevel.code()).toBe(functionCodeWithoutDocs)
+  })
 })
