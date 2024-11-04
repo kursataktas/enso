@@ -93,6 +93,22 @@ public class TestIRProcessorInline {
   }
 
   @Test
+  public void childAnnotation_MustBeAppliedToIRField() {
+      expectCompilationFailure(
+          """
+      import org.enso.runtime.parser.dsl.IRNode;
+      import org.enso.runtime.parser.dsl.IRChild;
+      import org.enso.compiler.core.IR;
+      import org.enso.compiler.core.ir.JExpression;
+
+      @IRNode
+      public interface MyIR extends IR {
+        @IRChild String expression();
+      }
+      """);
+  }
+
+  @Test
   public void simpleIRNodeWithoutChildren_GeneratesSource() {
     var src =
         JavaFileObjects.forSourceString(
@@ -488,5 +504,29 @@ public class TestIRProcessorInline {
         JName copy(String nameField, String ANOTHER_NON_EXISTING);
       }
       """);
+  }
+
+  @Test
+  public void copyMethod_WithMoreFieldsOfSameType() {
+    var genSrc =
+        generatedClass(
+            "JName",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.runtime.parser.dsl.IRCopyMethod;
+        import org.enso.compiler.core.IR;
+        import org.enso.compiler.core.ir.MetadataStorage;
+        import org.enso.compiler.core.ir.DiagnosticStorage;
+
+        @IRNode
+        public interface JName extends IR {
+          String nameField_1();
+          String nameField_2();
+
+          @IRCopyMethod
+          JName copy(String nameField_1, String nameField_2);
+        }
+        """);
+    assertThat(genSrc, containsString("JName copy("));
   }
 }
