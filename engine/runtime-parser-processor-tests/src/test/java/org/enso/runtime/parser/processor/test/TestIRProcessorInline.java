@@ -39,6 +39,13 @@ public class TestIRProcessorInline {
     }
   }
 
+  private static void expectCompilationFailure(String src) {
+    var srcObject = JavaFileObjects.forSourceString("TestHello", src);
+    var compiler = Compiler.javac().withProcessors(new IRProcessor());
+    var compilation = compiler.compile(srcObject);
+    CompilationSubject.assertThat(compilation).failed();
+  }
+
   @Test
   public void simpleIRNodeWithoutChildren_CompilationSucceeds() {
     var src =
@@ -441,5 +448,45 @@ public class TestIRProcessorInline {
         }
         """);
     assertThat(genSrc, containsString("JName copy("));
+  }
+
+  @Test
+  public void copyMethod_MustContainValidFieldsAsParameters_1() {
+    expectCompilationFailure(
+        """
+      import org.enso.runtime.parser.dsl.IRNode;
+      import org.enso.runtime.parser.dsl.IRCopyMethod;
+      import org.enso.compiler.core.IR;
+      import org.enso.compiler.core.ir.MetadataStorage;
+      import org.enso.compiler.core.ir.DiagnosticStorage;
+
+      @IRNode
+      public interface JName extends IR {
+        String nameField();
+
+        @IRCopyMethod
+        JName copy(String NON_EXISTING_FIELD_NAME);
+      }
+      """);
+  }
+
+  @Test
+  public void copyMethod_MustContainValidFieldsAsParameters_2() {
+    expectCompilationFailure(
+        """
+      import org.enso.runtime.parser.dsl.IRNode;
+      import org.enso.runtime.parser.dsl.IRCopyMethod;
+      import org.enso.compiler.core.IR;
+      import org.enso.compiler.core.ir.MetadataStorage;
+      import org.enso.compiler.core.ir.DiagnosticStorage;
+
+      @IRNode
+      public interface JName extends IR {
+        String nameField();
+
+        @IRCopyMethod
+        JName copy(String nameField, String ANOTHER_NON_EXISTING);
+      }
+      """);
   }
 }
