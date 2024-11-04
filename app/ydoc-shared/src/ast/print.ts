@@ -4,11 +4,17 @@ import { nodeKey, SpanMap, tokenKey } from './idMap'
 import { isTokenId, SyncTokenId, TokenType } from './token'
 import { Ast, AstId, parentId } from './tree'
 
-export type ConcreteChild<T> = { whitespace: string; node: T }
+/** An AST node of a given type with fully-specified whitespace. */
+export interface ConcreteChild<T> {
+  whitespace: string
+  node: T
+}
+/** An AST node in raw (serialization) form, with fully-specified whitespace. */
 export type RawConcreteChild = ConcreteChild<AstId> | ConcreteChild<SyncTokenId>
 
 export function spaced<T extends object | string>(node: T): ConcreteChild<T>
 export function spaced<T extends object | string>(node: T | undefined): ConcreteChild<T> | undefined
+/** @returns The input with leading whitespace specified to be a single space. */
 export function spaced<T extends object | string>(
   node: T | undefined,
 ): ConcreteChild<T> | undefined {
@@ -20,6 +26,7 @@ export function unspaced<T extends object | string>(node: T): ConcreteChild<T>
 export function unspaced<T extends object | string>(
   node: T | undefined,
 ): ConcreteChild<T> | undefined
+/** @returns The input with leading whitespace specified to be absent. */
 export function unspaced<T extends object | string>(
   node: T | undefined,
 ): ConcreteChild<T> | undefined {
@@ -33,9 +40,12 @@ export interface OptionalWhitespace {
 export interface WithWhitespace extends OptionalWhitespace {
   whitespace: string
 }
+/** @returns The input with leading whitespace as specified. */
 export function withWhitespace<T>(node: T, whitespace: string): T & WithWhitespace {
   return { ...node, whitespace }
 }
+
+/** @returns The input with leading whitespace set to a single space or an empty string, depending on the provided boolean. */
 export function ensureSpacedOnlyIf<T extends OptionalWhitespace>(
   child: T,
   condition: boolean,
@@ -44,14 +54,17 @@ export function ensureSpacedOnlyIf<T extends OptionalWhitespace>(
   return condition ? ensureSpaced(child, verbatim) : ensureUnspaced(child, verbatim)
 }
 
+/** @returns Whether the input value has whitespace specified (as opposed to autospaced). */
 export function isConcrete<T extends OptionalWhitespace>(child: T): child is T & WithWhitespace {
   return child.whitespace !== undefined
 }
+/** @returns The input if it satisfies {@link isConcrete} */
 export function tryAsConcrete<T extends OptionalWhitespace>(
   child: T,
 ): (T & WithWhitespace) | undefined {
   return isConcrete(child) ? child : undefined
 }
+/** @returns The input with leading whitespace specified to be a single space, unless it is specified as a non-autospaced value and `verbatim` is `true`. */
 export function ensureSpaced<T extends OptionalWhitespace>(
   child: T,
   verbatim: boolean | undefined,
@@ -60,6 +73,7 @@ export function ensureSpaced<T extends OptionalWhitespace>(
   if (verbatim && concreteInput) return concreteInput
   return concreteInput?.whitespace ? concreteInput : { ...child, whitespace: ' ' }
 }
+/** @returns The input with leading whitespace specified to be empty, unless it is specified as a non-autospaced value and `verbatim` is `true`. */
 export function ensureUnspaced<T extends OptionalWhitespace>(
   child: T,
   verbatim: boolean | undefined,
@@ -68,19 +82,23 @@ export function ensureUnspaced<T extends OptionalWhitespace>(
   if (verbatim && concreteInput) return concreteInput
   return concreteInput?.whitespace === '' ? concreteInput : { ...child, whitespace: '' }
 }
+/** @returns The input with leading whitespace specified to be empty. This is equivalent to other ways of clearing the whitespace, such as {@link unspaced}, but using this function documents the reason. */
 export function firstChild<T extends OptionalWhitespace>(child: T): T & WithWhitespace {
   const concreteInput = tryAsConcrete(child)
   return concreteInput?.whitespace === '' ? concreteInput : { ...child, whitespace: '' }
 }
+/** If the input is autospaced, returns it with spacing according to the provided `condition`; otherwise, returns it with its existing spacing. */
 export function preferSpacedIf<T extends OptionalWhitespace>(
   child: T,
   condition: boolean,
 ): T & WithWhitespace {
   return condition ? preferSpaced(child) : preferUnspaced(child)
 }
+/** If the input is autospaced, returns it unspaced; otherwise, returns it with its existing spacing. */
 export function preferUnspaced<T extends OptionalWhitespace>(child: T): T & WithWhitespace {
   return tryAsConcrete(child) ?? { ...child, whitespace: '' }
 }
+/** If the input is autospaced, returns it spaced; otherwise, returns it with its existing spacing. */
 export function preferSpaced<T extends OptionalWhitespace>(child: T): T & WithWhitespace {
   return tryAsConcrete(child) ?? { ...child, whitespace: ' ' }
 }
@@ -102,7 +120,7 @@ export function printWithSpans(ast: Ast): PrintedSource {
 }
 
 /**
- * Used by `Ast.printSubtree`.
+ * Implementation of `Ast.printSubtree`.
  * @internal
  */
 export function printAst(

@@ -59,10 +59,11 @@ export type DeepReadonly<T> =
   : T extends ReadonlySet<infer U> ? ReadonlySet<DeepReadonly<U>>
   : T extends WeakSet<infer U> ? WeakSet<DeepReadonly<U>>
   : T extends Promise<infer U> ? Promise<DeepReadonly<U>>
-  : T extends {} ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
+  : T extends object ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
   : Readonly<T>
 type Primitive = string | number | boolean | bigint | symbol | undefined | null
-type Builtin = Primitive | Function | Date | Error | RegExp
+type AnyFunction = () => void
+type Builtin = Primitive | AnyFunction | Date | Error | RegExp
 // Note that typescript doesn't consider this assignable to `DeepReadonly<T>`, so the intersection type can be useful.
 type DeepReadonlyExceptY<T> =
   T extends Builtin ? T
@@ -70,14 +71,15 @@ type DeepReadonlyExceptY<T> =
   T extends Y.Map<unknown> ? T
   : T extends Y.Text ? T
   : // Same as DeepReadonly
-  T extends Map<infer K, infer V> ? ReadonlyMap<DeepReadonly<K>, DeepReadonlyExceptY<V>>
+  T extends FixedMap<unknown> ? T
+  : T extends Map<infer K, infer V> ? ReadonlyMap<DeepReadonly<K>, DeepReadonlyExceptY<V>>
   : T extends ReadonlyMap<infer K, infer V> ? ReadonlyMap<DeepReadonly<K>, DeepReadonlyExceptY<V>>
   : T extends WeakMap<infer K, infer V> ? WeakMap<DeepReadonly<K>, DeepReadonlyExceptY<V>>
   : T extends Set<infer U> ? ReadonlySet<DeepReadonly<U>>
   : T extends ReadonlySet<infer U> ? ReadonlySet<DeepReadonly<U>>
   : T extends WeakSet<infer U> ? WeakSet<DeepReadonly<U>>
   : T extends Promise<infer U> ? Promise<DeepReadonly<U>>
-  : T extends {} ? { readonly [K in keyof T]: DeepReadonlyExceptY<T[K]> }
+  : T extends object ? { readonly [K in keyof T]: DeepReadonlyExceptY<T[K]> }
   : Readonly<T>
 
 declare const brandAstId: unique symbol
@@ -585,6 +587,7 @@ function rewriteFieldRefs<T extends TreeRefs, U extends TreeRefs>(
   const newValue = f(field)
   if (newValue) return newValue
   if (typeof field !== 'object') return
+  if (field === null) return
   if (field instanceof Y.Text) return
   // `Array.isArray` doesn't work with `DeepReadonly`, but we just need a narrowing that distinguishes it from all
   // `StructuralField` types.
@@ -1612,29 +1615,29 @@ interface TreeRefs {
 type RefMap<T extends TreeRefs, U extends TreeRefs> = (
   field: FieldData<T>,
 ) => FieldData<U> | undefined
-type RawRefs = {
+interface RawRefs extends TreeRefs {
   token: NodeChild<SyncTokenId>
   ast: NodeChild<AstId>
   expression: NodeChild<AstId>
   statement: NodeChild<AstId>
 }
-export type OwnedRefs = {
-  token: NodeChild<Token>
-  ast: NodeChild<Owned>
-  expression: NodeChild<Owned<MutableExpression>>
-  statement: NodeChild<Owned<MutableStatement>>
-}
-type ConcreteRefs = {
+export interface ConcreteRefs extends TreeRefs {
   token: NodeChild<Token>
   ast: NodeChild<Ast>
   expression: NodeChild<Expression>
   statement: NodeChild<Statement>
 }
-type MutableRefs = {
+interface MutableRefs extends ConcreteRefs {
   token: NodeChild<Token>
   ast: NodeChild<MutableAst>
   expression: NodeChild<MutableExpression>
   statement: NodeChild<MutableStatement>
+}
+export interface OwnedRefs extends MutableRefs {
+  token: NodeChild<Token>
+  ast: NodeChild<Owned>
+  expression: NodeChild<Owned<MutableExpression>>
+  statement: NodeChild<Owned<MutableStatement>>
 }
 function ownedToRaw(module: MutableModule, parentId: AstId): RefMap<OwnedRefs, RawRefs> {
   return (child: FieldData<OwnedRefs>) => {
@@ -2331,6 +2334,10 @@ export class FunctionDef extends BaseStatement {
     if (parsed instanceof MutableFunctionDef) return parsed
   }
 
+  /**
+   * Returns the Markdown model of the documentation. The returned object may be used to edit the documentation
+   * directly, without creating an edit module to explicitly commit it.
+   */
   mutableDocumentationMarkdown(): Y.Text {
     return (this.fields as FixedMap<AstFields & FunctionDefFields>).get('docMarkdown')
   }

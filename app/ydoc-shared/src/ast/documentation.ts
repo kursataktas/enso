@@ -9,7 +9,7 @@ import {
   unspaced,
 } from './print'
 import { Token, TokenType } from './token'
-import { DeepReadonly, DocLine, OwnedRefs, TextToken } from './tree'
+import { ConcreteRefs, DeepReadonly, DocLine, TextToken } from './tree'
 
 /** Render a documentation line to concrete tokens. */
 export function* docLineToConcrete(
@@ -56,7 +56,12 @@ export function functionDocsToConcrete(
   )
 }
 
-export function abstractMarkdown(elements: undefined | TextToken<OwnedRefs>[]) {
+/**
+ * Given Enso documentation comment tokens, returns a model of their Markdown content. This model abstracts away details
+ * such as the locations of line breaks that are not paragraph breaks (e.g. lone newlines denoting hard-wrapping of the
+ * source code).
+ */
+export function abstractMarkdown(elements: undefined | TextToken<ConcreteRefs>[]) {
   let markdown = ''
   let newlines = 0
   let readingTags = true
