@@ -6,22 +6,11 @@ import {
   UrlTransformer,
 } from '@/components/MarkdownEditor/imageUrlTransformer'
 import { ensoMarkdown } from '@/components/MarkdownEditor/markdown'
-import { TeleportationRegistry } from '@/components/MarkdownEditor/markdown/decoration'
+import VueComponentHost from '@/components/VueComponentHost.vue'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
-import { useObjectId } from 'enso-common/src/utilities/data/object'
-import {
-  type Component,
-  ComponentInstance,
-  onMounted,
-  reactive,
-  ref,
-  toRef,
-  useCssModule,
-  watch,
-  watchEffect,
-} from 'vue'
+import { ComponentInstance, onMounted, ref, toRef, useCssModule, watchEffect } from 'vue'
 import { yCollab } from 'y-codemirror.next'
 import * as awarenessProtocol from 'y-protocols/awareness.js'
 import * as Y from 'yjs'
@@ -34,35 +23,24 @@ const props = defineProps<{
   toolbarContainer: HTMLElement | undefined
 }>()
 
+const vueHost = ref<ComponentInstance<typeof VueComponentHost>>()
+
 provideDocumentationImageUrlTransformer(toRef(props, 'transformImageUrl'))
 
 const awareness = new awarenessProtocol.Awareness(new Y.Doc())
-
 const editorView = new EditorView()
-
-interface Teleportation {
-  component: Component
-  props: object
-}
-
-const decorationContext = reactive(new Map<HTMLElement, Teleportation>())
-
-const teleporter: TeleportationRegistry = {
-  register: decorationContext.set.bind(decorationContext),
-  unregister: decorationContext.delete.bind(decorationContext),
-}
-const constantExtensions = [
-  minimalSetup,
-  ensoMarkdown({ teleporter }),
-  highlightStyle(useCssModule()),
-  EditorView.lineWrapping,
-]
+const constantExtensions = [minimalSetup, highlightStyle(useCssModule()), EditorView.lineWrapping]
 
 watchEffect(() => {
+  if (!vueHost.value) return
   editorView.setState(
     EditorState.create({
       doc: props.yText.toString(),
-      extensions: [...constantExtensions, yCollab(props.yText, awareness)],
+      extensions: [
+        ...constantExtensions,
+        ensoMarkdown({ vueHost: vueHost.value }),
+        yCollab(props.yText, awareness),
+      ],
     }),
   )
 })
@@ -74,8 +52,6 @@ onMounted(() => {
 })
 
 const editing = ref(false)
-
-const { objectId } = useObjectId()
 </script>
 
 <template>
@@ -85,14 +61,7 @@ const { objectId } = useObjectId()
     :class="{ editing }"
     @focusout="editing = false"
   />
-  <template
-    v-for="[slot, { component, props: componentProps }] in decorationContext.entries()"
-    :key="objectId(componentProps)"
-  >
-    <Teleport :to="slot">
-      <component :is="component" v-bind="componentProps" />
-    </Teleport>
-  </template>
+  <VueComponentHost ref="vueHost" />
 </template>
 
 <!--suppress CssUnusedSymbol -->

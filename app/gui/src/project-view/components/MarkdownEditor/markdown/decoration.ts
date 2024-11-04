@@ -1,4 +1,5 @@
 import DocumentationImage from '@/components/MarkdownEditor/DocumentationImage.vue'
+import { VueHost } from '@/components/VueComponentHost.vue'
 import { syntaxTree } from '@codemirror/language'
 import { EditorSelection, Extension, RangeSetBuilder, Text } from '@codemirror/state'
 import {
@@ -11,15 +12,11 @@ import {
   WidgetType,
 } from '@codemirror/view'
 import { SyntaxNodeRef, Tree } from '@lezer/common'
-import { type Component, markRaw } from 'vue'
+import { h, markRaw } from 'vue'
 
 /** Extension applying decorators for Markdown. */
-export function markdownDecorators({
-  teleporter,
-}: {
-  teleporter: TeleportationRegistry
-}): Extension {
-  const stateDecorator = new TreeStateDecorator(teleporter, [
+export function markdownDecorators({ vueHost }: { vueHost: VueHost }): Extension {
+  const stateDecorator = new TreeStateDecorator(vueHost, [
     decorateImageWithClass,
     decorateImageWithRendered,
   ])
@@ -27,7 +24,7 @@ export function markdownDecorators({
     stateDecorator.decorate(syntaxTree(state), state.doc),
   )
   const viewDecoratorExt = ViewPlugin.define(
-    (view) => new TreeViewDecorator(view, teleporter, [decorateLink]),
+    (view) => new TreeViewDecorator(view, vueHost, [decorateLink]),
     {
       decorations: (v) => v.decorations,
     },
@@ -43,7 +40,7 @@ interface NodeDecorator {
     nodeRef: SyntaxNodeRef,
     doc: Text,
     emitDecoration: (from: number, to: number, deco: Decoration) => void,
-    teleporter: TeleportationRegistry,
+    vueHost: VueHost,
   ): void
 }
 
@@ -52,7 +49,7 @@ interface NodeDecorator {
 /** Maintains a set of decorations based on the tree. */
 class TreeStateDecorator {
   constructor(
-    private readonly teleporter: TeleportationRegistry,
+    private readonly vueHost: VueHost,
     private readonly nodeDecorators: NodeDecorator[],
   ) {}
 
@@ -63,7 +60,7 @@ class TreeStateDecorator {
     }
     tree.iterate({
       enter: (nodeRef) => {
-        for (const decorator of this.nodeDecorators) decorator(nodeRef, doc, emit, this.teleporter)
+        for (const decorator of this.nodeDecorators) decorator(nodeRef, doc, emit, this.vueHost)
       },
     })
     return builder.finish()
@@ -98,7 +95,7 @@ class TreeViewDecorator implements PluginValue {
 
   constructor(
     view: EditorView,
-    private readonly teleporter: TeleportationRegistry,
+    private readonly vueHost: VueHost,
     /**
      * Functions that construct decorations based on tree. The decorations must not have significant impact on the
      * height of the document, or scrolling issues would result, because decorations are lazily computed based on the
@@ -131,8 +128,7 @@ class TreeViewDecorator implements PluginValue {
         from,
         to,
         enter: (nodeRef) => {
-          for (const decorator of this.nodeDecorators)
-            decorator(nodeRef, doc, emit, this.teleporter)
+          for (const decorator of this.nodeDecorators) decorator(nodeRef, doc, emit, this.vueHost)
         },
       })
     }
@@ -191,7 +187,7 @@ function decorateImageWithRendered(
   nodeRef: SyntaxNodeRef,
   doc: Text,
   emitDecoration: (from: number, to: number, deco: Decoration) => void,
-  teleporter: TeleportationRegistry,
+  vueHost: VueHost,
 ) {
   if (nodeRef.name === 'Image') {
     const node = nodeRef.node
@@ -199,7 +195,7 @@ function decorateImageWithRendered(
     const urlNode = node.firstChild?.nextSibling?.nextSibling?.nextSibling
     if (!urlNode) return
     const src = doc.sliceString(urlNode.from, urlNode.to)
-    const widget = new ImageWidget({ alt, src }, teleporter)
+    const widget = new ImageWidget({ alt, src }, vueHost)
     emitDecoration(
       nodeRef.to,
       nodeRef.to,
@@ -213,21 +209,16 @@ function decorateImageWithRendered(
   }
 }
 
-// TODO: Move this
-export interface TeleportationRegistry {
-  register: (slot: HTMLElement, content: { component: Component; props: object }) => void
-  unregister: (slot: HTMLElement) => void
-}
-
 class ImageWidget extends WidgetType {
   private container: HTMLElement | undefined
+  private vueHostRegistration: { unregister: () => void } | undefined
 
   constructor(
     private readonly props: {
       readonly alt: string
       readonly src: string
     },
-    private readonly teleporter: TeleportationRegistry,
+    private readonly vueHost: VueHost,
   ) {
     super()
   }
@@ -248,17 +239,20 @@ class ImageWidget extends WidgetType {
     if (!this.container) {
       const container = markRaw(document.createElement('span'))
       container.className = 'cm-image-rendered'
-      this.teleporter.register(container, {
-        component: markRaw(DocumentationImage),
-        props: this.props,
-      })
+      this.vueHostRegistration = this.vueHost.register(
+        h(DocumentationImage, {
+          src: this.props.src,
+          alt: this.props.alt,
+        }),
+        container,
+      )
       this.container = container
     }
     return this.container
   }
 
   override destroy() {
-    if (this.container) this.teleporter.unregister(this.container)
+    this.vueHostRegistration?.unregister()
     this.container = undefined
   }
 }

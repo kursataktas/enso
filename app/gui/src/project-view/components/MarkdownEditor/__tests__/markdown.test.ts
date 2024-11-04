@@ -2,31 +2,18 @@ import { ensoMarkdown } from '@/components/MarkdownEditor/markdown'
 import { EditorState } from '@codemirror/state'
 import { Decoration, EditorView } from '@codemirror/view'
 import { expect, test } from 'vitest'
-import type { Component } from 'vue'
-import { reactive } from 'vue'
-import { TeleportationRegistry } from '../markdown/decoration'
-
-function editorState(text: string) {
-  interface Teleportation {
-    component: Component
-    props: object
-  }
-  const decorationContext = reactive(new Map<HTMLElement, Teleportation>())
-  const teleporter: TeleportationRegistry = {
-    register: decorationContext.set.bind(decorationContext),
-    unregister: decorationContext.delete.bind(decorationContext),
-  }
-  return EditorState.create({
-    doc: text,
-    extensions: [ensoMarkdown({ teleporter })],
-  })
-}
 
 function decorations<T>(
   source: string,
   recognize: (from: number, to: number, decoration: Decoration) => T | undefined,
 ) {
-  const state = editorState(source)
+  const vueHost = {
+    register: () => ({ unregister: () => {} })
+  }
+  const state = EditorState.create({
+    doc: source,
+    extensions: [ensoMarkdown({ vueHost })],
+  })
   const view = new EditorView({ state })
   const decorationSets = state.facet(EditorView.decorations)
   const results = []
