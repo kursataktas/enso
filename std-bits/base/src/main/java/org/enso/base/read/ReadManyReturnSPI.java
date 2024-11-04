@@ -1,9 +1,8 @@
 package org.enso.base.read;
 
+import java.util.ServiceLoader;
 import org.enso.base.polyglot.EnsoMeta;
 import org.graalvm.polyglot.Value;
-
-import java.util.ServiceLoader;
 
 public abstract class ReadManyReturnSPI {
   private static final ServiceLoader<ReadManyReturnSPI> loader =
@@ -23,5 +22,4 @@ public abstract class ReadManyReturnSPI {
   protected abstract String getModuleName();
 
   protected abstract String getTypeName();
-
 }
