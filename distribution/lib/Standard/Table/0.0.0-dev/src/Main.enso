@@ -30,7 +30,6 @@ export project.Extensions.Table_Conversions.from_objects
 export project.Extensions.Table_Conversions.parse_to_table
 export project.Extensions.Table_Conversions.to_table
 export project.Extensions.Table_Conversions.write_table
-export project.Extensions.Read_Many.from
 
 export project.Headers.Headers
 

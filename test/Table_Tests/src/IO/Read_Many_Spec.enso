@@ -2,10 +2,11 @@ from Standard.Base import all
 import Standard.Base.Errors.Illegal_Argument.Illegal_Argument
 
 from Standard.Table import all
-from Standard.Database import Database, SQLite
+from Standard.Database import all
 
 from Standard.Test import all
 
+from project.Util import all
 
 main filter=Nothing =
     suite = Test.build suite_builder->
@@ -18,31 +19,36 @@ add_specs suite_builder =
         # One File and one Text path
         files_vector = [enso_project.data / "empty.txt", (enso_project.data / "sample.tsv") . path]
         sample_table = (enso_project.data / "sample.tsv").read
+        check_loaded_vector v =
+            v.should_be_a Vector
+            v.length . should_equal 2
+            v.at 0 . should_equal ""
+            v.at 1 . should_equal sample_table
         group_builder.specify "should read files listed in a Column" <|
             column = Column.from_vector "Col" files_vector
             ## TODO for next PR:
                test that if `return` is not specified, it will return as a Table when a Column is provided
             r1 = Data.read_many column return=..Vector
-            r1.should_equal ["", sample_table]
+            check_loaded_vector r1
             Problems.assume_no_problems r1
 
         group_builder.specify "should read files listed in a single column Table" <|
             table1 = Table.new [["Some column", files_vector]]
             r1 = Data.read_many table1 return=..Vector
             # TODO like above
-            r1.should_equal ["", sample_table]
+            check_loaded_vector r1
 
         group_builder.specify "should read files listed in a Table with `path` column" <|
             table2 = Table.new [["X", [1, 2]], ["path", files_vector]]
             r2 = Data.read_many table2 return=..Vector
             # TODO like above
-            r2.should_equal ["", sample_table]
+            check_loaded_vector r2
             Problems.assume_no_problems r2
 
             # Test that this is really case insensitive
             table3 = Table.new [["X", [1, 2]], ["pAtH", files_vector]]
             r3 = Data.read_many table3 return=..Vector
-            r3.should_equal ["", sample_table]
+            check_loaded_vector r3
             Problems.assume_no_problems r3
 
         group_builder.specify "will fail if no `path` column can be found or its ambiguous" <|
