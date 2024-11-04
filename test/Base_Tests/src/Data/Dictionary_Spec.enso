@@ -275,6 +275,11 @@ add_specs suite_builder =
             m.at 1.2 . should_equal 3
             Problems.expect_only_warning Float_Used_As_Dictionary_Key m
 
+        group_builder.specify "should attach a warning when a Float is used as a key (using from_vector)" <|
+            m = Dictionary.from_vector [[2, 3], [1.2, 3], [4, 5]]
+            m.at 1.2 . should_equal 3
+            Problems.expect_only_warning Float_Used_As_Dictionary_Key m
+
     suite_builder.group "Polyglot keys and values" group_builder->
         group_builder.specify "should support polyglot keys" pending=pending_js_missing <|
             dict = Dictionary.singleton (js_str "A") 42
