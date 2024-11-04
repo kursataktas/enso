@@ -20,6 +20,7 @@ import {
   toRef,
   useCssModule,
   watch,
+  watchEffect,
 } from 'vue'
 import { yCollab } from 'y-codemirror.next'
 import * as awarenessProtocol from 'y-protocols/awareness.js'
@@ -39,11 +40,6 @@ const awareness = new awarenessProtocol.Awareness(new Y.Doc())
 
 const editorView = new EditorView()
 
-watch(
-  () => props.yText,
-  () => console.error('new yText?!?'),
-)
-
 interface Teleportation {
   component: Component
   props: object
@@ -55,20 +51,23 @@ const teleporter: TeleportationRegistry = {
   register: decorationContext.set.bind(decorationContext),
   unregister: decorationContext.delete.bind(decorationContext),
 }
+const constantExtensions = [
+  minimalSetup,
+  ensoMarkdown({ teleporter }),
+  highlightStyle(useCssModule()),
+  EditorView.lineWrapping,
+]
 
-onMounted(() => {
+watchEffect(() => {
   editorView.setState(
     EditorState.create({
       doc: props.yText.toString(),
-      extensions: [
-        minimalSetup,
-        yCollab(props.yText, awareness),
-        ensoMarkdown({ teleporter }),
-        highlightStyle(useCssModule()),
-        EditorView.lineWrapping,
-      ],
+      extensions: [...constantExtensions, yCollab(props.yText, awareness)],
     }),
   )
+})
+
+onMounted(() => {
   const content = editorView.dom.getElementsByClassName('cm-content')[0]!
   content.addEventListener('focusin', () => (editing.value = true))
   editorRoot.value?.rootElement?.prepend(editorView.dom)

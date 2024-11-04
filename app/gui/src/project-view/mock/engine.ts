@@ -49,6 +49,7 @@ const mainFile = `\
 ## Module documentation
 from Standard.Base import all
 
+## A collapsed function
 func1 arg =
     f2 = Main.func2 arg
     result = f2 - 5
