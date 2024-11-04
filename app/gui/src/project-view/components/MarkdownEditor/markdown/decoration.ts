@@ -110,6 +110,7 @@ class TreeViewDecorator implements PluginValue {
   }
 
   update(update: ViewUpdate) {
+    // TODO
     // Attaching widgets can change the geometry, so don't re-attach widgets in response to geometry changes.
     // Reusing unchanged widgets would be a better solution, but this works correctly as long as rendering widgets
     // within the `visibleRanges` doesn't bring any new content into the `visibleRanges`; in practice this should hold.
@@ -212,6 +213,7 @@ function decorateImageWithRendered(
   }
 }
 
+// TODO: Move this
 export interface TeleportationRegistry {
   register: (slot: HTMLElement, content: { component: Component; props: object }) => void
   unregister: (slot: HTMLElement) => void

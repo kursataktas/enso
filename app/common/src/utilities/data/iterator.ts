@@ -1,3 +1,5 @@
+import { mapIterator } from 'lib0/iterator'
+
 export function reduce<T, A>(
   iterator: Iterator<T>,
   f: (accumulator: A, element: T) => A,
@@ -14,4 +16,8 @@ export function reduce<T, A>(
 
 export function intoCount(it: Iterator<unknown>): number {
   return reduce(it, a => a + 1, 0)
+}
+
+export function mapIterable<T, U>(it: Iterable<T>, f: (value: T) => U): IterableIterator<U> {
+  return mapIterator(it[Symbol.iterator](), f)
 }

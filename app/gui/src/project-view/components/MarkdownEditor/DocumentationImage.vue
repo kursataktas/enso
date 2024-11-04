@@ -4,7 +4,7 @@ import {
   TransformUrlResult,
 } from '@/components/MarkdownEditor/imageUrlTransformer'
 import { computedAsync } from '@vueuse/core'
-import { computed, onUnmounted, ref, Ref } from 'vue'
+import { computed, onUnmounted, Ref } from 'vue'
 import { Ok } from 'ydoc-shared/util/data/result'
 
 const DEFAULT_ALT_TEXT = 'Image'
@@ -37,10 +37,8 @@ const alt = props.alt ? props.alt : DEFAULT_ALT_TEXT
 onUnmounted(() => {
   if (data.value?.ok) data.value.value.dispose?.()
 })
-
-const imgElement = ref<HTMLImageElement>()
 </script>
 
 <template>
-  <img ref="imgElement" :src="data?.ok ? data.value.url : ''" :alt="alt" :title="title" />
+  <img :src="data?.ok ? data.value.url : ''" :alt="alt" :title="title" />
 </template>
