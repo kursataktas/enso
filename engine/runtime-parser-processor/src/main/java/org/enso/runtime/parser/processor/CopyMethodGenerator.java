@@ -64,7 +64,7 @@ class CopyMethodGenerator {
     var sb = new StringBuilder();
     sb.append("@Override").append(System.lineSeparator());
     var argList =
-        parameterMapping.keySet().stream()
+        copyMethod.getParameters().stream()
             .map(
                 parameter -> simpleTypeName(parameter) + " " + parameter.getSimpleName().toString())
             .collect(Collectors.joining(", "));
