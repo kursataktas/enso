@@ -183,7 +183,7 @@ type HTTP
 
              HTTP.clear_response_cache
     clear_response_cache : Nothing
-    clear_response_cache -> Nothing = EnsoSecretHelper.clearCache
+    clear_response_cache -> Nothing = EnsoSecretHelper.getCache.clear
 
     ## PRIVATE
        ADVANCED

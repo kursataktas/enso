@@ -176,8 +176,8 @@ public final class EnsoSecretHelper extends SecretValueResolver {
     }
   }
 
-  public static final clearCache() {
-    cache.clear();
+  public static EnsoHTTPResponseCache getCache() {
+    return cache;
   }
 
   private static final Comparator<Pair<String, String>> headerNameComparator =
