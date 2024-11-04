@@ -22,6 +22,7 @@ from enso_dev.Base_Tests.Network.Http.Http_Test_Setup import base_url_with_slash
 import project.Util
 
 polyglot java import java.lang.IllegalArgumentException
+polyglot java import org.enso.base.cache.LRUCache
 polyglot java import org.enso.base.enso_cloud.EnsoSecretHelper
 
 main filter=Nothing =
@@ -118,6 +119,8 @@ add_specs suite_builder =
         reset_size_limits =
             EnsoSecretHelper.getCache.getCacheTestParameters.clearMaxFileSizeOverrideTestOnly
             EnsoSecretHelper.getCache.getCacheTestParameters.clearMaxTotalCacheSizeOverrideTestOnly
+        reset_disk_space =
+            EnsoSecretHelper.getCache.getCacheTestParameters.clearUsableDiskSpaceOverrideTestOnly
 
         expect_counts expected_counts ~action =
             counts = with_counts action
@@ -437,7 +440,20 @@ add_specs suite_builder =
             Test.expect_panic IllegalArgumentException <|
                 EnsoSecretHelper.getCache.getCacheTestParameters.setMaxTotalCacheSizeOverrideTestOnly (20 * 1024 * 1024 * 1024 + 1) . should_fail_with Illegal_Argument
 
-        ##
-            group_builder.specify "Should be able to set the max file size via environment variable" <|
-            group_builder.specify "Should be able to set the max total cache size in bytes via environment variable" <|
-            group_builder.specify "Should be able to set the max total cache size as a percentage via environment variable" <|
+        group_builder.specify "Cache limits should have defaults" <|
+            lru_cache = EnsoSecretHelper.getCache.getLRUCache
+            lru_cache.getMaxFileSize . should_equal (2 * 1024 * 1024 * 1024)
+            lru_cache.getTotalCacheLimit.percentage . should_equal 0.2
+
+        group_builder.specify "Should be able to set the max file size via environment variable" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS" 8 <|
+                lru_cache = LRUCache.create
+                lru_cache.getMaxFileSize . should_equal (8 * 1024 * 1024)
+
+        group_builder.specify "Should be able to set the max total cache size in bytes via environment variable" <|
+        group_builder.specify "Should be able to set the max total cache size as a percentage via environment variable" <|
+            # check the size and the percentage using fake disk space
+            Panic.with_finalizer reset_disk_space <|
+                EnsoSecretHelper.getCache.getCacheTestParameters.setUsableDiskSpaceOverrideTestOnly 100
+        group_builder.specify "Toital cache size should be constrainted to the allowed range" <|
+        group_builder.specify "Throws exception if the max total cache size is incorrectly formatted" <|

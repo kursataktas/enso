@@ -6,6 +6,7 @@ import java.net.http.HttpHeaders;
 import java.util.List;
 import java.util.Optional;
 import org.enso.base.cache.LRUCache;
+import org.enso.base.cache.TotalCacheLimit;
 import org.enso.base.cache.ResponseTooLargeException;
 
 /**
@@ -27,11 +28,8 @@ public class EnsoHTTPResponseCache {
 
   // 1 year.
   private final int DEFAULT_TTL_SECONDS = 31536000;
-  private final long MAX_FILE_SIZE = 2L * 1024 * 1024 * 1024;
-  private final long MAX_TOTAL_CACHE_SIZE = 20L * 1024 * 1024 * 1024;
 
-  private final LRUCache<Metadata> lruCache =
-      new LRUCache<>(MAX_FILE_SIZE, MAX_TOTAL_CACHE_SIZE);
+  private final LRUCache<Metadata> lruCache = LRUCache.create();
 
   public EnsoHttpResponse makeRequest(RequestMaker requestMaker)
       throws IOException, InterruptedException, ResponseTooLargeException {
@@ -142,6 +140,10 @@ public class EnsoHTTPResponseCache {
   /** Return a set of parameters that can be used to modify settings for testing purposes. */
   public LRUCache.CacheTestParameters getCacheTestParameters() {
     return lruCache.getCacheTestParameters();
+  }
+
+  public LRUCache getLRUCache() {
+    return lruCache;
   }
 
   public interface RequestMaker {

@@ -33,17 +33,25 @@ import org.enso.base.Stream_Utils;
 public class LRUCache<M> {
   private static final Logger logger = Logger.getLogger(LRUCache.class.getName());
 
+  private final long DEFAULT_MAX_FILE_SIZE = 2L * 1024 * 1024 * 1024;
+  private final double DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE = 0.2;
+  private final long MIN_TOTAL_CACHE_SIZE_FREE_SPACE = 20 * 1024 * 1024 * 1024;
+  private final long MAX_TOTAL_CACHE_SIZE_FREE_SPACE = 100 * 1024 * 1024 * 1024;
+
   private final long maxFileSize;
-  private final long maxTotalCacheSize;
+  private final TotalCacheLimit.Limit totalCacheLimit;
 
   private final CacheTestParameters cacheTestParameters = new CacheTestParameters();
 
   private final Map<String, CacheEntry<M>> cache = new HashMap<>();
   private final Map<String, ZonedDateTime> lastUsed = new HashMap<>();
 
-  public LRUCache(long maxFileSize, long maxTotalCacheSize) {
+  // TODO: use the project root dir.
+  private final File rootDir = new File("/");
+
+  public LRUCache(long maxFileSize, TotalCacheLimit.Limit totalCacheLimit) {
     this.maxFileSize = maxFileSize;
-    this.maxTotalCacheSize = maxTotalCacheSize;
+    this.totalCacheLimit = totalCacheLimit;
   }
 
   public CacheResult<M> getResult(ItemBuilder<M> itemBuilder)
@@ -230,12 +238,35 @@ public class LRUCache<M> {
     return cache.values().stream().collect(Collectors.summingLong(e -> e.size()));
   }
 
-  private long getMaxFileSize() {
+  // Public for testing.
+  public long getMaxFileSize() {
     return cacheTestParameters.getMaxFileSizeOverrideTestOnly().orElse(maxFileSize);
   }
 
-  private long getMaxTotalCacheSize() {
-    return cacheTestParameters.getMaxTotalCacheSizeOverrideTestOnly().orElse(maxTotalCacheSize);
+  public TotalCacheLimit.Limit getTotalCacheLimit() {
+    return totalCacheLimit;
+  }
+
+  // Public for testing.
+  public long getMaxTotalCacheSize() {
+    return cacheTestParameters.getMaxTotalCacheSizeOverrideTestOnly().orElse(calculateTotalCacheSize());
+  }
+
+  private long calculateTotalCacheSize() {
+    return switch (totalCacheLimit) {
+      case TotalCacheLimit.Megs megs -> (long) (megs.megs() * 1024 * 1024);
+      case TotalCacheLimit.Percentage percentage -> {
+        long usableSpace = getUsableDiskSpace();
+        long totalCacheSize = (long) (percentage.percentage() * usableSpace):
+        return
+          Long.max(MIN_TOTAL_CACHE_SIZE_FREE_SPACE,
+            Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE, totalCacheSize));
+      };
+    };
+  }
+
+  private long getUsableDiskSpace() {
+    return cacheTestParameters.getUsableDiskSpaceOverrideTestOnly().orElse(rootDir.getUsableDiskSpace());
   }
 
   public int getNumEntries() {
@@ -304,6 +335,8 @@ public class LRUCache<M> {
 
     private Optional<Long> maxTotalCacheSizeOverrideTestOnly = Optional.empty();
 
+    private Optional<Long> usableDiskSpaceOverrideTestOnly = Optional.empty();
+
     public Optional<ZonedDateTime> getNowOverrideTestOnly() {
       return nowOverrideTestOnly;
     }
@@ -348,6 +381,41 @@ public class LRUCache<M> {
 
     public void clearMaxTotalCacheSizeOverrideTestOnly() {
       maxTotalCacheSizeOverrideTestOnly = Optional.empty();
+    }
+
+    public Optional<Long> getUsableDiskSpaceOverrideTestOnly() {
+      return usableDiskSpaceOverrideTestOnly;
+    }
+
+    public void setUsableDiskSpaceOverrideTestOnly(long usableDiskSpaceOverrideTestOnly_) {
+      usableDiskSpaceOverrideTestOnly = Optional.of(usableDiskSpaceOverrideTestOnly_);
+    }
+
+    public void clearUsableDiskSpaceOverrideTestOnly() {
+      usableDiskSpaceOverrideTestOnly = Optional.empty();
+    }
+  }
+
+  private static LRUCache<> create() {
+    return new LRUCache<>(calcMaxFileSize(), calcTotalCacheLimit());
+  }
+
+  private long calcMaxFileSize() {
+    String maxFileSizeMegsVar = System.getenv("ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS");
+    if (maxFileSizeMegsVar != null) {
+      double maxFileSizeMegs = Double.parseDouble(maxFileSizeMegsVar);
+      return (long) (maxFileSizeMegs * 1024 * 1024);
+    } else {
+      return DEFAULT_MAX_FILE_SIZE;
+    }
+  }
+
+  private TotalCacheLimit.Limit calcTotalCacheLimit() {
+    String limitVar = System.getenv("ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT");
+    if (limitVar != null) {
+      return TotalCacheLimit.parse(limitVar);
+    } else {
+      return new TotalCacheLimit.Percentage(DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE);
     }
   }
 }
