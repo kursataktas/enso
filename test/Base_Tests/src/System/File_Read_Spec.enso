@@ -87,9 +87,17 @@ add_specs suite_builder =
 
     suite_builder.group "Data.read_many" group_builder->
         group_builder.specify "should allow to read a list of files and return them as vector" <|
-            files = ["TODO"]
-            r = Data.read_many files return=..Vector
-            r.should_be_a Vector
+            files = [enso_project.data / "sample.json", enso_project.data / "helloworld.txt"]
+
+            # Read all files using Auto_Detect - each file is read according to its inferred format.
+            r1 = Data.read_many files return=..Vector
+            js_object = JS_Object.from_pairs [["arr", [1, 2, 3]], ["num", 42.5], ["not", Nothing]]
+            r1.should_equal [js_object, "Hello World!"]
+
+            # Read all files using a specified format.
+            r2 = Data.read_many files format=..Plain_Text return=..Vector
+            r2.should_be_a Vector
+            r2.should_equal ['{\n  "arr": [1, 2, 3],\n  "num": 42.5,\n  "not": null\n}', "Hello World!"]
 
 main filter=Nothing =
     suite = Test.build suite_builder->
