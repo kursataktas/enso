@@ -8,6 +8,7 @@ import project.Errors.Illegal_Argument.Illegal_Argument
 import project.Function.Function
 import project.Metadata.Display
 import project.Metadata.Widget
+import project.Nothing.Nothing
 import project.Panic.Panic
 from project.Data.Boolean import Boolean, False, True
 from project.Metadata.Choice import Option
@@ -65,7 +66,11 @@ type Return_As_Base
     get_dropdown_options = [Option "Vector" "..Vector"]
 
     ## PRIVATE
-    make_return (input : Many_Files_List) (objects : Vector Any) =
+    resolve value =
+        Panic.catch Type_Error (value:Return_As_Base) _->Nothing
+
+    ## PRIVATE
+    make_return self (input : Many_Files_List) (objects : Vector Any) =
         _ = input
         objects
 

@@ -19,4 +19,4 @@ type Many_Files_List
 
 ## PRIVATE
 Many_Files_List.from (that : Vector) =
-    Many_Files_List.Instance that that
+    Many_Files_List.Value that that

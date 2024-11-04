@@ -97,7 +97,7 @@ add_specs suite_builder =
             # Read all files using a specified format.
             r2 = Data.read_many files format=..Plain_Text return=..Vector
             r2.should_be_a Vector
-            r2.should_equal ['{\n  "arr": [1, 2, 3],\n  "num": 42.5,\n  "not": null\n}', "Hello World!"]
+            r2.should_equal ['{\n  "arr": [1, 2, 3],\n  "num": 42.5,\n  "not": null\n}\n', "Hello World!"]
 
 main filter=Nothing =
     suite = Test.build suite_builder->
