@@ -19,6 +19,9 @@ import java.lang.annotation.Target;
  * The order of the parameters is not important. Number of parameters must not exceed total number
  * of fields and meta fields.
  *
+ * <p>There can be more methods annotated with this annotation. All of them must follow the contract
+ * describe in this docs. For each of those methods, an implementation will be generated.
+ *
  * <p>The name of the annotated method can be arbitrary, but the convention is to use the {@code
  * copy} name.
  */

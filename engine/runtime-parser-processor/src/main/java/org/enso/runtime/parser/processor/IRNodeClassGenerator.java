@@ -1,5 +1,6 @@
 package org.enso.runtime.parser.processor;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,10 +40,10 @@ final class IRNodeClassGenerator {
   private final BuilderMethodGenerator builderMethodGenerator;
 
   /**
-   * Can be null if there is no method annotated with {@link
-   * org.enso.runtime.parser.dsl.IRCopyMethod}.
+   * For every method annotated with {@link IRCopyMethod}, there is a generator. Can be empty. Not
+   * null.
    */
-  private final CopyMethodGenerator copyMethodGenerator;
+  private final List<CopyMethodGenerator> copyMethodGenerators;
 
   private static final Set<String> defaultImportedTypes =
       Set.of(
@@ -71,17 +72,15 @@ final class IRNodeClassGenerator {
     this.className = className;
     var userFields = getAllUserFields(interfaceType);
     var duplicateMethod = Utils.findDuplicateMethod(interfaceType, processingEnv);
-    var copyMethod = findCopyMethod();
     this.generatedClassContext =
         new GeneratedClassContext(className, userFields, processingEnv, interfaceType);
     this.duplicateMethodGenerator =
         new DuplicateMethodGenerator(duplicateMethod, generatedClassContext);
     this.builderMethodGenerator = new BuilderMethodGenerator(generatedClassContext);
-    if (copyMethod != null) {
-      this.copyMethodGenerator = new CopyMethodGenerator(copyMethod, generatedClassContext);
-    } else {
-      this.copyMethodGenerator = null;
-    }
+    this.copyMethodGenerators =
+        findCopyMethods().stream()
+            .map(copyMethod -> new CopyMethodGenerator(copyMethod, generatedClassContext))
+            .toList();
     var nestedTypes =
         interfaceType.getEnclosedElements().stream()
             .filter(
@@ -94,21 +93,25 @@ final class IRNodeClassGenerator {
   }
 
   /**
-   * @return null if non found.
+   * Finds all the methods annotated with {@link IRCopyMethod} in the interface hierarchy.
+   *
+   * @return empty if none. Not null.
    */
-  private ExecutableElement findCopyMethod() {
-    return Utils.iterateSuperInterfaces(
+  private List<ExecutableElement> findCopyMethods() {
+    var copyMethods = new ArrayList<ExecutableElement>();
+    Utils.iterateSuperInterfaces(
         interfaceType,
         processingEnv,
         (TypeElement iface) -> {
           for (var enclosedElem : iface.getEnclosedElements()) {
             if (enclosedElem instanceof ExecutableElement executableElem
                 && Utils.hasAnnotation(executableElem, IRCopyMethod.class)) {
-              return executableElem;
+              copyMethods.add(executableElem);
             }
           }
           return null;
         });
+    return copyMethods;
   }
 
   /** Returns simple name of the generated class. */
@@ -152,7 +155,7 @@ final class IRNodeClassGenerator {
 
         $overrideIRMethods
 
-        $copyMethod
+        $copyMethods
 
         $builder
         """
@@ -160,7 +163,7 @@ final class IRNodeClassGenerator {
         .replace("$constructor", constructor())
         .replace("$overrideUserDefinedMethods", overrideUserDefinedMethods())
         .replace("$overrideIRMethods", overrideIRMethods())
-        .replace("$copyMethod", copyMethod())
+        .replace("$copyMethods", copyMethods())
         .replace("$builder", builderMethodGenerator.generateBuilder());
   }
 
@@ -359,16 +362,15 @@ final class IRNodeClassGenerator {
   }
 
   /**
-   * Generates the code for the copy method. The method is generated only if the interface contains
-   * a method annotated with {@link IRCopyMethod}. In that case, returns an empty string.
+   * Generates the code for all the copy methods. Returns an empty string if there are no methods
+   * annotated with {@link IRCopyMethod}.
    *
    * @return Code of the copy method or an empty string if the method is not present.
    */
-  private String copyMethod() {
-    if (copyMethodGenerator != null) {
-      return copyMethodGenerator.generateCopyMethod();
-    }
-    return "";
+  private String copyMethods() {
+    return copyMethodGenerators.stream()
+        .map(CopyMethodGenerator::generateCopyMethod)
+        .collect(Collectors.joining(System.lineSeparator()));
   }
 
   private static String indent(String code, int indentation) {

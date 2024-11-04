@@ -393,4 +393,30 @@ public class TestIRProcessorInline {
         """);
     assertThat(genSrc, containsString("JName copy(MetadataStorage"));
   }
+
+  @Test
+  public void canDefineMultipleCopyMethods() {
+    var genSrc =
+        generatedClass(
+            "JName",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.runtime.parser.dsl.IRCopyMethod;
+        import org.enso.compiler.core.IR;
+        import org.enso.compiler.core.ir.MetadataStorage;
+
+        @IRNode
+        public interface JName extends IR {
+          String nameField();
+
+          @IRCopyMethod
+          JName copy(MetadataStorage passData);
+
+          @IRCopyMethod
+          JName copy(String nameField);
+        }
+        """);
+    assertThat(genSrc, containsString("JName copy(MetadataStorage"));
+    assertThat(genSrc, containsString("JName copy(String"));
+  }
 }
