@@ -11,7 +11,6 @@ import type { AnyAsset, Asset } from '#/services/Backend'
 import { AssetType } from '#/services/Backend'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import * as ast from 'ydoc-shared/ast'
-import { Tree } from 'ydoc-shared/ast/generated/ast'
 import { splitFileContents } from 'ydoc-shared/ensoFile'
 import { versionContentQueryOptions } from '../AssetDiffView/useFetchVersionContent'
 
@@ -59,15 +58,11 @@ export function AssetDocsContent(props: AssetDocsContentProps) {
     ...versionContentQueryOptions({ backend, projectId: item.id, metadata: false }),
     select: (data) => {
       const withoutMeta = splitFileContents(data)
-      // We use the raw parser here because we don't need the whole AST, only the Docs part,
-      // we skip parsing the whole file, which is a lot faster by the time of writing this (5-10 times).
-      const tree = ast.rawParseModule(withoutMeta.code)
+      const module = ast.parseModule(withoutMeta.code)
 
-      for (const node of tree.statements) {
-        if (node.expression?.type === Tree.Type.Documented) {
-          const module = ast.MutableModule.Transient()
-          const x = ast.abstract(module, node.expression, data)
-          return x.root.documentingAncestor()?.documentation() ?? ''
+      for (const statement of module.statements()) {
+        if (statement instanceof ast.MutableFunction && statement.name.code() === 'main') {
+          return statement.documentationText() ?? ''
         }
       }
 
