@@ -437,7 +437,7 @@ object Graph {
       * @param definition The definition to add.
       */
     private[graph] def addDefinition(definition: GraphOccurrence.Def): Unit = {
-      _allDefinitions = allDefinitions ++ List(definition)
+      _allDefinitions = _allDefinitions ++ List(definition)
     }
 
     /** Finds an occurrence for the provided ID in the current scope, if it
