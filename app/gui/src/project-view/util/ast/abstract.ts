@@ -285,9 +285,9 @@ function unwrapGroups(ast: Ast) {
 
 /**
  * Tries to recognize inputs that are semantically-equivalent to a sequence of `App`s, and returns the arguments
- *  identified and LHS of the analyzable chain.
+ * identified and LHS of the analyzable chain.
  *
- *  In particular, this function currently recognizes syntax used in visualization-preprocessor expressions.
+ * In particular, this function currently recognizes syntax used in visualization-preprocessor expressions.
  */
 export function analyzeAppLike(ast: Ast): { func: Ast; args: Ast[] } {
   const deferredOperands = new Array<Ast>()
