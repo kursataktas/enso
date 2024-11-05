@@ -12,6 +12,8 @@
 - [Changed the way of adding new column in Table Input Widget][11388]. The
   "virtual column" is replaced with an explicit (+) button.
 - [New dropdown-based component menu][11398].
+- [Methods defined on Standard.Base.Any type are now visible on all
+  components][11451].
 - [Undo/redo buttons in the top bar][11433].
 - [Size of Table Input Widget is preserved and restored after project
   re-opening][11435]
@@ -28,6 +30,7 @@
 [11383]: https://github.com/enso-org/enso/pull/11383
 [11388]: https://github.com/enso-org/enso/pull/11388
 [11398]: https://github.com/enso-org/enso/pull/11398
+[11451]: https://github.com/enso-org/enso/pull/11451
 [11433]: https://github.com/enso-org/enso/pull/11433
 [11435]: https://github.com/enso-org/enso/pull/11435
 [11446]: https://github.com/enso-org/enso/pull/11446
@@ -119,6 +122,7 @@
 - [Added `format` parameter to `Float.parse`.][11229]
 - [Implemented a cache for HTTP data requests, as well as a per-file response
   size limit.][11342]
+- [Overhauled Google Analytics APIs.][11484]
 
 [10614]: https://github.com/enso-org/enso/pull/10614
 [10660]: https://github.com/enso-org/enso/pull/10660
@@ -135,6 +139,7 @@
 [11205]: https://github.com/enso-org/enso/pull/11205
 [11229]: https://github.com/enso-org/enso/pull/11229
 [11342]: https://github.com/enso-org/enso/pull/11342
+[11484]: https://github.com/enso-org/enso/pull/11484
 
 #### Enso Language & Runtime
 
