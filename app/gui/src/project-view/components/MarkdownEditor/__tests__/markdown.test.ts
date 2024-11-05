@@ -8,7 +8,7 @@ function decorations<T>(
   recognize: (from: number, to: number, decoration: Decoration) => T | undefined,
 ) {
   const vueHost = {
-    register: () => ({ unregister: () => {} })
+    register: () => ({ unregister: () => {} }),
   }
   const state = EditorState.create({
     doc: source,
