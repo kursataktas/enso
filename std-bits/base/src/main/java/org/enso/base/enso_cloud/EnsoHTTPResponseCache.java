@@ -29,7 +29,7 @@ public class EnsoHTTPResponseCache {
   // 1 year.
   private final int DEFAULT_TTL_SECONDS = 31536000;
 
-  private final LRUCache<Metadata> lruCache = LRUCache.create();
+  private final LRUCache<Metadata> lruCache = new LRUCache<>();
 
   public EnsoHttpResponse makeRequest(RequestMaker requestMaker)
       throws IOException, InterruptedException, ResponseTooLargeException {

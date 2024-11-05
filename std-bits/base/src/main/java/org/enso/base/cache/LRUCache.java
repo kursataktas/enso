@@ -19,6 +19,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import org.enso.base.Environment_Utils;
 import org.enso.base.Stream_Utils;
 
 /**
@@ -33,10 +34,9 @@ import org.enso.base.Stream_Utils;
 public class LRUCache<M> {
   private static final Logger logger = Logger.getLogger(LRUCache.class.getName());
 
-  private final long DEFAULT_MAX_FILE_SIZE = 2L * 1024 * 1024 * 1024;
-  private final double DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE = 0.2;
-  private final long MIN_TOTAL_CACHE_SIZE_FREE_SPACE = 20 * 1024 * 1024 * 1024;
-  private final long MAX_TOTAL_CACHE_SIZE_FREE_SPACE = 100 * 1024 * 1024 * 1024;
+  private static final long DEFAULT_MAX_FILE_SIZE = 2L * 1024 * 1024 * 1024;
+  private static final double DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE = 0.2;
+  private static final long MAX_TOTAL_CACHE_SIZE_FREE_SPACE = 100L * 1024 * 1024 * 1024;
 
   private final long maxFileSize;
   private final TotalCacheLimit.Limit totalCacheLimit;
@@ -48,6 +48,11 @@ public class LRUCache<M> {
 
   // TODO: use the project root dir.
   private final File rootDir = new File("/");
+
+
+  public LRUCache() {
+    this(calcMaxFileSize(), calcTotalCacheLimit());
+  }
 
   public LRUCache(long maxFileSize, TotalCacheLimit.Limit totalCacheLimit) {
     this.maxFileSize = maxFileSize;
@@ -257,16 +262,14 @@ public class LRUCache<M> {
       case TotalCacheLimit.Megs megs -> (long) (megs.megs() * 1024 * 1024);
       case TotalCacheLimit.Percentage percentage -> {
         long usableSpace = getUsableDiskSpace();
-        long totalCacheSize = (long) (percentage.percentage() * usableSpace):
-        return
-          Long.max(MIN_TOTAL_CACHE_SIZE_FREE_SPACE,
-            Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE, totalCacheSize));
-      };
+        long totalCacheSize = (long) (percentage.percentage() * usableSpace);
+        yield Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE, totalCacheSize);
+      }
     };
   }
 
   private long getUsableDiskSpace() {
-    return cacheTestParameters.getUsableDiskSpaceOverrideTestOnly().orElse(rootDir.getUsableDiskSpace());
+    return cacheTestParameters.getUsableDiskSpaceOverrideTestOnly().orElse(rootDir.getUsableSpace());
   }
 
   public int getNumEntries() {
@@ -371,6 +374,7 @@ public class LRUCache<M> {
     }
 
     public void setMaxTotalCacheSizeOverrideTestOnly(long maxTotalCacheSizeOverrideTestOnly_) {
+      long maxTotalCacheSize = getMaxTotalCacheSize();
       if (maxTotalCacheSizeOverrideTestOnly_ > maxTotalCacheSize) {
         throw new IllegalArgumentException(
             "Cannot set the (test-only) total cache size to more than the allowed limit of "
@@ -396,12 +400,8 @@ public class LRUCache<M> {
     }
   }
 
-  private static LRUCache<> create() {
-    return new LRUCache<>(calcMaxFileSize(), calcTotalCacheLimit());
-  }
-
-  private long calcMaxFileSize() {
-    String maxFileSizeMegsVar = System.getenv("ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS");
+  private static long calcMaxFileSize() {
+    String maxFileSizeMegsVar = Environment_Utils.get_environment_variable("ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS");
     if (maxFileSizeMegsVar != null) {
       double maxFileSizeMegs = Double.parseDouble(maxFileSizeMegsVar);
       return (long) (maxFileSizeMegs * 1024 * 1024);
@@ -410,8 +410,8 @@ public class LRUCache<M> {
     }
   }
 
-  private TotalCacheLimit.Limit calcTotalCacheLimit() {
-    String limitVar = System.getenv("ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT");
+  private static TotalCacheLimit.Limit calcTotalCacheLimit() {
+    String limitVar = Environment_Utils.get_environment_variable("ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT");
     if (limitVar != null) {
       return TotalCacheLimit.parse(limitVar);
     } else {
