@@ -367,15 +367,16 @@ public class LRUCache<M> {
   private final Comparator<Map.Entry<String, CacheEntry<M>>> cacheEntryLRUComparator =
       Comparator.comparing(me -> lastUsed.get(me.getKey()));
 
-  /** A set of parameters that can be used to modify cache settings for testing purposes. */
+  /**
+   * A set of parameters that can be used to modify cache settings for testing purposes.
+   *
+   * Since these are callable from Enso, size limits cannot be set to a value
+   * larger than the real limit.
+   */
   public class CacheTestParameters {
     /** This value is used for the current time when testing TTL expiration logic. */
     private Optional<ZonedDateTime> nowOverrideTestOnly = Optional.empty();
 
-    /**
-     * Used for testing file and cache size limits. These cannot be set to values larger than the
-     * real limits.
-     */
     private Optional<Long> maxFileSizeOverrideTestOnly = Optional.empty();
 
     private Optional<Long> maxTotalCacheSizeOverrideTestOnly = Optional.empty();
@@ -434,6 +435,12 @@ public class LRUCache<M> {
     }
 
     public void setUsableDiskSpaceOverrideTestOnly(long usableDiskSpaceOverrideTestOnly_) {
+      long usableDiskSpace = rootPath.getUsableSpace();
+      if (usableDiskSpaceOverrideTestOnly_ > usableDiskSpace) {
+        throw new IllegalArgumentException(
+            "Cannot set the (test-only) usable disk space to more than the allowed limit of "
+                + usableDiskSpace);
+      }
       usableDiskSpaceOverrideTestOnly = Optional.of(usableDiskSpaceOverrideTestOnly_);
     }
 
@@ -442,6 +449,7 @@ public class LRUCache<M> {
     }
   }
 
+  /** Uses the environment variable if set, otherwise uses a default. */
   private static long calcMaxFileSize() {
     String maxFileSizeMegsVar = Environment_Utils.get_environment_variable("ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS");
     if (maxFileSizeMegsVar != null) {
@@ -452,6 +460,7 @@ public class LRUCache<M> {
     }
   }
 
+  /** Uses the environment variable if set, otherwise uses a default percentage. */
   private static TotalCacheLimit.Limit calcTotalCacheLimit() {
     String limitVar = Environment_Utils.get_environment_variable("ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT");
     if (limitVar != null) {
