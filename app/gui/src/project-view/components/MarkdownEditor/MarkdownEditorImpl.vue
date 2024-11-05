@@ -10,7 +10,7 @@ import VueComponentHost from '@/components/VueComponentHost.vue'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
-import { type ComponentInstance, onMounted, ref, toRef, useCssModule, watchEffect } from 'vue'
+import { type ComponentInstance, onMounted, ref, toRef, useCssModule, watch } from 'vue'
 import { yCollab } from 'y-codemirror.next'
 import * as awarenessProtocol from 'y-protocols/awareness.js'
 import * as Y from 'yjs'
@@ -31,16 +31,12 @@ const awareness = new awarenessProtocol.Awareness(new Y.Doc())
 const editorView = new EditorView()
 const constantExtensions = [minimalSetup, highlightStyle(useCssModule()), EditorView.lineWrapping]
 
-watchEffect(() => {
-  if (!vueHost.value) return
+watch([vueHost, toRef(props, 'yText')], ([vueHost, yText]) => {
+  if (!vueHost) return
   editorView.setState(
     EditorState.create({
-      doc: props.yText.toString(),
-      extensions: [
-        ...constantExtensions,
-        ensoMarkdown({ vueHost: vueHost.value }),
-        yCollab(props.yText, awareness),
-      ],
+      doc: yText.toString(),
+      extensions: [...constantExtensions, ensoMarkdown({ vueHost }), yCollab(yText, awareness)],
     }),
   )
 })
