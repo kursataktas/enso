@@ -295,6 +295,10 @@ public class LRUCache<M> {
     return cacheTestParameters.getMaxTotalCacheSizeOverrideTestOnly().orElse(calculateTotalCacheSize());
   }
 
+  /**
+   * Calculate the max total cache size, using the current limit but also
+   * constraining the result to the upper bound.
+   */
   private long calculateTotalCacheSize() {
     return switch (totalCacheLimit) {
       case TotalCacheLimit.Megs megs -> (long) (megs.megs() * 1024 * 1024);
