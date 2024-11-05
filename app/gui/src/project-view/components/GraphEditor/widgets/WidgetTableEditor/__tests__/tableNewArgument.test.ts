@@ -8,13 +8,14 @@ import {
   useTableNewArgument,
 } from '@/components/GraphEditor/widgets/WidgetTableEditor/tableNewArgument'
 import { MenuItem } from '@/components/shared/AgGridTableView.vue'
-import { WidgetInput, WidgetUpdate } from '@/providers/widgetRegistry'
+import { WidgetInput } from '@/providers/widgetRegistry'
 import { SuggestionDb } from '@/stores/suggestionDatabase'
 import { makeType } from '@/stores/suggestionDatabase/entry'
 import { assert } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import { GetContextMenuItems, GetMainMenuItems } from 'ag-grid-enterprise'
 import { expect, test, vi } from 'vitest'
+import { assertDefined } from 'ydoc-shared/util/assert'
 
 function suggestionDbWithNothing() {
   const db = new SuggestionDb()
@@ -24,7 +25,9 @@ function suggestionDbWithNothing() {
 
 function generateTableOfOnes(rows: number, cols: number) {
   const code = `Table.new [${[...Array(cols).keys()].map((i) => `['Column #${i}', [${Array(rows).fill('1').join(',')}]]`).join(',')}]`
-  return Ast.parse(code)
+  const ast = Ast.parseExpression(code)
+  assertDefined(ast)
+  return ast
 }
 
 const expectedRowIndexColumnDef = { headerName: ROW_INDEX_HEADER }
@@ -88,7 +91,8 @@ test.each([
     ],
   },
 ])('Read table from $code', ({ code, expectedColumnDefs, expectedRows }) => {
-  const ast = Ast.parse(code)
+  const ast = Ast.parseExpression(code)
+  assertDefined(ast)
   expect(tableNewCallMayBeHandled(ast)).toBeTruthy()
   const input = WidgetInput.FromAst(ast)
   const startEdit = vi.fn()
@@ -177,14 +181,16 @@ test.each([
   "Table.new [['a', [123]], ['a'.repeat 170, [123]]]",
   "Table.new [['a', [1, 2, 3, 3 + 1]]]",
 ])('"%s" is not valid input for Table Editor Widget', (code) => {
-  const ast = Ast.parse(code)
+  const ast = Ast.parseExpression(code)
+  assertDefined(ast)
   expect(tableNewCallMayBeHandled(ast)).toBeFalsy()
 })
 
 function tableEditFixture(code: string, expectedCode: string) {
   const ast = Ast.parseBlock(code)
-  const inputAst = [...ast.statements()][0]
-  assert(inputAst != null)
+  const firstStatement = [...ast.statements()][0]
+  assert(firstStatement instanceof Ast.MutableExpressionStatement)
+  const inputAst = firstStatement.expression
   const input = WidgetInput.FromAst(inputAst)
   const startEdit = vi.fn(() => ast.module.edit())
   const onUpdate = vi.fn((update) => {
