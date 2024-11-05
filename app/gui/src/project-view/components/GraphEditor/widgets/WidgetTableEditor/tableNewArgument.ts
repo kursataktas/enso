@@ -12,7 +12,7 @@ import type { ToValue } from '@/util/reactivity'
 import type { ColDef } from 'ag-grid-enterprise'
 import * as iter from 'enso-common/src/utilities/data/iter'
 import { computed, toValue } from 'vue'
-import { ColumnSpecificHeaderParams } from './TableHeader.vue'
+import type { ColumnSpecificHeaderParams } from './TableHeader.vue'
 
 /** Id of a fake column with "Add new column" option. */
 export const NEW_COLUMN_ID = 'NewColumn'

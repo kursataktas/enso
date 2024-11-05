@@ -6,9 +6,9 @@ import type { SourceRangeEdit } from '../util/data/text'
 import { defaultLocalOrigin, tryAsOrigin, type ExternalId, type Origin } from '../yjsModel'
 import { newExternalId } from './idMap'
 import { parseModule } from './parse'
-import { SyncTokenId, Token, isTokenId } from './token'
-import {
-  Ast,
+import type { SyncTokenId } from './token'
+import { Token, isTokenId } from './token'
+import type {
   AstFields,
   AstId,
   BodyBlock,
@@ -20,6 +20,9 @@ import {
   NodeChild,
   Owned,
   RawNodeChild,
+} from './tree'
+import {
+  Ast,
   Wildcard,
   asOwned,
   composeFieldData,

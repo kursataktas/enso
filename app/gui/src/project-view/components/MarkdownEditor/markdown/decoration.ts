@@ -1,17 +1,17 @@
 import DocumentationImage from '@/components/MarkdownEditor/DocumentationImage.vue'
-import { VueHost } from '@/components/VueComponentHost.vue'
+import type { VueHost } from '@/components/VueComponentHost.vue'
 import { syntaxTree } from '@codemirror/language'
-import { EditorSelection, Extension, RangeSetBuilder, Text } from '@codemirror/state'
+import { type EditorSelection, type Extension, RangeSetBuilder, type Text } from '@codemirror/state'
 import {
   Decoration,
-  DecorationSet,
+  type DecorationSet,
   EditorView,
-  PluginValue,
+  type PluginValue,
   ViewPlugin,
-  ViewUpdate,
+  type ViewUpdate,
   WidgetType,
 } from '@codemirror/view'
-import { SyntaxNodeRef, Tree } from '@lezer/common'
+import type { SyntaxNodeRef, Tree } from '@lezer/common'
 import { h, markRaw } from 'vue'
 
 /** Extension applying decorators for Markdown. */

@@ -11,7 +11,7 @@ import * as iter from 'enso-common/src/utilities/data/iter'
 import * as set from 'lib0/set'
 import { computed, ref, shallowReactive, shallowRef } from 'vue'
 import { Err, Ok, type Result } from 'ydoc-shared/util/data/result'
-import { NavigatorComposable } from './navigator'
+import type { NavigatorComposable } from './navigator'
 
 interface BaseSelectionOptions<T> {
   margin?: number

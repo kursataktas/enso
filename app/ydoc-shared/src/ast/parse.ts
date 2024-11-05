@@ -2,47 +2,50 @@ import * as iter from 'enso-common/src/utilities/data/iter'
 import * as map from 'lib0/map'
 import * as Y from 'yjs'
 import { assert } from '../util/assert'
-import { IdMap } from '../yjsModel'
+import type { IdMap } from '../yjsModel'
 import { abstractMarkdown } from './documentation'
 import { parse_block, parse_module } from './ffi'
 import * as RawAst from './generated/ast'
-import { nodeKey, NodeKey, NodeSpanMap, SpanMap, tokenKey, TokenSpanMap } from './idMap'
+import type { NodeKey, NodeSpanMap, SpanMap, TokenSpanMap } from './idMap'
+import { nodeKey, tokenKey } from './idMap'
 import { MutableModule } from './mutableModule'
-import { LazyObject } from './parserSupport'
+import type { LazyObject } from './parserSupport'
 import { Token } from './token'
+import type {
+  Ast,
+  AstId,
+  FunctionDefFields,
+  MutableBodyBlock,
+  MutableExpression,
+  MutableStatement,
+  NodeChild,
+  Owned,
+  OwnedRefs,
+  TextElement,
+  TextToken,
+} from './tree'
 import {
   App,
   asOwned,
   Assignment,
-  Ast,
-  AstId,
   AutoscopedIdentifier,
   BodyBlock,
   ExpressionStatement,
   FunctionDef,
-  FunctionDefFields,
   Generic,
   Group,
   Ident,
   Import,
   Invalid,
-  MutableBodyBlock,
-  MutableExpression,
   MutableExpressionStatement,
   MutableIdent,
   MutableInvalid,
-  MutableStatement,
   NegationApp,
-  NodeChild,
   NumericLiteral,
   OprApp,
-  Owned,
-  OwnedRefs,
   parentId,
   PropertyAccess,
-  TextElement,
   TextLiteral,
-  TextToken,
   UnaryOprApp,
   Vector,
   Wildcard,

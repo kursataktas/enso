@@ -1,16 +1,9 @@
 import * as random from 'lib0/random'
 import { assert } from '../util/assert'
-import {
-  ExternalId,
-  IdMap,
-  isUuid,
-  SourceRange,
-  sourceRangeFromKey,
-  sourceRangeKey,
-  SourceRangeKey,
-} from '../yjsModel'
-import { Token } from './token'
-import { Ast, AstId } from './tree'
+import type { ExternalId, SourceRange, SourceRangeKey } from '../yjsModel'
+import { IdMap, isUuid, sourceRangeFromKey, sourceRangeKey } from '../yjsModel'
+import type { Token } from './token'
+import type { Ast, AstId } from './tree'
 
 declare const nodeKeyBrand: unique symbol
 /** A source-range key for an `Ast`. */

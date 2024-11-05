@@ -1,11 +1,12 @@
 import { subtreeRoots } from '.'
 import { assertDefined, assertEqual } from '../util/assert'
 import { sourceRangeFromKey } from '../yjsModel'
-import { NodeKey, NodeSpanMap } from './idMap'
-import { MutableModule } from './mutableModule'
+import type { NodeKey, NodeSpanMap } from './idMap'
+import type { MutableModule } from './mutableModule'
 import { parseModuleWithSpans } from './parse'
 import { printWithSpans } from './print'
-import { Ast, AstId, BodyBlock, Group } from './tree'
+import type { Ast, AstId } from './tree'
+import { BodyBlock, Group } from './tree'
 
 /**
  * Try to find all the spans in `expected` in `encountered`. If any are missing, use the provided `code` to determine

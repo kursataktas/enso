@@ -2,18 +2,21 @@
 /* eslint-disable @typescript-eslint/no-unsafe-declaration-merging */
 import * as Y from 'yjs'
 import { assert, assertDefined, assertEqual, bail } from '../util/assert'
-import { Err, Ok, Result } from '../util/data/result'
+import type { Result } from '../util/data/result'
+import { Err, Ok } from '../util/data/result'
 import type { SourceRangeEdit } from '../util/data/text'
 import { allKeys } from '../util/types'
 import type { ExternalId, VisualizationMetadata } from '../yjsModel'
 import { visMetadataEquals } from '../yjsModel'
 import { functionDocsToConcrete } from './documentation'
 import { is_numeric_literal } from './ffi'
-import { SpanMap, newExternalId } from './idMap'
-import { Module, MutableModule, ROOT_ID } from './mutableModule'
+import type { SpanMap } from './idMap'
+import { newExternalId } from './idMap'
+import type { Module } from './mutableModule'
+import { MutableModule, ROOT_ID } from './mutableModule'
 import { parseExpression, parseStatement } from './parse'
+import type { RawConcreteChild } from './print'
 import {
-  RawConcreteChild,
   ensureSpaced,
   ensureSpacedOnlyIf,
   ensureUnspaced,
@@ -29,20 +32,15 @@ import {
 } from './print'
 import { applyTextEditsToAst, syncToCode } from './syncToCode'
 import { escapeTextLiteral } from './text'
-import {
+import type {
   Identifier,
   IdentifierOrOperatorIdentifier,
   IdentifierOrOperatorIdentifierToken,
   IdentifierToken,
   SyncTokenId,
-  Token,
-  TokenType,
   TypeOrConstructorIdentifier,
-  isIdentifier,
-  isToken,
-  isTokenChild,
-  isTokenId,
 } from './token'
+import { Token, TokenType, isIdentifier, isToken, isTokenChild, isTokenId } from './token'
 
 // This is used to ensure immutability of data owned by Yjs, which is important and is difficult to enforce without this
 // type-level help. When constructing a new value for a field, it is tempting to `get` the old value, mutate it, and

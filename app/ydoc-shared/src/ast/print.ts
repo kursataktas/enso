@@ -1,8 +1,11 @@
 import * as map from 'lib0/map'
 import { assert, assertEqual } from '../util/assert'
-import { nodeKey, SpanMap, tokenKey } from './idMap'
-import { isTokenId, SyncTokenId, TokenType } from './token'
-import { Ast, AstId, parentId } from './tree'
+import type { SpanMap } from './idMap'
+import { nodeKey, tokenKey } from './idMap'
+import type { SyncTokenId } from './token'
+import { isTokenId, TokenType } from './token'
+import type { Ast, AstId } from './tree'
+import { parentId } from './tree'
 
 /** An AST node of a given type with fully-specified whitespace. */
 export interface ConcreteChild<T> {

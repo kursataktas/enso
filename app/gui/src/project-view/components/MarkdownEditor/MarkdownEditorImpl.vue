@@ -3,14 +3,14 @@ import EditorRoot from '@/components/MarkdownEditor/EditorRoot.vue'
 import { highlightStyle } from '@/components/MarkdownEditor/highlight'
 import {
   provideDocumentationImageUrlTransformer,
-  UrlTransformer,
+  type UrlTransformer,
 } from '@/components/MarkdownEditor/imageUrlTransformer'
 import { ensoMarkdown } from '@/components/MarkdownEditor/markdown'
 import VueComponentHost from '@/components/VueComponentHost.vue'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { minimalSetup } from 'codemirror'
-import { ComponentInstance, onMounted, ref, toRef, useCssModule, watchEffect } from 'vue'
+import { type ComponentInstance, onMounted, ref, toRef, useCssModule, watchEffect } from 'vue'
 import { yCollab } from 'y-codemirror.next'
 import * as awarenessProtocol from 'y-protocols/awareness.js'
 import * as Y from 'yjs'

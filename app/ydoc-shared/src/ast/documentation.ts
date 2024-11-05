@@ -1,15 +1,9 @@
 import { LINE_BOUNDARIES } from 'enso-common/src/utilities/data/string'
 import { xxHash128 } from './ffi'
-import {
-  ConcreteChild,
-  ensureUnspaced,
-  firstChild,
-  preferUnspaced,
-  RawConcreteChild,
-  unspaced,
-} from './print'
+import type { ConcreteChild, RawConcreteChild } from './print'
+import { ensureUnspaced, firstChild, preferUnspaced, unspaced } from './print'
 import { Token, TokenType } from './token'
-import { ConcreteRefs, DeepReadonly, DocLine, TextToken } from './tree'
+import type { ConcreteRefs, DeepReadonly, DocLine, TextToken } from './tree'
 
 /** Render a documentation line to concrete tokens. */
 export function* docLineToConcrete(

@@ -1,7 +1,8 @@
 import { markdown as baseMarkdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { Extension } from '@codemirror/state'
-import { Tree } from '@lezer/common'
-import { BlockContext, BlockParser, Element, Line, MarkdownParser, NodeSpec } from '@lezer/markdown'
+import type { Extension } from '@codemirror/state'
+import type { Tree } from '@lezer/common'
+import type { BlockContext, BlockParser, Line, MarkdownParser, NodeSpec } from '@lezer/markdown'
+import { Element } from '@lezer/markdown'
 import { assertDefined } from 'ydoc-shared/util/assert'
 
 /**

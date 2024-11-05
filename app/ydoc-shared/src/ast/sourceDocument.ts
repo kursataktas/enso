@@ -1,9 +1,11 @@
 import { assertDefined } from '../util/assert'
-import { SourceRangeEdit, offsetEdit, textChangeToEdits } from '../util/data/text'
-import { Origin, SourceRange, rangeEquals, sourceRangeFromKey } from '../yjsModel'
-import { Module, ModuleUpdate } from './mutableModule'
+import type { SourceRangeEdit } from '../util/data/text'
+import { offsetEdit, textChangeToEdits } from '../util/data/text'
+import type { Origin, SourceRange } from '../yjsModel'
+import { rangeEquals, sourceRangeFromKey } from '../yjsModel'
+import type { Module, ModuleUpdate } from './mutableModule'
 import { printWithSpans } from './print'
-import { AstId } from './tree'
+import type { AstId } from './tree'
 
 /**
  * Provides a view of the text representation of a module,

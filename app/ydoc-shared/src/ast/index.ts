@@ -1,6 +1,6 @@
 import { reachable } from '../util/data/graph'
-import { Module } from './mutableModule'
-import { AstId } from './tree'
+import type { Module } from './mutableModule'
+import type { AstId } from './tree'
 
 export { spanMapToIdMap } from './idMap'
 export * from './mutableModule'

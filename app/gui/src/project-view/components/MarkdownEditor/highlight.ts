@@ -1,6 +1,6 @@
 import { syntaxHighlighting } from '@codemirror/language'
-import { Extension } from '@codemirror/state'
-import { Tag, tagHighlighter, tags } from '@lezer/highlight'
+import type { Extension } from '@codemirror/state'
+import { type Tag, tagHighlighter, tags } from '@lezer/highlight'
 
 const tagNames: (keyof typeof tags)[] = [
   'comment',

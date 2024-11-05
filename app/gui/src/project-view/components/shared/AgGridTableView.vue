@@ -47,7 +47,7 @@ import {
   tsvTableToEnsoExpression,
   writeClipboard,
 } from '@/components/GraphEditor/clipboard'
-import { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
+import type { TextFormatOptions } from '@/components/visualizations/TableVisualization.vue'
 import { useAutoBlur } from '@/util/autoBlur'
 import type {
   CellEditingStartedEvent,

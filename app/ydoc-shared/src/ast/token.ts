@@ -4,7 +4,8 @@ import { isUuid } from '../yjsModel'
 import { is_ident_or_operator } from './ffi'
 import * as RawAst from './generated/ast'
 import { newExternalId } from './idMap'
-import { Ast, AstId, DeepReadonly, NodeChild, Owned } from './tree'
+import type { AstId, DeepReadonly, NodeChild, Owned } from './tree'
+import { Ast } from './tree'
 export import TokenType = RawAst.Token.Type
 
 /** Whether the given value is a {@link Token}. */

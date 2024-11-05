@@ -1,37 +1,30 @@
 import * as iter from 'enso-common/src/utilities/data/iter'
 import * as map from 'lib0/map'
 import { assert, assertDefined } from '../util/assert'
+import type { SourceRangeEdit, SpanTree } from '../util/data/text'
 import {
   applyTextEdits,
   applyTextEditsToSpans,
   enclosingSpans,
-  SourceRangeEdit,
-  SpanTree,
   textChangeToEdits,
   trimEnd,
 } from '../util/data/text'
-import {
-  rangeLength,
-  SourceRange,
-  sourceRangeFromKey,
-  sourceRangeKey,
-  SourceRangeKey,
-} from '../yjsModel'
+import type { SourceRange, SourceRangeKey } from '../yjsModel'
+import { rangeLength, sourceRangeFromKey, sourceRangeKey } from '../yjsModel'
 import { xxHash128 } from './ffi'
 import * as RawAst from './generated/ast'
-import { newExternalId, NodeKey, NodeSpanMap } from './idMap'
-import { Module, MutableModule } from './mutableModule'
+import type { NodeKey, NodeSpanMap } from './idMap'
+import { newExternalId } from './idMap'
+import type { Module, MutableModule } from './mutableModule'
 import { abstract, rawParseBlock, rawParseModule } from './parse'
 import { printWithSpans } from './print'
 import { isTokenId } from './token'
+import type { AstId, MutableAst, Owned } from './tree'
 import {
   Assignment,
   Ast,
-  AstId,
   MutableAssignment,
-  MutableAst,
   MutableBodyBlock,
-  Owned,
   rewriteRefs,
   syncFields,
   syncNodeMetadata,
