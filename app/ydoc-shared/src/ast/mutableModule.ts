@@ -273,28 +273,33 @@ export class MutableModule implements Module {
           node.get(key as any),
         ])
         updateBuilder.updateFields(id, changes)
-      } else if (event.target.parent.parent === this.nodes) {
+      } else if (event.target.parent?.parent === this.nodes) {
         // Updates to fields of an object within a node.
         const id = event.target.parent.get('id')
         DEV: assertAstId(id)
         const node = this.nodes.get(id)
         if (!node) continue
-        const metadata = node.get('metadata') as unknown as Map<string, unknown>
+        const metadata = node.get('metadata')
         if (event.target === metadata) {
           const changes: (readonly [string, unknown])[] = Array.from(
             event.changes.keys,
             ([key]) => [key, metadata.get(key as any)],
           )
           updateBuilder.updateMetadata(id, changes)
-        } else if (event.target.parent === metadata) {
-          // Updates to some specific widget's metadata
-          const id = event.target.parent.parent.get('id')
-          assertAstId(id)
-          if (!this.nodes.get(id)) continue
-          updateBuilder.updateWidgets(id)
         } else {
           // `AbstractType` in node fields.
           updateBuilder.nodesUpdated.add(id)
+        }
+      } else if (event.target.parent?.parent?.parent === this.nodes) {
+        const id = event.target.parent.parent.get('id')
+        assertAstId(id)
+        const node = this.nodes.get(id)
+        if (!node) continue
+        const metadata = node.get('metadata')
+        const widgets = metadata?.get('widget')
+        if (event.target === widgets) {
+          // Updates to some specific widget's metadata
+          updateBuilder.updateWidgets(id)
         }
       }
     }
