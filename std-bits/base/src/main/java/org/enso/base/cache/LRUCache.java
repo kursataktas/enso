@@ -19,6 +19,8 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+
+import org.enso.base.CurrentEnsoProject;
 import org.enso.base.Environment_Utils;
 import org.enso.base.Stream_Utils;
 
@@ -47,8 +49,7 @@ public class LRUCache<M> {
   private final Map<String, ZonedDateTime> lastUsed = new HashMap<>();
 
   // TODO: use the project root dir.
-  private final File rootDir = new File("/");
-
+  private static final File rootPath = new File(CurrentEnsoProject.get().getRootPath());
 
   public LRUCache() {
     this(calcMaxFileSize(), calcTotalCacheLimit());
@@ -269,7 +270,7 @@ public class LRUCache<M> {
   }
 
   private long getUsableDiskSpace() {
-    return cacheTestParameters.getUsableDiskSpaceOverrideTestOnly().orElse(rootDir.getUsableSpace());
+    return cacheTestParameters.getUsableDiskSpaceOverrideTestOnly().orElse(rootPath.getUsableSpace());
   }
 
   public int getNumEntries() {
