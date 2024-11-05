@@ -3881,5 +3881,9 @@ make_fill_nothing_default_widget table cache=Nothing =
     Widget_Helpers.make_fill_default_value_selector table value_types=types
 
 ## PRIVATE
+   Helper method for internal use to make a Table from a Java Table.
+from_java_table java_table = Table.Value java_table
+
+## PRIVATE
 Many_Files_List.from (that : Table) =
     Read_Many_Helpers._find_files_list_in_table that
