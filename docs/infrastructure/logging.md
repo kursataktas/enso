@@ -183,6 +183,17 @@ message via `pattern` field e.g.
   ]
 ```
 
+In the above example `%logger` format will be substituted with a class name for
+which the logger was created with.
+
+By default, console pattern includes `%nopex` formatter which means that any
+stacktrace attached to the log message will always be ignored. By default other
+appenders do not have such formatting key. This means that if an exception is
+included in the logged messaged, a full stacktrace will be attached, if present.
+
+For a full list of formatting keys please refer to the concrete implementation's
+[manual](https://logback.qos.ch/manual/layouts.html#ClassicPatternLayout).
+
 #### File Appender
 
 Enabled with `ENSO_APPENDER_DEFAULT=file` environment variable.
@@ -387,3 +398,62 @@ For example, in the above example `project-manager` will log events of up-to
 
 **Note** Logging to a file requires presence of the `file`
 [appender](#file-appender) in the `logging-service.appenders` section.
+
+# How to use logging
+
+Logging infrastructure uses a popular SLF4J interface which most of developers
+should be familiar with. In this section we include a only small number of
+examples, full user manual is available at SLF4J's
+[website](https://www.slf4j.org/manual.html).
+
+## Log a simple INFO message
+
+```
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class HelloWorld {
+
+  public static void main(String[] args) {
+    Logger logger = LoggerFactory.getLogger(HelloWorld.class);
+    logger.info("Hello World");
+  }
+}
+```
+
+## Log a simple INFO message only if TRACE is enabled
+
+```
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class HelloWorld {
+
+  public static void main(String[] args) {
+    Logger logger = LoggerFactory.getLogger(HelloWorld.class);
+    if (logger.isTraceEnabled()) {
+      logger.info("Hello World");
+    }
+  }
+}
+```
+
+## Log an exception
+
+```
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class HelloWorld {
+
+  public static void main(String[] args) {
+    Logger logger = LoggerFactory.getLogger(HelloWorld.class);
+    Throwable ex = new RuntimeException("foo")
+    logger.error("Hello World", ex);
+  }
+}
+```
+
+Note that in order for the full stacktrace to be printed, pattern in the desired
+appender must not contain `%nopex` formatting key. See [formatting](#format) for
+details.
