@@ -300,14 +300,14 @@ public class LRUCache<M> {
    * constraining the result to the upper bound.
    */
   private long calculateTotalCacheSize() {
-    return switch (totalCacheLimit) {
+    var totalCacheSize = switch (totalCacheLimit) {
       case TotalCacheLimit.Megs megs -> (long) (megs.megs() * 1024 * 1024);
       case TotalCacheLimit.Percentage percentage -> {
         long usableSpace = getUsableDiskSpace();
-        long totalCacheSize = (long) (percentage.percentage() * usableSpace);
-        yield Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND, totalCacheSize);
+        yield (long) (percentage.percentage() * usableSpace);
       }
     };
+    return Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND, totalCacheSize);
   }
 
   private long getUsableDiskSpace() {

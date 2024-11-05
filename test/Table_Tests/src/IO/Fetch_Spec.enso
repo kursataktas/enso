@@ -471,12 +471,10 @@ add_specs suite_builder =
                     lru_cache.getMaxTotalCacheSize . should_equal 40
                     lru_cache.getTotalCacheLimit.percentage . should_equal 0.1
 
-        group_builder.specify "Toital cache size should not go over the hard-coded maximum" <|
-            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "50%" <|
-                Panic.with_finalizer reset_disk_space <|
-                    lru_cache = LRUCache.new
-                    lru_cache.getCacheTestParameters.setUsableDiskSpaceOverrideTestOnly (500 * 1024 * 1024 * 1024)
-                    lru_cache.getMaxTotalCacheSize . should_equal (100 * 1024 * 1024 * 1024)
+        group_builder.specify "Total cache size should not go over the hard-coded maximum" <|
+            Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" (1024 * 1024).to_text <|
+                lru_cache = LRUCache.new
+                lru_cache.getMaxTotalCacheSize . should_equal (100 * 1024 * 1024 * 1024)
 
         group_builder.specify "Throws exception if the max total cache size is incorrectly formatted" <|
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "50q.%" <|
