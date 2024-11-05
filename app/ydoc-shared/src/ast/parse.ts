@@ -1,7 +1,7 @@
+import * as iter from 'enso-common/src/utilities/data/iter'
 import * as map from 'lib0/map'
 import * as Y from 'yjs'
 import { assert } from '../util/assert'
-import { tryGetSoleValue } from '../util/data/iterable'
 import { IdMap } from '../yjsModel'
 import { abstractMarkdown } from './documentation'
 import { parse_block, parse_module } from './ffi'
@@ -211,7 +211,7 @@ class Abstractor {
             [this.abstractToken(tree.opr.value)]
           : Array.from(tree.opr.error.payload.operators, this.abstractToken.bind(this))
         const rhs = tree.rhs ? this.abstractExpression(tree.rhs) : undefined
-        const soleOpr = tryGetSoleValue(opr)
+        const soleOpr = iter.tryGetSoleValue(opr)
         if (soleOpr?.node.code() === '.' && rhs?.node instanceof MutableIdent) {
           // Propagate type.
           const rhs_ = { ...rhs, node: rhs.node }
@@ -467,7 +467,7 @@ export function parseStatement(
 ): Owned<MutableStatement> | undefined {
   const module_ = module ?? MutableModule.Transient()
   const ast = parseBlock(code, module)
-  const soleStatement = tryGetSoleValue(ast.statements())
+  const soleStatement = iter.tryGetSoleValue(ast.statements())
   if (!soleStatement) return
   const parent = parentId(soleStatement)
   if (parent) module_.delete(parent)
@@ -485,7 +485,7 @@ export function parseExpression(
 ): Owned<MutableExpression> | undefined {
   const module_ = module ?? MutableModule.Transient()
   const ast = parseBlock(code, module)
-  const soleStatement = tryGetSoleValue(ast.statements())
+  const soleStatement = iter.tryGetSoleValue(ast.statements())
   if (!(soleStatement instanceof MutableExpressionStatement)) return undefined
   const expression = soleStatement.expression
   module_.delete(soleStatement.id)

@@ -57,12 +57,12 @@ import { bail } from '@/util/assert'
 import { Ast } from '@/util/ast'
 import { colorFromString } from '@/util/colors'
 import { partition } from '@/util/data/array'
-import { every, filterDefined } from '@/util/data/iterable'
 import { Rect } from '@/util/data/rect'
 import { Err, Ok } from '@/util/data/result'
 import { Vec2 } from '@/util/data/vec2'
 import { computedFallback, useSelectRef } from '@/util/reactivity'
 import { until } from '@vueuse/core'
+import * as iter from 'enso-common/src/utilities/data/iter'
 import { encoding, set } from 'lib0'
 import {
   computed,
@@ -76,7 +76,6 @@ import {
   type ComponentInstance,
 } from 'vue'
 import { encodeMethodPointer } from 'ydoc-shared/languageServerTypes'
-import * as iterable from 'ydoc-shared/util/data/iterable'
 import { isDevMode } from 'ydoc-shared/util/detect'
 
 const rootNode = ref<HTMLElement>()
@@ -331,7 +330,7 @@ const graphBindingsHandler = graphBindings.handler({
   },
   toggleVisualization() {
     const selected = nodeSelection.selected
-    const allVisible = every(
+    const allVisible = iter.every(
       selected,
       (id) => graphStore.db.nodeIdToNode.get(id)?.vis?.visible === true,
     )
@@ -612,7 +611,7 @@ function handleEdgeDrop(source: Ast.AstId, position: Vec2) {
 
 function collapseNodes() {
   const selected = new Set(
-    iterable.filter(
+    iter.filter(
       nodeSelection.selected,
       (id) => graphStore.db.nodeIdToNode.get(id)?.type === 'component',
     ),
@@ -633,7 +632,7 @@ function collapseNodes() {
     if (!topLevel) {
       bail('BUG: no top level, collapsing not possible.')
     }
-    const selectedNodeRects = filterDefined(Array.from(selected, graphStore.visibleArea))
+    const selectedNodeRects = iter.filterDefined(iter.map(selected, graphStore.visibleArea))
     graphStore.edit((edit) => {
       const { collapsedCallRoot, collapsedNodeIds, outputAstId } = performCollapse(
         info.value,
@@ -644,8 +643,8 @@ function collapseNodes() {
       const position = collapsedNodePlacement(selectedNodeRects)
       edit.get(collapsedCallRoot).mutableNodeMetadata().set('position', position.xy())
       if (outputAstId != null) {
-        const collapsedNodeRects = filterDefined(
-          Array.from(collapsedNodeIds, graphStore.visibleArea),
+        const collapsedNodeRects = iter.filterDefined(
+          iter.map(collapsedNodeIds, graphStore.visibleArea),
         )
         const { place } = usePlacement(collapsedNodeRects, graphNavigator.viewport)
         const position = place(collapsedNodeRects)

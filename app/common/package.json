@@ -19,7 +19,7 @@
     "./src/utilities/data/newtype": "./src/utilities/data/newtype.ts",
     "./src/utilities/data/object": "./src/utilities/data/object.ts",
     "./src/utilities/data/string": "./src/utilities/data/string.ts",
-    "./src/utilities/data/iterator": "./src/utilities/data/iterator.ts",
+    "./src/utilities/data/iter": "./src/utilities/data/iter.ts",
     "./src/utilities/style/tabBar": "./src/utilities/style/tabBar.ts",
     "./src/utilities/uniqueString": "./src/utilities/uniqueString.ts",
     "./src/text": "./src/text/index.ts",

@@ -29,8 +29,8 @@ import { Vec2 } from '@/util/data/vec2'
 import { normalizeQualifiedName, qnLastSegment, tryQualifiedName } from '@/util/qualifiedName'
 import { useWatchContext } from '@/util/reactivity'
 import { computedAsync } from '@vueuse/core'
+import * as iter from 'enso-common/src/utilities/data/iter'
 import { map, set } from 'lib0'
-import { iteratorFilter } from 'lib0/iterator'
 import {
   computed,
   markRaw,
@@ -98,7 +98,7 @@ export const { injectFn: useGraphStore, provideFn: provideGraphStore } = createC
     const vizRects = reactive(new Map<NodeId, Rect>())
     // The currently visible nodes' areas (including visualization).
     const visibleNodeAreas = computed(() => {
-      const existing = iteratorFilter(nodeRects.entries(), ([id]) => db.isNodeId(id))
+      const existing = iter.filter(nodeRects.entries(), ([id]) => db.isNodeId(id))
       return Array.from(existing, ([id, rect]) => vizRects.get(id) ?? rect)
     })
     function visibleArea(nodeId: NodeId): Rect | undefined {

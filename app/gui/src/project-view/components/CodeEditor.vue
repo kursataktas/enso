@@ -4,10 +4,10 @@ import { useGraphStore, type NodeId } from '@/stores/graph'
 import { useProjectStore } from '@/stores/project'
 import { useSuggestionDbStore } from '@/stores/suggestionDatabase'
 import { useAutoBlur } from '@/util/autoBlur'
-import { chain } from '@/util/data/iterable'
 import { unwrap } from '@/util/data/result'
 import { qnJoin, tryQualifiedName } from '@/util/qualifiedName'
 import { EditorSelection } from '@codemirror/state'
+import * as iter from 'enso-common/src/utilities/data/iter'
 import { createDebouncer } from 'lib0/eventloop'
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch, watchEffect } from 'vue'
 import { MutableModule } from 'ydoc-shared/ast'
@@ -63,7 +63,7 @@ const expressionUpdatesDiagnostics = computed(() => {
   const panics = updates.type.reverseLookup('Panic')
   const errors = updates.type.reverseLookup('DataflowError')
   const diagnostics: Diagnostic[] = []
-  for (const externalId of chain(panics, errors)) {
+  for (const externalId of iter.chain(panics, errors)) {
     const update = updates.get(externalId)
     if (!update) continue
     const astId = graphStore.db.idFromExternal(externalId)

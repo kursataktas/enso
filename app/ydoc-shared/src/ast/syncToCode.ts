@@ -1,6 +1,6 @@
+import * as iter from 'enso-common/src/utilities/data/iter'
 import * as map from 'lib0/map'
 import { assert, assertDefined } from '../util/assert'
-import { tryGetSoleValue, zip } from '../util/data/iterable'
 import {
   applyTextEdits,
   applyTextEditsToSpans,
@@ -145,7 +145,7 @@ function calculateCorrespondence(
   for (const [hash, newAsts] of newHashes) {
     const unmatchedNewAsts = newAsts.filter(ast => !newIdsMatched.has(ast.id))
     const unmatchedOldAsts = oldHashes.get(hash)?.filter(ast => !oldIdsMatched.has(ast.id)) ?? []
-    for (const [unmatchedNew, unmatchedOld] of zip(unmatchedNewAsts, unmatchedOldAsts)) {
+    for (const [unmatchedNew, unmatchedOld] of iter.zip(unmatchedNewAsts, unmatchedOldAsts)) {
       if (unmatchedNew.typeName() === unmatchedOld.typeName()) {
         toSync.set(unmatchedOld.id, unmatchedNew)
         // Update the matched-IDs indices.
@@ -184,7 +184,7 @@ export function applyTextEditsToAst(
     : rawParseBlock(code)
   const rawParsedStatement =
     ast instanceof MutableBodyBlock ? undefined : (
-      tryGetSoleValue(rawParsedBlock.statements)?.expression
+      iter.tryGetSoleValue(rawParsedBlock.statements)?.expression
     )
   const rawParsedExpression =
     ast.isExpression() ?
