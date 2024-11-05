@@ -76,7 +76,7 @@ export function useVisualizationData({
 
   const defaultVisualizationRaw = projectStore.useVisualizationData(
     configForGettingDefaultVisualization,
-  ) as ShallowRef<Result<{ library: { name: string } | null; name: string } | undefined>>
+  ).data as ShallowRef<Result<{ library: { name: string } | null; name: string } | undefined>>
 
   const defaultVisualizationForCurrentNodeSource = computed<VisualizationIdentifier | undefined>(
     () => {
@@ -108,14 +108,15 @@ export function useVisualizationData({
     return false
   })
 
-  const nodeVisualizationData = projectStore.useVisualizationData(() => {
-    const dataSourceValue = toValue(dataSource)
-    if (dataSourceValue?.type !== 'node') return
-    return {
-      ...visPreprocessor.value,
-      expressionId: dataSourceValue.nodeId,
-    }
-  })
+  const { data: nodeVisualizationData, reconnect: reconnectVisualization } =
+    projectStore.useVisualizationData(() => {
+      const dataSourceValue = toValue(dataSource)
+      if (dataSourceValue?.type !== 'node') return
+      return {
+        ...visPreprocessor.value,
+        expressionId: dataSourceValue.nodeId,
+      }
+    })
 
   const expressionVisualizationData = computedAsync(
     () => {
@@ -237,6 +238,12 @@ export function useVisualizationData({
       return LoadingVisualization
     }
     return visualization.value
+  })
+  watch(effectiveVisualization, (_, oldVis) => {
+    // Reconnect when the visualization kind changes, but ignore transitions from the loading state.
+    if (oldVis !== LoadingVisualization) {
+      reconnectVisualization()
+    }
   })
 
   // Visualization-provided configuration

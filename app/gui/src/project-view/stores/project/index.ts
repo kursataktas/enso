@@ -237,11 +237,12 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
     })
 
     function useVisualizationData(configuration: WatchSource<Opt<NodeVisualizationConfiguration>>) {
-      const id = random.uuidv4() as Uuid
+      const newId = () => random.uuidv4() as Uuid
+      const id = ref(newId())
 
       watch(
-        configuration,
-        (config, _, onCleanup) => {
+        [configuration, id],
+        ([config, id], _, onCleanup) => {
           executionContext.setVisualization(id, config)
           onCleanup(() => executionContext.setVisualization(id, null))
         },
@@ -250,7 +251,12 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
         { immediate: true, flush: 'post' },
       )
 
-      return computed(() => parseVisualizationData(visualizationDataRegistry.getRawData(id)))
+      return {
+        data: computed(() =>
+          parseVisualizationData(visualizationDataRegistry.getRawData(id.value)),
+        ),
+        reconnect: () => (id.value = newId()),
+      }
     }
 
     const dataflowErrors = new ReactiveMapping(computedValueRegistry.db, (id, info) => {
@@ -267,7 +273,7 @@ export const { provideFn: provideProjectStore, injectFn: useProjectStore } = cre
           }
         : null,
       )
-      const data = useVisualizationData(config)
+      const { data } = useVisualizationData(config)
       return computed<{ kind: 'Dataflow'; message: string } | undefined>(() => {
         const visResult = data.value
         if (!visResult) return
