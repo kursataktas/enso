@@ -718,58 +718,40 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
         </>
       )
     }
-    case backendModule.AssetType.specialLoading: {
-      return hidden ? null : (
-          <tr>
-            <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
-              <div
-                className={tailwindMerge.twMerge(
-                  'flex h-table-row w-container items-center justify-center rounded-full rounded-rows-child',
-                  indent.indentClass(depth),
-                )}
-              >
-                <StatelessSpinner size={24} state={statelessSpinner.SpinnerState.loadingMedium} />
-              </div>
-            </td>
-          </tr>
-        )
-    }
-    case backendModule.AssetType.specialEmpty: {
-      return hidden ? null : (
-          <tr>
-            <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
-              <div
-                className={tailwindMerge.twMerge(
-                  'flex h-table-row items-center rounded-full rounded-rows-child',
-                  indent.indentClass(depth),
-                )}
-              >
-                <img src={BlankIcon} />
-                <Text className="px-name-column-x placeholder" disableLineHeightCompensation>
-                  {getText('thisFolderIsEmpty')}
-                </Text>
-              </div>
-            </td>
-          </tr>
-        )
-    }
+    case backendModule.AssetType.specialLoading:
+    case backendModule.AssetType.specialEmpty:
     case backendModule.AssetType.specialError: {
       return hidden ? null : (
-          <tr>
-            <td colSpan={columns.length} className="border-r p-0 rounded-rows-skip-level">
+          <tr className="rounded-rows-child">
+            <td
+              colSpan={columns.length}
+              className="rounded-full border-r p-0 rounded-rows-skip-level"
+            >
               <div
                 className={tailwindMerge.twMerge(
-                  'flex h-table-row items-center rounded-full rounded-rows-child',
+                  'flex h-table-row w-container items-center rounded-full',
                   indent.indentClass(depth),
+                  asset.type === backendModule.AssetType.specialLoading && 'justify-center',
                 )}
               >
-                <img src={BlankIcon} />
-                <Text
-                  className="px-name-column-x text-danger placeholder"
-                  disableLineHeightCompensation
-                >
-                  {getText('thisFolderFailedToFetch')}
-                </Text>
+                {asset.type === backendModule.AssetType.specialLoading && (
+                  <StatelessSpinner size={24} state={statelessSpinner.SpinnerState.loadingMedium} />
+                )}
+                {(asset.type === backendModule.AssetType.specialEmpty ||
+                  asset.type === backendModule.AssetType.specialError) && <img src={BlankIcon} />}
+                {asset.type === backendModule.AssetType.specialEmpty && (
+                  <Text className="px-name-column-x placeholder" disableLineHeightCompensation>
+                    {getText('thisFolderIsEmpty')}
+                  </Text>
+                )}
+                {asset.type === backendModule.AssetType.specialError && (
+                  <Text
+                    className="px-name-column-x text-danger placeholder"
+                    disableLineHeightCompensation
+                  >
+                    {getText('thisFolderFailedToFetch')}
+                  </Text>
+                )}
               </div>
             </td>
           </tr>
