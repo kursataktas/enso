@@ -191,7 +191,7 @@ export abstract class Ast {
     return this.isAllowedInStatementContext()
   }
 
-  /** TODO: Add docs */
+  /** Returns a view of the metadata applicable to a graph node (e.g. its position) associated with this AST object. */
   get nodeMetadata(): NodeMetadata {
     const metadata = this.fields.get('metadata')
     return metadata as FixedMapView<NodeMetadataFields & MetadataFields>
@@ -302,13 +302,13 @@ export abstract class MutableAst extends Ast {
     return this.fields.get('metadata').get('widget')
   }
 
-  /** TODO: Add docs */
+  /** Returns a writable view of the {@link nodeMetadata}. */
   mutableNodeMetadata(): MutableNodeMetadata {
     const metadata = this.fields.get('metadata')
     return metadata as FixedMap<NodeMetadataFields & MetadataFields>
   }
 
-  /** TODO: Add docs */
+  /** Overwrites the provided fields of the {@link nodeMetadata}. */
   setNodeMetadata(nodeMeta: NodeMetadataFields) {
     const metadata = this.fields.get('metadata') as unknown as Map<string, unknown>
     for (const [key, value] of Object.entries(nodeMeta)) {
