@@ -456,7 +456,7 @@ add_specs suite_builder =
                 lru_cache = LRUCache.new
                 lru_cache.getMaxTotalCacheSize . should_equal (30 * 1024 * 1024)
 
-        group_builder.specify "Should be able to set the max total cache size as a percentage via environment variable" <|
+        group_builder.specify "Should be able to set the max total cache size as a percentage via environment variable, and track changes to available disk space." <|
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "10%" <|
                 Panic.with_finalizer reset_disk_space <|
                     lru_cache = LRUCache.new
