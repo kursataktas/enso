@@ -362,6 +362,7 @@ impl Processor {
                         build_engine_package: true,
                         build_launcher_bundle: true,
                         build_project_manager_bundle: true,
+                        build_native_ydoc: true,
                         verify_packages: true,
                         ..default()
                     };
