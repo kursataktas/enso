@@ -108,8 +108,7 @@ const tabStyle = {
 
 .panelInner {
   min-width: var(--dock-panel-min-width);
-  /* FIXME: Need a fixed size when `dock-panel-width` is not set, so that animation works for default-sized panels. */
-  width: var(--dock-panel-width, 100%);
+  width: var(--dock-panel-width, var(--right-dock-default-width));
   height: 100%;
   position: relative;
   --icon-margin: 16px; /* `--icon-margin` in `.toggleDock` must match this value. */
