@@ -36,19 +36,32 @@ import org.enso.base.Stream_Utils;
 public class LRUCache<M> {
   private static final Logger logger = Logger.getLogger(LRUCache.class.getName());
 
+  /** Default value for the largest file size allowed. */
   private static final long DEFAULT_MAX_FILE_SIZE = 2L * 1024 * 1024 * 1024;
-  private static final double DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE = 0.2;
-  private static final long MAX_TOTAL_CACHE_SIZE_FREE_SPACE = 100L * 1024 * 1024 * 1024;
 
+  /** Default value for the percentage of free disk space to use as a limit on the total cache size. */
+  private static final double DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE = 0.2;
+
+  /**
+   * An upper limit on the total cache size. If the cache size limit specified
+   * by the other parameters goes over this value, then this value is used.
+   */
+  private static final long MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND = 100L * 1024 * 1024 * 1024;
+
+  /**
+   * Maximum size allowed for a single file. If a file larger than this is
+   * requested through this cache, a ResponseTooLargeException is thrown.
+   */
   private final long maxFileSize;
+  /** Limits the total size of all files in the cache. */
   private final TotalCacheLimit.Limit totalCacheLimit;
 
+  /** Used to override cache parameters for testing. */
   private final CacheTestParameters cacheTestParameters = new CacheTestParameters();
 
   private final Map<String, CacheEntry<M>> cache = new HashMap<>();
   private final Map<String, ZonedDateTime> lastUsed = new HashMap<>();
 
-  // TODO: use the project root dir.
   private static final File rootPath = new File(CurrentEnsoProject.get().getRootPath());
 
   public LRUCache() {
@@ -84,10 +97,11 @@ public class LRUCache<M> {
       return new CacheResult<>(item.stream(), item.metadata());
     }
 
+    long maxFileSize = getMaxFileSize();
     if (item.sizeMaybe.isPresent()) {
       long size = item.sizeMaybe().get();
-      if (size > getMaxFileSize()) {
-        throw new ResponseTooLargeException(getMaxFileSize());
+      if (size > maxFileSize) {
+        throw new ResponseTooLargeException(maxFileSize);
       }
       makeRoomFor(size);
     }
@@ -138,13 +152,14 @@ public class LRUCache<M> {
     boolean successful = false;
     try {
       // Limit the download to getMaxFileSize().
-      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, getMaxFileSize());
+      long maxFileSize = getMaxFileSize();
+      boolean sizeOK = Stream_Utils.limitedCopy(inputStream, outputStream, maxFileSize );
 
       if (sizeOK) {
         successful = true;
         return temp;
       } else {
-        throw new ResponseTooLargeException(getMaxFileSize());
+        throw new ResponseTooLargeException(maxFileSize );
       }
     } finally {
       outputStream.close();
@@ -264,7 +279,7 @@ public class LRUCache<M> {
       case TotalCacheLimit.Percentage percentage -> {
         long usableSpace = getUsableDiskSpace();
         long totalCacheSize = (long) (percentage.percentage() * usableSpace);
-        yield Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE, totalCacheSize);
+        yield Long.min(MAX_TOTAL_CACHE_SIZE_FREE_SPACE_UPPER_BOUND, totalCacheSize);
       }
     };
   }
