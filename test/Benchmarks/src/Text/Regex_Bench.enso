@@ -6,12 +6,12 @@ from Standard.Test import Bench, Faker
 
 
 type Data
-    Value ~two_nums ~just_two_nums ~double_two_nums ~a_regex ~regexes ~replacers ~one_num_regex ~two_nums_regex
+    Value ~two_nums ~just_two_nums ~four_nums ~a_regex ~regexes ~replacers ~one_num_regex ~two_nums_regex
 
     create =
         faker = Faker.new
         a_regex = Regex.compile "(\d)ab(\d)"
-        Data.Value (build_two_nums faker) (build_just_two_nums faker) (build_double_two_nums faker) a_regex (build_regexes faker) (build_replacers faker) (Regex.compile "(\d+)") (Regex.compile "(\d+)[a-z]+(\d+)")
+        Data.Value (build_two_nums faker) (build_just_two_nums faker) (build_four_nums faker) a_regex (build_regexes faker) (build_replacers faker) (Regex.compile "(\d+)") (Regex.compile "(\d+)[a-z]+(\d+)")
 
 list_count = 1000000
 regex_count = 10000
@@ -25,7 +25,7 @@ build_just_two_nums faker = 0.up_to list_count . map _->
     (faker.integer 0 100).to_text + (faker.alpha 8) + (faker.integer 0 100).to_text
 
 # "ab12cdefg634hiab12cdefg634hi"
-build_double_two_nums faker =
+build_four_nums faker =
     strings0 = build_two_nums faker
     strings1 = build_two_nums faker
     strings0.zip strings1 (_ + _)
@@ -48,7 +48,7 @@ collect_benches = Bench.build builder->
             data.two_nums . map  data.two_nums_regex.match
 
         group_builder.specify "match_all" <|
-            data.double_two_nums . map  data.two_nums_regex.match_all
+            data.four_nums . map  data.two_nums_regex.match_all
 
         group_builder.specify "matches" <|
             data.just_two_nums . map  data.two_nums_regex.matches
@@ -57,7 +57,7 @@ collect_benches = Bench.build builder->
             data.two_nums . map  data.two_nums_regex.find
 
         group_builder.specify "find_all" <|
-            data.double_two_nums . map  data.two_nums_regex.find_all
+            data.four_nums . map  data.two_nums_regex.find_all
 
         group_builder.specify "split" <|
             data.two_nums . map  data.two_nums_regex.split
