@@ -13,17 +13,20 @@ main filter=Nothing =
         add_specs suite_builder
     suite.run_with_filter filter
 
+type Lazy_Ref
+    Value ~get
 
 add_specs suite_builder =
     suite_builder.group "Data.read_many" group_builder->
         # One File and one Text path
         files_vector = [enso_project.data / "empty.txt", (enso_project.data / "sample.tsv") . path]
-        sample_table = (enso_project.data / "sample.tsv").read
+        sample_table = Lazy_Ref.Value <|
+            (enso_project.data / "sample.tsv") . read
         check_loaded_vector v =
             v.should_be_a Vector
             v.length . should_equal 2
             v.at 0 . should_equal ""
-            v.at 1 . should_equal sample_table
+            v.at 1 . should_equal sample_table.get
         group_builder.specify "should read files listed in a Column" <|
             column = Column.from_vector "Col" files_vector
             ## TODO for next PR:

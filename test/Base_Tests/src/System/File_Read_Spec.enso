@@ -5,6 +5,8 @@ import Standard.Base.Errors.File_Error.File_Error
 
 from Standard.Test import all
 
+type Lazy_Ref
+    Value ~get
 
 add_specs suite_builder =
     sample_xxx = enso_project.data / "sample.xxx"
@@ -88,6 +90,8 @@ add_specs suite_builder =
 
     suite_builder.group "Data.read_many" group_builder->
         js_object = JS_Object.from_pairs [["arr", [1, 2, 3]], ["num", 42.5], ["not", Nothing]]
+        js_as_text = Lazy_Ref.Value <|
+            (enso_project.data / "sample.json") . read ..Plain_Text
         group_builder.specify "should allow to read a list of files and return them as vector" <|
             files = [enso_project.data / "sample.json", enso_project.data / "helloworld.txt"]
 
@@ -98,7 +102,7 @@ add_specs suite_builder =
             # Read all files using a specified format.
             r2 = Data.read_many files format=..Plain_Text
             r2.should_be_a Vector
-            r2.should_equal ['{\n  "arr": [1, 2, 3],\n  "num": 42.5,\n  "not": null\n}\n', "Hello World!"]
+            r2.should_equal [js_as_text.get, "Hello World!"]
 
         group_builder.specify "should work with paths as Text" <|
             files = [enso_project.data / "sample.json", enso_project.data / "helloworld.txt"]
