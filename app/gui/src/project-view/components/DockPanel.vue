@@ -105,6 +105,7 @@ const tabStyle = {
 .panelOuter {
   min-width: var(--dock-panel-min-width);
   width: var(--dock-panel-width, var(--right-dock-default-width));
+  height: 100%;
 }
 
 .panelInner {
