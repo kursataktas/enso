@@ -813,7 +813,7 @@ const documentationEditorFullscreen = ref(false)
 
   display: flex;
   flex-direction: row;
-  & :deep(.DockPanel) {
+  & .DockPanel {
     flex: none;
   }
   & .vertical {
@@ -825,7 +825,7 @@ const documentationEditorFullscreen = ref(false)
 .vertical {
   display: flex;
   flex-direction: column;
-  & :deep(.BottomPanel) {
+  & .BottomPanel {
     flex: none;
   }
   & .viewport {

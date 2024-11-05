@@ -93,8 +93,9 @@ const tabStyle = {
 
 <style scoped>
 .DockPanel {
-  display: contents;
+  display: block;
   --dock-panel-min-width: 258px;
+  width: fit-content;
 }
 
 /* Outer panel container; this element's visible width will be overwritten by the size transition, but the inner panel's
