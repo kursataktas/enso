@@ -94,8 +94,8 @@ public class TestIRProcessorInline {
 
   @Test
   public void childAnnotation_MustBeAppliedToIRField() {
-      expectCompilationFailure(
-          """
+    expectCompilationFailure(
+        """
       import org.enso.runtime.parser.dsl.IRNode;
       import org.enso.runtime.parser.dsl.IRChild;
       import org.enso.compiler.core.IR;
@@ -528,5 +528,26 @@ public class TestIRProcessorInline {
         }
         """);
     assertThat(genSrc, containsString("JName copy("));
+  }
+
+  @Test
+  public void mapExpressions_CanOverride() {
+    var genSrc =
+        generatedClass(
+            "JExpression",
+            """
+        import org.enso.runtime.parser.dsl.IRNode;
+        import org.enso.compiler.core.IR;
+        import org.enso.compiler.core.ir.Expression;
+        import java.util.function.Function;
+
+        @IRNode
+        public interface JExpression extends IR {
+
+          @Override
+          JExpression mapExpressions(Function<Expression, Expression> fn);
+        }
+        """);
+    assertThat(genSrc, containsString("JExpression mapExpressions("));
   }
 }

@@ -2,6 +2,7 @@ package org.enso.runtime.parser.processor;
 
 import java.util.List;
 import java.util.function.Function;
+import javax.lang.model.element.TypeElement;
 import org.enso.runtime.parser.dsl.IRChild;
 
 /**
@@ -12,6 +13,9 @@ interface Field {
 
   /** Name (identifier) of the field. */
   String getName();
+
+  /** Returns type of this field. Null if this is a primitive field. */
+  TypeElement getType();
 
   /**
    * Does not return null. If the type is generic, the type parameter is included in the name.

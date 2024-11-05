@@ -38,6 +38,7 @@ final class IRNodeClassGenerator {
   private final GeneratedClassContext generatedClassContext;
   private final DuplicateMethodGenerator duplicateMethodGenerator;
   private final BuilderMethodGenerator builderMethodGenerator;
+  private final MapExpressionsMethodGenerator mapExpressionsMethodGenerator;
 
   /**
    * For every method annotated with {@link IRCopyMethod}, there is a generator. Can be empty. Not
@@ -77,6 +78,9 @@ final class IRNodeClassGenerator {
     this.duplicateMethodGenerator =
         new DuplicateMethodGenerator(duplicateMethod, generatedClassContext);
     this.builderMethodGenerator = new BuilderMethodGenerator(generatedClassContext);
+    var mapExpressionsMethod = Utils.findMapExpressionsMethod(interfaceType, processingEnv);
+    this.mapExpressionsMethodGenerator =
+        new MapExpressionsMethodGenerator(mapExpressionsMethod, generatedClassContext);
     this.copyMethodGenerators =
         findCopyMethods().stream()
             .map(copyMethod -> new CopyMethodGenerator(copyMethod, generatedClassContext))
@@ -155,6 +159,8 @@ final class IRNodeClassGenerator {
 
         $overrideIRMethods
 
+        $mapExpressionsMethod
+
         $copyMethods
 
         $builder
@@ -163,6 +169,7 @@ final class IRNodeClassGenerator {
         .replace("$constructor", constructor())
         .replace("$overrideUserDefinedMethods", overrideUserDefinedMethods())
         .replace("$overrideIRMethods", overrideIRMethods())
+        .replace("$mapExpressionsMethod", mapExpressions())
         .replace("$copyMethods", copyMethods())
         .replace("$builder", builderMethodGenerator.generateBuilder());
   }
@@ -296,11 +303,6 @@ final class IRNodeClassGenerator {
         }
 
         @Override
-        public IR mapExpressions(Function<Expression, Expression> fn) {
-          throw new UnsupportedOperationException("unimplemented");
-        }
-
-        @Override
         public scala.collection.immutable.List<IR> children() {
         $childrenMethodBody
         }
@@ -371,6 +373,10 @@ final class IRNodeClassGenerator {
     return copyMethodGenerators.stream()
         .map(CopyMethodGenerator::generateCopyMethod)
         .collect(Collectors.joining(System.lineSeparator()));
+  }
+
+  private String mapExpressions() {
+    return Utils.indent(mapExpressionsMethodGenerator.generateMapExpressionsMethodCode(), 2);
   }
 
   private static String indent(String code, int indentation) {

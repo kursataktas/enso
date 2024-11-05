@@ -14,6 +14,10 @@ import javax.lang.model.type.TypeMirror;
 import javax.tools.Diagnostic.Kind;
 
 final class Utils {
+
+  private static final String MAP_EXPRESSIONS = "mapExpressions";
+  private static final String DUPLICATE = "duplicate";
+
   private Utils() {}
 
   /** Returns true if the given {@code type} is a subtype of {@code org.enso.compiler.core.IR}. */
@@ -54,6 +58,11 @@ final class Utils {
 
   static void printError(String msg, Element elem, Messager messager) {
     messager.printMessage(Kind.ERROR, msg, elem);
+  }
+
+  static void printErrorAndFail(String msg, Element elem, Messager messager) {
+    printError(msg, elem, messager);
+    throw new IllegalStateException("Unexpected failure during annotation processing: " + msg);
   }
 
   static String indent(String code, int indentation) {
@@ -138,6 +147,31 @@ final class Utils {
     return duplicateMethod;
   }
 
+  static ExecutableElement findMapExpressionsMethod(
+      TypeElement interfaceType, ProcessingEnvironment processingEnv) {
+    var mapExprsMethod =
+        Utils.iterateSuperInterfaces(
+            interfaceType,
+            processingEnv,
+            iface -> {
+              // Filter only ExecutableElement from iface.getEnclosedElements and convert the stream
+              // to Stream<ExecutableElement>
+              var declaredMethods =
+                  iface.getEnclosedElements().stream()
+                      .filter(elem -> elem instanceof ExecutableElement)
+                      .map(elem -> (ExecutableElement) elem);
+              var mapExprMethod =
+                  declaredMethods
+                      .filter(elem -> elem.getSimpleName().toString().equals(MAP_EXPRESSIONS))
+                      .findFirst();
+              return mapExprMethod.orElse(null);
+            });
+    hardAssert(
+        mapExprsMethod != null,
+        "mapExpressions method must be found it must be defined at least on IR super interface");
+    return mapExprsMethod;
+  }
+
   static void hardAssert(boolean condition) {
     hardAssert(condition, "Assertion failed");
   }
@@ -153,7 +187,7 @@ final class Utils {
   }
 
   private static boolean isDuplicateMethod(ExecutableElement executableElement) {
-    return executableElement.getSimpleName().toString().equals("duplicate")
+    return executableElement.getSimpleName().toString().equals(DUPLICATE)
         && executableElement.getParameters().size() == 4;
   }
 

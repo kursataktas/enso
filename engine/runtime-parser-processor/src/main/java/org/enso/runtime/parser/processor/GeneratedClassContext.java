@@ -43,7 +43,7 @@ final class GeneratedClassContext {
       TypeElement irNodeInterface) {
     this.className = Objects.requireNonNull(className);
     this.userFields = Objects.requireNonNull(userFields);
-    this.processingEnvironment = processingEnvironment;
+    this.processingEnvironment = Objects.requireNonNull(processingEnvironment);
     this.irNodeInterface = irNodeInterface;
     ensureSimpleName(className);
     this.constructorParameters =

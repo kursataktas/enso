@@ -30,6 +30,11 @@ final class ReferenceField implements Field {
   }
 
   @Override
+  public TypeElement getType() {
+    return type;
+  }
+
+  @Override
   public String getSimpleTypeName() {
     return type.getSimpleName().toString();
   }

@@ -97,7 +97,7 @@ final class FieldCollector {
       var typeArg = declaredRetType.getTypeArguments().get(0);
       var typeArgElem = (TypeElement) processingEnv.getTypeUtils().asElement(typeArg);
       ensureIsSubtypeOfIR(typeArgElem);
-      return new ListField(name, typeArgElem);
+      return new ListField(name, retTypeElem, typeArgElem);
     }
 
     boolean isNullable = !childAnnot.required();

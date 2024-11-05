@@ -7,19 +7,26 @@ import javax.lang.model.element.TypeElement;
 final class ListField implements Field {
   private final String name;
   private final TypeElement typeArgElement;
+  private final TypeElement type;
 
   /**
    * @param name Name of the field
    * @param typeArgElement TypeElement of the type argument. Must be subtype of IR.
    */
-  ListField(String name, TypeElement typeArgElement) {
+  ListField(String name, TypeElement type, TypeElement typeArgElement) {
     this.name = name;
+    this.type = type;
     this.typeArgElement = typeArgElement;
   }
 
   @Override
   public String getName() {
     return name;
+  }
+
+  @Override
+  public TypeElement getType() {
+    return type;
   }
 
   @Override
