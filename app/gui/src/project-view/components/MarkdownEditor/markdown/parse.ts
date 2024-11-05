@@ -1,8 +1,8 @@
-import { Type } from '@/components/MarkdownEditor/markdown/lezer'
 import { markdown as baseMarkdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { Extension } from '@codemirror/state'
 import { Tree } from '@lezer/common'
-import { BlockContext, BlockParser, Element, Line, NodeSpec, TreeElement } from '@lezer/markdown'
+import { BlockContext, BlockParser, Element, Line, MarkdownParser, NodeSpec } from '@lezer/markdown'
+import { assertDefined } from 'ydoc-shared/util/assert'
 
 /**
  * Enso Markdown extension. Differences from CodeMirror's base Markdown extension:
@@ -23,6 +23,12 @@ export function markdown(): Extension {
   })
 }
 
+function getType({ parser }: { parser: MarkdownParser }, name: string) {
+  const ty = parser.nodeSet.types.find((ty) => ty.name === name)
+  assertDefined(ty)
+  return ty.id
+}
+
 /** Parser override to include the space in the delimiter. */
 const headerParser: BlockParser = {
   name: 'ATXHeading',
@@ -41,11 +47,12 @@ const headerParser: BlockParser = {
     while (after > off && line.text.charCodeAt(after - 1) == line.next) after--
     if (after == endOfSpace || after == off || !isSpace(line.text.charCodeAt(after - 1)))
       after = line.text.length
+    const headerMark = getType(cx, 'HeaderMark')
     const buf = cx.buffer
-      .write(Type.HeaderMark, 0, size)
+      .write(headerMark, 0, size)
       .writeElements(cx.parser.parseInline(line.text.slice(off + size, after), from + size), -from)
-    if (after < line.text.length) buf.write(Type.HeaderMark, after - off, endOfSpace - off)
-    const node = buf.finish(Type.ATXHeading1 + level - 1, line.text.length - off)
+    if (after < line.text.length) buf.write(headerMark, after - off, endOfSpace - off)
+    const node = buf.finish(getType(cx, `ATXHeading${level}`), line.text.length - off)
     cx.nextLine()
     cx.addNode(node, from)
     return true
@@ -59,10 +66,11 @@ const bulletList: BlockParser = {
     const size = isBulletList(line, cx, false)
     if (size < 0) return false
     const length = size + (isSpace(line.text.charCodeAt(line.pos + 1)) ? 1 : 0)
-    if (cx.block.type != Type.BulletList) cx.startContext(Type.BulletList, line.basePos, line.next)
+    const bulletList = getType(cx, 'BulletList')
+    if (cx.block.type != bulletList) cx.startContext(bulletList, line.basePos, line.next)
     const newBase = getListIndent(line, line.pos + 1)
-    cx.startContext(Type.ListItem, line.basePos, newBase - line.baseIndent)
-    cx.addNode(Type.ListMark, cx.lineStart + line.pos, cx.lineStart + line.pos + length)
+    cx.startContext(getType(cx, 'ListItem'), line.basePos, newBase - line.baseIndent)
+    cx.addNode(getType(cx, 'ListMark'), cx.lineStart + line.pos, cx.lineStart + line.pos + length)
     line.moveBaseColumn(newBase)
     return null
   },
@@ -74,27 +82,28 @@ const orderedList: BlockParser = {
   parse: (cx, line) => {
     const size = isOrderedList(line, cx, false)
     if (size < 0) return false
-    if (cx.block.type != Type.OrderedList)
-      cx.startContext(Type.OrderedList, line.basePos, line.text.charCodeAt(line.pos + size - 1))
+    const orderedList = getType(cx, 'OrderedList')
+    if (cx.block.type != orderedList)
+      cx.startContext(orderedList, line.basePos, line.text.charCodeAt(line.pos + size - 1))
     const newBase = getListIndent(line, line.pos + size)
-    cx.startContext(Type.ListItem, line.basePos, newBase - line.baseIndent)
-    cx.addNode(Type.ListMark, cx.lineStart + line.pos, cx.lineStart + line.pos + size)
+    cx.startContext(getType(cx, 'ListItem'), line.basePos, newBase - line.baseIndent)
+    cx.addNode(getType(cx, 'ListMark'), cx.lineStart + line.pos, cx.lineStart + line.pos + size)
     line.moveBaseColumn(newBase)
     return null
   },
 }
 
-const EnsoBlockquote = 'EnsoBlockquote'
+const ENSO_BLOCKQUOTE_TYPE = 'EnsoBlockquote'
 
 /** Parser override to include the space in the delimiter. */
 const blockquoteParser: BlockParser = {
-  name: EnsoBlockquote,
+  name: ENSO_BLOCKQUOTE_TYPE,
   parse: (cx, line) => {
     const size = isBlockquote(line)
     if (size < 0) return false
-    const type = cx.parser.getNodeType(EnsoBlockquote)
+    const type = getType(cx, ENSO_BLOCKQUOTE_TYPE)
     cx.startContext(type, line.pos)
-    cx.addNode(Type.QuoteMark, cx.lineStart + line.pos, cx.lineStart + line.pos + size)
+    cx.addNode(getType(cx, 'QuoteMark'), cx.lineStart + line.pos, cx.lineStart + line.pos + size)
     line.moveBase(line.pos + size)
     return null
   },
@@ -114,20 +123,22 @@ const disableSetextHeading: BlockParser = {
 }
 
 const blockquoteNode: NodeSpec = {
-  name: EnsoBlockquote,
+  name: ENSO_BLOCKQUOTE_TYPE,
   block: true,
   composite: (cx, line) => {
     if (line.next != 62 /* '>' */) return false
     const size = isSpace(line.text.charCodeAt(line.pos + 1)) ? 2 : 1
-    line.addMarker(elt(Type.QuoteMark, cx.lineStart + line.pos, cx.lineStart + line.pos + size))
+    line.addMarker(
+      elt(getType(cx, 'QuoteMark'), cx.lineStart + line.pos, cx.lineStart + line.pos + size),
+    )
     line.moveBase(line.pos + size)
     //bl.end = cx.lineStart + line.text.length
     return true
   },
 }
 
-function elt(type: Type, from: number, to: number, children?: readonly (Element | TreeElement)[]) {
-  return new (Element as any)(type, from, to, children)
+function elt(type: number, from: number, to: number): Element {
+  return new (Element as any)(type, from, to)
 }
 
 function isBlockquote(line: Line) {
@@ -142,9 +153,7 @@ function isBulletList(line: Line, cx: BlockContext, breaking: boolean) {
   return (
       (line.next == 45 || line.next == 43 || line.next == 42) /* '-+*' */ &&
         (line.pos == line.text.length - 1 || isSpace(line.text.charCodeAt(line.pos + 1))) &&
-        (!breaking ||
-          inList(cx, Type.BulletList) ||
-          line.skipSpace(line.pos + 2) < line.text.length)
+        (!breaking || inList(cx, 'BulletList') || line.skipSpace(line.pos + 2) < line.text.length)
     ) ?
       1
     : -1
@@ -165,7 +174,7 @@ function isOrderedList(line: Line, cx: BlockContext, breaking: boolean) {
     (next != 46 && next != 41) /* '.)' */ ||
     (pos < line.text.length - 1 && !isSpace(line.text.charCodeAt(pos + 1))) ||
     (breaking &&
-      !inList(cx, Type.OrderedList) &&
+      !inList(cx, 'OrderedList') &&
       (line.skipSpace(pos + 1) == line.text.length ||
         pos > line.pos + 1 ||
         line.next != 49)) /* '1' */
@@ -174,7 +183,8 @@ function isOrderedList(line: Line, cx: BlockContext, breaking: boolean) {
   return pos + 1 - line.pos
 }
 
-function inList(cx: BlockContext, type: Type) {
+function inList(cx: BlockContext, typeName: string) {
+  const type = getType(cx, typeName)
   for (let i = cx.stack.length - 1; i >= 0; i--) if (cx.stack[i]!.type == type) return true
   return false
 }
