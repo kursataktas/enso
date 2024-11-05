@@ -463,6 +463,9 @@ add_specs suite_builder =
                     lru_cache.getCacheTestParameters.setUsableDiskSpaceOverrideTestOnly (300 * 1024 * 1024 * 1024)
                     lru_cache.getMaxTotalCacheSize . should_equal (30 * 1024 * 1024 * 1024)
                     lru_cache.getTotalCacheLimit.percentage . should_equal 0.1
+                    lru_cache.getCacheTestParameters.setUsableDiskSpaceOverrideTestOnly (400 * 1024 * 1024 * 1024)
+                    lru_cache.getMaxTotalCacheSize . should_equal (40 * 1024 * 1024 * 1024)
+                    lru_cache.getTotalCacheLimit.percentage . should_equal 0.1
 
         group_builder.specify "Toital cache size should not go over the hard-coded maximum" <|
             Test_Environment.unsafe_with_environment_override "ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT" "50%" <|

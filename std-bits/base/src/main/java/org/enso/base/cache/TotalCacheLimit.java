@@ -3,7 +3,12 @@ package org.enso.base.cache;
 import java.text.DecimalFormat;
 import java.text.ParsePosition;
 
+/**
+ * Represents a limit on the total size of an LRUCache, either as a fixed byte
+ * count or as a percentage of available disk space.
+ */
 public class TotalCacheLimit {
+    /** Parse the limit specification string into either a Megs or Percentage value. */
     public static Limit parse(String limitString) throws NumberFormatException {
         Number percentageNumber = tryPercentage(limitString);
         if (percentageNumber != null) {

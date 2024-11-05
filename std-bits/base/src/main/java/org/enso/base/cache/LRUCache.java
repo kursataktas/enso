@@ -31,15 +31,30 @@ import org.enso.base.Stream_Utils;
  * deleting entries to make space for new ones. All cache files are set to be deleted automatically
  * on JVM exit.
  *
+ * Limits should be set with environment variables:
+ *   ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS -- single file size, in megs
+ *   ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT -- total cache size, in megs or percentage of free disk space
+ *
+ *   Examples:
+ *     ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS=20
+ *     ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=200
+ *     ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT=50%
+ *
  * @param <M> Additional metadata to associate with the data.
  */
 public class LRUCache<M> {
   private static final Logger logger = Logger.getLogger(LRUCache.class.getName());
 
-  /** Default value for the largest file size allowed. */
+  /**
+   * Default value for the largest file size allowed.
+   * Should be overridden with the ENSO_LIB_HTTP_CACHE_MAX_FILE_SIZE_MEGS environment variable.
+   */
   private static final long DEFAULT_MAX_FILE_SIZE = 2L * 1024 * 1024 * 1024;
 
-  /** Default value for the percentage of free disk space to use as a limit on the total cache size. */
+  /**
+   * Default value for the percentage of free disk space to use as a limit on the total cache size.
+   * Should be overridden with the ENSO_LIB_HTTP_CACHE_MAX_TOTAL_CACHE_LIMIT environment variable.
+   */
   private static final double DEFAULT_TOTAL_CACHE_SIZE_FREE_SPACE_PERCENTAGE = 0.2;
 
   /**
@@ -53,7 +68,14 @@ public class LRUCache<M> {
    * requested through this cache, a ResponseTooLargeException is thrown.
    */
   private final long maxFileSize;
-  /** Limits the total size of all files in the cache. */
+
+  /**
+   * Limits the total size of all files in the cache.
+   *
+   * This value can depend on free disk space, so it is not resolved to a
+   * maximum byte count at initialization time, but recalculated during each
+   * file cleanup.
+   */
   private final TotalCacheLimit.Limit totalCacheLimit;
 
   /** Used to override cache parameters for testing. */
