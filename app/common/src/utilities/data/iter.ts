@@ -187,6 +187,13 @@ export function find<T>(iter: Iterable<T>, f: (value: T) => boolean): T | undefi
   return undefined
 }
 
+/** Returns the first element yielded by the iterable. */
+export function first<T>(iterable: Iterable<T>): T | undefined {
+  const iterator = iterable[Symbol.iterator]()
+  const result = iterator.next()
+  return result.done ? undefined : result.value
+}
+
 /**
  * Return last element returned by the iterable.
  * NOTE: Linear complexity. This function always visits the whole iterable. Using this with an
