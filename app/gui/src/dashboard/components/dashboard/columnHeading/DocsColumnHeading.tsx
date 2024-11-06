@@ -11,7 +11,7 @@ export default function DocsColumnHeading(props: AssetColumnHeadingProps) {
   const { hideColumn } = props
   const { getText } = useText()
 
-  const onColumnHide = useEventCallback(() => {
+  const hideThisColumn = useEventCallback(() => {
     hideColumn(Column.docs)
   })
 
@@ -22,7 +22,7 @@ export default function DocsColumnHeading(props: AssetColumnHeadingProps) {
         icon={DocsIcon}
         aria-label={getText('docsColumnHide')}
         tooltip={false}
-        onPress={onColumnHide}
+        onPress={hideThisColumn}
       />
       <Text className="text-sm font-semibold">{getText('docsColumnName')}</Text>
     </div>

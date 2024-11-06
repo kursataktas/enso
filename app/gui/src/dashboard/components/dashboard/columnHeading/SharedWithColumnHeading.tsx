@@ -17,7 +17,7 @@ export default function SharedWithColumnHeading(props: AssetColumnHeadingProps) 
   const { user } = useFullUserSession()
   const { isFeatureUnderPaywall } = usePaywall({ plan: user.plan })
 
-  const onHideClick = useEventCallback(() => {
+  const hideThisColumn = useEventCallback(() => {
     hideColumn(Column.sharedWith)
   })
 
@@ -30,7 +30,7 @@ export default function SharedWithColumnHeading(props: AssetColumnHeadingProps) 
         icon={PeopleIcon}
         aria-label={getText('sharedWithColumnHide')}
         tooltip={false}
-        onPress={onHideClick}
+        onPress={hideThisColumn}
       />
 
       <div className="flex items-center gap-1">

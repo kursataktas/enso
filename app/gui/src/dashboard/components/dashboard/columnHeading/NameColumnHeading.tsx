@@ -16,7 +16,7 @@ export default function NameColumnHeading(props: AssetColumnHeadingProps) {
   const isSortActive = sortInfo?.field === Column.name
   const isDescending = sortInfo?.direction === SortDirection.descending
 
-  const onPress = useEventCallback(() => {
+  const cycleSortDirection = useEventCallback(() => {
     if (!sortInfo) {
       setSortInfo({ field: Column.name, direction: SortDirection.ascending })
       return
@@ -42,7 +42,7 @@ export default function NameColumnHeading(props: AssetColumnHeadingProps) {
         : getText('sortByNameDescending')
       }
       className="group flex h-table-row w-full items-center justify-start gap-icon-with-text px-name-column-x"
-      onPress={onPress}
+      onPress={cycleSortDirection}
     >
       <Text className="text-sm font-semibold">{getText('nameColumnName')}</Text>
       <img

@@ -12,7 +12,7 @@ export default function LabelsColumnHeading(props: AssetColumnHeadingProps) {
 
   const { getText } = useText()
 
-  const onColumnHide = useEventCallback(() => {
+  const hideThisColumn = useEventCallback(() => {
     hideColumn(Column.labels)
   })
 
@@ -23,7 +23,7 @@ export default function LabelsColumnHeading(props: AssetColumnHeadingProps) {
         icon={TagIcon}
         aria-label={getText('labelsColumnHide')}
         tooltip={false}
-        onPress={onColumnHide}
+        onPress={hideThisColumn}
       />
       <Text className="fond-semibold text-sm">{getText('labelsColumnName')}</Text>
     </div>

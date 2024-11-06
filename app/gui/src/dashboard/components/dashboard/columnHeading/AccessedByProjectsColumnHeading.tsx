@@ -11,7 +11,7 @@ export default function AccessedByProjectsColumnHeading(props: AssetColumnHeadin
   const { hideColumn } = props
   const { getText } = useText()
 
-  const onColumnHide = useEventCallback(() => {
+  const hideThisColumn = useEventCallback(() => {
     hideColumn(Column.accessedByProjects)
   })
 
@@ -22,7 +22,7 @@ export default function AccessedByProjectsColumnHeading(props: AssetColumnHeadin
         icon={AccessedByProjectsIcon}
         aria-label={getText('accessedByProjectsColumnHide')}
         tooltip={false}
-        onPress={onColumnHide}
+        onPress={hideThisColumn}
       />
       <Text className="text-sm font-semibold">{getText('accessedByProjectsColumnName')}</Text>
     </div>

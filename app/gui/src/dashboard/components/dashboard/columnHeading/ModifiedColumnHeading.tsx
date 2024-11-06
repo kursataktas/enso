@@ -19,11 +19,11 @@ export default function ModifiedColumnHeading(props: AssetColumnHeadingProps) {
   const isSortActive = sortInfo?.field === Column.modified
   const isDescending = sortInfo?.direction === SortDirection.descending
 
-  const onHideClick = useEventCallback(() => {
+  const hideThisColumn = useEventCallback(() => {
     hideColumn(Column.modified)
   })
 
-  const onSortClick = useEventCallback(() => {
+  const cycleSortDirection = useEventCallback(() => {
     if (!sortInfo) {
       setSortInfo({ field: Column.modified, direction: SortDirection.ascending })
       return
@@ -54,13 +54,13 @@ export default function ModifiedColumnHeading(props: AssetColumnHeadingProps) {
         icon={TimeIcon}
         aria-label={getText('modifiedColumnHide')}
         tooltip={false}
-        onPress={onHideClick}
+        onPress={hideThisColumn}
       />
       <Button
         size="custom"
         variant="custom"
         className="flex grow justify-start gap-icon-with-text"
-        onPress={onSortClick}
+        onPress={cycleSortDirection}
       >
         <Text className="text-header">{getText('modifiedColumnName')}</Text>
         <img

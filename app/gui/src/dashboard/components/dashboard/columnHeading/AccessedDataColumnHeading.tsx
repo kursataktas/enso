@@ -11,7 +11,7 @@ export default function AccessedDataColumnHeading(props: AssetColumnHeadingProps
   const { hideColumn } = props
   const { getText } = useText()
 
-  const onHideClick = useEventCallback(() => {
+  const hideThisColumn = useEventCallback(() => {
     hideColumn(Column.accessedData)
   })
 
@@ -22,7 +22,7 @@ export default function AccessedDataColumnHeading(props: AssetColumnHeadingProps
         icon={AccessedDataIcon}
         aria-label={getText('accessedDataColumnHide')}
         tooltip={false}
-        onPress={onHideClick}
+        onPress={hideThisColumn}
       />
       <Text className="text-sm font-semibold">{getText('accessedDataColumnName')}</Text>
     </div>
