@@ -44,6 +44,7 @@ interface AssetProjectSessionsInternalProps extends AssetProjectSessionsProps {
 /** A list of previous versions of an asset. */
 function AssetProjectSessionsInternal(props: AssetProjectSessionsInternalProps) {
   const { backend, item } = props
+  const { getText } = useText()
 
   const projectSessionsQuery = reactQuery.useSuspenseQuery({
     queryKey: ['getProjectSessions', item.id, item.title],
@@ -53,17 +54,17 @@ function AssetProjectSessionsInternal(props: AssetProjectSessionsInternalProps) 
     },
   })
 
-  return (
-    <div className="flex w-full flex-col justify-start">
-      {projectSessionsQuery.data.map((session, i) => (
-        <AssetProjectSession
-          key={session.projectSessionId}
-          backend={backend}
-          project={item}
-          projectSession={session}
-          index={projectSessionsQuery.data.length - i}
-        />
-      ))}
-    </div>
-  )
+  return projectSessionsQuery.data.length === 0 ?
+      <Result status="info" centered title={getText('assetProjectSessions.noSessions')} />
+    : <div className="flex w-full flex-col justify-start">
+        {projectSessionsQuery.data.map((session, i) => (
+          <AssetProjectSession
+            key={session.projectSessionId}
+            backend={backend}
+            project={item}
+            projectSession={session}
+            index={projectSessionsQuery.data.length - i}
+          />
+        ))}
+      </div>
 }
