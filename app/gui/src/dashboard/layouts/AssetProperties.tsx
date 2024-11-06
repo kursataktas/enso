@@ -35,7 +35,14 @@ import { useDriveStore, useSetAssetPanelProps } from '#/providers/DriveProvider'
 import { useFeatureFlags } from '#/providers/FeatureFlagsProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import { AssetType, BackendType, Plan, type AnyAsset, type DatalinkId } from '#/services/Backend'
+import {
+  assetIsType,
+  AssetType,
+  BackendType,
+  Plan,
+  type AnyAsset,
+  type DatalinkId,
+} from '#/services/Backend'
 import { extractTypeAndId } from '#/services/LocalBackend'
 import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
@@ -183,7 +190,9 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   )
   const updateSecretMutation = useMutation(backendMutationOptions(backend, 'updateSecret'))
   const displayedDescription =
-    editDescriptionMutation.variables?.[1].description ?? asset.description
+    editDescriptionMutation.variables?.[0] === asset.id ?
+      editDescriptionMutation.variables[1].description ?? asset.description
+    : asset.description
 
   const editDescriptionForm = Form.useForm({
     schema: (z) => z.object({ description: z.string() }),
