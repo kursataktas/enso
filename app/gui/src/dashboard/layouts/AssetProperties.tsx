@@ -200,10 +200,15 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
       setIsEditingDescription(false)
     },
   })
+  const resetEditDescriptionForm = editDescriptionForm.reset
 
   React.useEffect(() => {
     setIsEditingDescription(false)
   }, [asset.id, setIsEditingDescription])
+
+  React.useEffect(() => {
+    resetEditDescriptionForm({ description: asset.description ?? '' })
+  }, [asset.description, resetEditDescriptionForm])
 
   const editDatalinkForm = Form.useForm({
     schema: (z) => z.object({ datalink: z.custom((x) => validateDatalink(x)) }),
