@@ -35,14 +35,7 @@ import { useDriveStore, useSetAssetPanelProps } from '#/providers/DriveProvider'
 import { useFeatureFlags } from '#/providers/FeatureFlagsProvider'
 import { useText } from '#/providers/TextProvider'
 import type Backend from '#/services/Backend'
-import {
-  assetIsType,
-  AssetType,
-  BackendType,
-  Plan,
-  type AnyAsset,
-  type DatalinkId,
-} from '#/services/Backend'
+import { AssetType, BackendType, Plan, type AnyAsset, type DatalinkId } from '#/services/Backend'
 import { extractTypeAndId } from '#/services/LocalBackend'
 import { normalizePath } from '#/utilities/fileInfo'
 import { mapNonNullish } from '#/utilities/nullable'
@@ -123,7 +116,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
   const localBackend = useLocalBackend()
   const [isEditingDescriptionRaw, setIsEditingDescriptionRaw] = React.useState(false)
   const isEditingDescription = isEditingDescriptionRaw || spotlightOn === 'description'
-  const setIsEditingDescription = React.useCallback(
+  const setIsEditingDescription = useEventCallback(
     (valueOrUpdater: React.SetStateAction<boolean>) => {
       setIsEditingDescriptionRaw((currentValue) => {
         if (typeof valueOrUpdater === 'function') {
@@ -135,7 +128,6 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
         return valueOrUpdater
       })
     },
-    [closeSpotlight],
   )
   const featureFlags = useFeatureFlags()
   const datalinkQuery = useBackendQuery(
@@ -208,6 +200,10 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
       setIsEditingDescription(false)
     },
   })
+
+  React.useEffect(() => {
+    setIsEditingDescription(false)
+  }, [asset.id, setIsEditingDescription])
 
   const editDatalinkForm = Form.useForm({
     schema: (z) => z.object({ datalink: z.custom((x) => validateDatalink(x)) }),
