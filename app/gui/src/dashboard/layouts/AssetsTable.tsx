@@ -28,6 +28,8 @@ import { toast } from 'react-toastify'
 import invariant from 'tiny-invariant'
 import * as z from 'zod'
 
+import { uniqueString } from 'enso-common/src/utilities/uniqueString'
+
 import DropFilesImage from '#/assets/drop_files.svg'
 import { FileTrigger, mergeProps } from '#/components/aria'
 import { Button, Text } from '#/components/AriaComponents'
@@ -48,6 +50,7 @@ import { COLUMN_HEADING } from '#/components/dashboard/columnHeading'
 import Label from '#/components/dashboard/Label'
 import { ErrorDisplay } from '#/components/ErrorBoundary'
 import SelectionBrush from '#/components/SelectionBrush'
+import { StatelessSpinner } from '#/components/StatelessSpinner'
 import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
 import { ASSETS_MIME_TYPE } from '#/data/mimeTypes'
@@ -164,8 +167,6 @@ import { SortDirection } from '#/utilities/sorting'
 import { regexEscape } from '#/utilities/string'
 import { twJoin, twMerge } from '#/utilities/tailwindMerge'
 import Visibility from '#/utilities/Visibility'
-import { uniqueString } from 'enso-common/src/utilities/uniqueString'
-import StatelessSpinner from '../components/StatelessSpinner'
 
 // ============================
 // === Global configuration ===

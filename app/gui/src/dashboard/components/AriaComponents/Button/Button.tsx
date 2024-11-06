@@ -5,7 +5,7 @@ import * as focusHooks from '#/hooks/focusHooks'
 
 import * as aria from '#/components/aria'
 import * as ariaComponents from '#/components/AriaComponents'
-import StatelessSpinner from '#/components/StatelessSpinner'
+import { StatelessSpinner } from '#/components/StatelessSpinner'
 import SvgMask from '#/components/SvgMask'
 
 import { forwardRef } from '#/utilities/react'

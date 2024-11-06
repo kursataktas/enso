@@ -11,8 +11,8 @@ import * as authProvider from '#/providers/AuthProvider'
 import * as textProvider from '#/providers/TextProvider'
 
 import * as ariaComponents from '#/components/AriaComponents'
-import Spinner from '#/components/Spinner'
-import StatelessSpinner, { type SpinnerState } from '#/components/StatelessSpinner'
+import { Spinner } from '#/components/Spinner'
+import { StatelessSpinner, type SpinnerState } from '#/components/StatelessSpinner'
 
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'

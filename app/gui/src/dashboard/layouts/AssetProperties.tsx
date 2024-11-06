@@ -17,7 +17,7 @@ import SharedWithColumn from '#/components/dashboard/column/SharedWithColumn'
 import { DatalinkFormInput } from '#/components/dashboard/DatalinkInput'
 import Label from '#/components/dashboard/Label'
 import { Result } from '#/components/Result'
-import StatelessSpinner from '#/components/StatelessSpinner'
+import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { validateDatalink } from '#/data/datalinkValidator'
 import {
   backendMutationOptions,

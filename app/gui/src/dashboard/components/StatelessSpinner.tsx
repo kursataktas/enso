@@ -2,16 +2,17 @@
 import { startTransition, useEffect, useState } from 'react'
 
 import type { SpinnerProps, SpinnerState } from '#/components/Spinner'
-import Spinner from '#/components/Spinner'
+import { Spinner } from '#/components/Spinner'
+export type { SpinnerState } from '#/components/Spinner'
 
 /** Props for a {@link StatelessSpinner}. */
 export type StatelessSpinnerProps = SpinnerProps
 
 /**
  * A spinner that does not expose its {@link SpinnerState}. Instead, it begins at
- * {@link SpinnerState.initial} and immediately changes to the given state.
+ * `initial` and immediately changes to the given state.
  */
-export default function StatelessSpinner(props: StatelessSpinnerProps) {
+export function StatelessSpinner(props: StatelessSpinnerProps) {
   const { state: rawState, ...spinnerProps } = props
 
   const [state, setState] = useState<SpinnerState>('initial')

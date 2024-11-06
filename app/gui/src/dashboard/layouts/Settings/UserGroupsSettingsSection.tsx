@@ -1,12 +1,12 @@
 /** @file Settings tab for viewing and editing roles for all users in the organization. */
-import { useRef, useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 
 import { useMutation } from '@tanstack/react-query'
 
 import { Cell, Column, Row, Table, TableBody, TableHeader, useDragAndDrop } from '#/components/aria'
 import { Button, ButtonGroup } from '#/components/AriaComponents'
 import { PaywallDialogButton } from '#/components/Paywall'
-import StatelessSpinner from '#/components/StatelessSpinner'
+import { StatelessSpinner } from '#/components/StatelessSpinner'
 import { USER_MIME_TYPE } from '#/data/mimeTypes'
 import {
   backendMutationOptions,

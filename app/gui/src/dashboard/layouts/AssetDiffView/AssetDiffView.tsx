@@ -2,7 +2,7 @@
 import { DiffEditor } from '@monaco-editor/react'
 import { useSuspenseQueries } from '@tanstack/react-query'
 
-import Spinner from '#/components/Spinner'
+import { Spinner } from '#/components/Spinner'
 import { versionContentQueryOptions } from '#/layouts/AssetDiffView/useFetchVersionContent'
 import type * as backendService from '#/services/Backend'
 import type Backend from '#/services/Backend'
