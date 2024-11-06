@@ -66,7 +66,6 @@ import { useIntersectionRatio } from '#/hooks/intersectionHooks'
 import { useOpenProject } from '#/hooks/projectHooks'
 import { useSyncRef } from '#/hooks/syncRefHooks'
 import { useToastAndLog } from '#/hooks/toastAndLogHooks'
-import useOnScroll from '#/hooks/useOnScroll'
 import type * as assetSearchBar from '#/layouts/AssetSearchBar'
 import * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import AssetsTableContextMenu from '#/layouts/AssetsTableContextMenu'
@@ -120,6 +119,7 @@ import {
   createSpecialLoadingAsset,
   DatalinkId,
   DirectoryId,
+  escapeSpecialCharacters,
   extractProjectExtension,
   fileIsNotProject,
   fileIsProject,
@@ -198,13 +198,6 @@ const MINIMUM_DROPZONE_INTERSECTION_RATIO = 0.5
 const ROW_HEIGHT_PX = 38
 /** The size of the loading spinner. */
 const LOADING_SPINNER_SIZE_PX = 36
-/**
- * The number of pixels the header bar should shrink when the column selector is visible,
- * assuming 0 icons are visible in the column selector.
- */
-const COLUMNS_SELECTOR_BASE_WIDTH_PX = 4
-/** The number of pixels the header bar should shrink per collapsed column. */
-const COLUMNS_SELECTOR_ICON_WIDTH_PX = 28
 
 const SUGGESTIONS_FOR_NO: assetSearchBar.Suggestion[] = [
   {
@@ -363,7 +356,6 @@ export default function AssetsTable(props: AssetsTableProps) {
   const inputBindings = useInputBindings()
   const navigator2D = useNavigator2D()
   const toastAndLog = useToastAndLog()
-  const previousCategoryRef = useRef(category)
   const dispatchAssetEvent = eventListProvider.useDispatchAssetEvent()
   const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const setCanCreateAssets = useSetCanCreateAssets()
@@ -500,7 +492,8 @@ export default function AssetsTable(props: AssetsTableProps) {
   // This reduces the amount of rerenders by batching them together, so they happen less often.
   useQuery({
     queryKey: [backend.type, 'refetchListDirectory'],
-    queryFn: () => queryClient.refetchQueries({ queryKey: [backend.type, 'listDirectory'] }),
+    queryFn: () =>
+      queryClient.refetchQueries({ queryKey: [backend.type, 'listDirectory'] }).then(() => null),
     refetchInterval:
       enableAssetsTableBackgroundRefresh ? assetsTableBackgroundRefreshInterval : false,
     refetchOnMount: 'always',
@@ -828,7 +821,6 @@ export default function AssetsTable(props: AssetsTableProps) {
   /** Events sent when the asset list was still loading. */
   const queuedAssetListEventsRef = useRef<AssetListEvent[]>([])
   const rootRef = useRef<HTMLDivElement | null>(null)
-  const cleanupRootRef = useRef(() => {})
   const mainDropzoneRef = useRef<HTMLButtonElement | null>(null)
   const lastSelectedIdsRef = useRef<AssetId | ReadonlySet<AssetId> | null>(null)
   const headerRowRef = useRef<HTMLTableRowElement>(null)
@@ -849,10 +841,6 @@ export default function AssetsTable(props: AssetsTableProps) {
     (ratio) => ratio >= MINIMUM_DROPZONE_INTERSECTION_RATIO,
     true,
   )
-
-  useEffect(() => {
-    previousCategoryRef.current = category
-  })
 
   const setTargetDirectory = useEventCallback(
     (targetDirectory: AssetTreeNode<DirectoryAsset> | null) => {
@@ -1688,12 +1676,7 @@ export default function AssetsTable(props: AssetsTableProps) {
         const siblingProjects = siblings.filter(assetIsProject)
         const siblingFileTitles = new Set(siblingFiles.map((asset) => asset.title))
         const siblingProjectTitles = new Set(siblingProjects.map((asset) => asset.title))
-        const files = reversedFiles.filter(fileIsNotProject)
-        const projects = reversedFiles.filter(fileIsProject)
-        const duplicateFiles = files.filter((file) => siblingFileTitles.has(file.name))
-        const duplicateProjects = projects.filter((project) =>
-          siblingProjectTitles.has(stripProjectExtension(project.name)),
-        )
+
         const ownerPermission = tryCreateOwnerPermission(
           parent?.path ?? '',
           category,
@@ -1701,7 +1684,35 @@ export default function AssetsTable(props: AssetsTableProps) {
           users ?? [],
           userGroups ?? [],
         )
-        const fileMap = new Map<AssetId, File>()
+
+        const files = reversedFiles.filter(fileIsNotProject).map((file) => {
+          const asset = createPlaceholderFileAsset(
+            escapeSpecialCharacters(file.name),
+            event.parentId,
+            ownerPermission,
+          )
+          return { asset, file }
+        })
+        const projects = reversedFiles.filter(fileIsProject).map((file) => {
+          const basename = escapeSpecialCharacters(stripProjectExtension(file.name))
+          const asset = createPlaceholderProjectAsset(
+            basename,
+            event.parentId,
+            ownerPermission,
+            user,
+            localBackend?.joinPath(event.parentId, basename) ?? null,
+          )
+
+          return { asset, file }
+        })
+        const duplicateFiles = files.filter((file) => siblingFileTitles.has(file.asset.title))
+        const duplicateProjects = projects.filter((project) =>
+          siblingProjectTitles.has(stripProjectExtension(project.asset.title)),
+        )
+        const fileMap = new Map<AssetId, File>([
+          ...files.map(({ asset, file }) => [asset.id, file] as const),
+          ...projects.map(({ asset, file }) => [asset.id, file] as const),
+        ])
         const uploadedFileIds: AssetId[] = []
         const addIdToSelection = (id: AssetId) => {
           uploadedFileIds.push(id)
@@ -1718,7 +1729,7 @@ export default function AssetsTable(props: AssetsTableProps) {
             switch (true) {
               case assetIsProject(asset): {
                 const { extension } = extractProjectExtension(file.name)
-                const title = stripProjectExtension(asset.title)
+                const title = escapeSpecialCharacters(stripProjectExtension(asset.title))
 
                 await uploadFileMutation
                   .mutateAsync(
@@ -1739,11 +1750,9 @@ export default function AssetsTable(props: AssetsTableProps) {
                 break
               }
               case assetIsFile(asset): {
+                const title = escapeSpecialCharacters(asset.title)
                 await uploadFileMutation
-                  .mutateAsync(
-                    { fileId, fileName: asset.title, parentDirectoryId: asset.parentId },
-                    file,
-                  )
+                  .mutateAsync({ fileId, fileName: title, parentDirectoryId: asset.parentId }, file)
                   .then(({ id }) => {
                     addIdToSelection(id)
                   })
@@ -1757,26 +1766,7 @@ export default function AssetsTable(props: AssetsTableProps) {
         }
 
         if (duplicateFiles.length === 0 && duplicateProjects.length === 0) {
-          const placeholderFiles = files.map((file) => {
-            const asset = createPlaceholderFileAsset(file.name, event.parentId, ownerPermission)
-            fileMap.set(asset.id, file)
-            return asset
-          })
-
-          const placeholderProjects = projects.map((project) => {
-            const basename = stripProjectExtension(project.name)
-            const asset = createPlaceholderProjectAsset(
-              basename,
-              event.parentId,
-              ownerPermission,
-              user,
-              localBackend?.joinPath(event.parentId, basename) ?? null,
-            )
-            fileMap.set(asset.id, project)
-            return asset
-          })
-
-          const assets = [...placeholderFiles, ...placeholderProjects]
+          const assets = [...files, ...projects].map(({ asset }) => asset)
 
           doToggleDirectoryExpansion(event.parentId, event.parentKey, true)
 
@@ -1790,12 +1780,12 @@ export default function AssetsTable(props: AssetsTableProps) {
             // This is SAFE, as `duplicateFiles` only contains files that have siblings
             // with the same name.
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            current: siblingFilesByName.get(file.name)!,
-            new: createPlaceholderFileAsset(file.name, event.parentId, ownerPermission),
-            file,
+            current: siblingFilesByName.get(file.asset.title)!,
+            new: createPlaceholderFileAsset(file.asset.title, event.parentId, ownerPermission),
+            file: file.file,
           }))
           const conflictingProjects = duplicateProjects.map((project) => {
-            const basename = stripProjectExtension(project.name)
+            const basename = stripProjectExtension(project.asset.title)
             return {
               // This is SAFE, as `duplicateProjects` only contains projects that have
               // siblings with the same name.
@@ -1808,7 +1798,7 @@ export default function AssetsTable(props: AssetsTableProps) {
                 user,
                 localBackend?.joinPath(event.parentId, basename) ?? null,
               ),
-              file: project,
+              file: project.file,
             }
           })
           setModal(
@@ -1835,23 +1825,24 @@ export default function AssetsTable(props: AssetsTableProps) {
                 doToggleDirectoryExpansion(event.parentId, event.parentKey, true)
 
                 const newFiles = files
-                  .filter((file) => !siblingFileTitles.has(file.name))
+                  .filter((file) => !siblingFileTitles.has(file.asset.title))
                   .map((file) => {
                     const asset = createPlaceholderFileAsset(
-                      file.name,
+                      file.asset.title,
                       event.parentId,
                       ownerPermission,
                     )
-                    fileMap.set(asset.id, file)
+                    fileMap.set(asset.id, file.file)
                     return asset
                   })
 
                 const newProjects = projects
                   .filter(
-                    (project) => !siblingProjectTitles.has(stripProjectExtension(project.name)),
+                    (project) =>
+                      !siblingProjectTitles.has(stripProjectExtension(project.asset.title)),
                   )
                   .map((project) => {
-                    const basename = stripProjectExtension(project.name)
+                    const basename = stripProjectExtension(project.asset.title)
                     const asset = createPlaceholderProjectAsset(
                       basename,
                       event.parentId,
@@ -1859,7 +1850,7 @@ export default function AssetsTable(props: AssetsTableProps) {
                       user,
                       localBackend?.joinPath(event.parentId, basename) ?? null,
                     )
-                    fileMap.set(asset.id, project)
+                    fileMap.set(asset.id, project.file)
                     return asset
                   })
 
@@ -2057,6 +2048,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   const doCopy = useEventCallback(() => {
     unsetModal()
     const { selectedKeys } = driveStore.getState()
+
     setPasteData({
       type: 'copy',
       data: { backendType: backend.type, category, ids: selectedKeys },
@@ -2080,7 +2072,9 @@ export default function AssetsTable(props: AssetsTableProps) {
   const cutAndPaste = useCutAndPaste(category)
   const doPaste = useEventCallback((newParentKey: DirectoryId, newParentId: DirectoryId) => {
     unsetModal()
+
     const { pasteData } = driveStore.getState()
+
     if (
       pasteData?.data.backendType === backend.type &&
       canTransferBetweenCategories(pasteData.data.category, category)
@@ -2234,26 +2228,6 @@ export default function AssetsTable(props: AssetsTableProps) {
       }
     }
   }, [hidden])
-
-  // This is required to prevent the table body from overlapping the table header, because
-  // the table header is transparent.
-  const updateClipPath = useOnScroll(() => {
-    if (bodyRef.current != null && rootRef.current != null) {
-      bodyRef.current.style.clipPath = `inset(${rootRef.current.scrollTop}px 0 0 0)`
-    }
-    if (
-      backend.type === BackendType.remote &&
-      rootRef.current != null &&
-      headerRowRef.current != null
-    ) {
-      const shrinkBy =
-        COLUMNS_SELECTOR_BASE_WIDTH_PX + COLUMNS_SELECTOR_ICON_WIDTH_PX * hiddenColumns.length
-      const rightOffset = rootRef.current.clientWidth + rootRef.current.scrollLeft - shrinkBy
-      headerRowRef.current.style.clipPath = `polygon(0 0, ${rightOffset}px 0, ${rightOffset}px 100%, 0 100%)`
-    }
-  }, [backend.type, hiddenColumns.length])
-
-  const updateClipPathObserver = useMemo(() => new ResizeObserver(updateClipPath), [updateClipPath])
 
   useEffect(
     () =>
@@ -2607,7 +2581,7 @@ export default function AssetsTable(props: AssetsTableProps) {
   )
 
   const headerRow = (
-    <tr ref={headerRowRef} className="sticky top-[1px] text-sm font-semibold">
+    <tr ref={headerRowRef} className="rounded-none text-sm font-semibold">
       {columns.map((column) => {
         // This is a React component, even though it does not contain JSX.
         const Heading = COLUMN_HEADING[column]
@@ -2703,8 +2677,8 @@ export default function AssetsTable(props: AssetsTableProps) {
         }
       }}
     >
-      <table className="table-fixed border-collapse rounded-rows">
-        <thead>{headerRow}</thead>
+      <table className="isolate table-fixed border-collapse rounded-rows">
+        <thead className="sticky top-0 z-1 bg-dashboard">{headerRow}</thead>
         <tbody ref={bodyRef}>
           {itemRows}
           <tr className="hidden h-row first:table-row">
@@ -2804,21 +2778,8 @@ export default function AssetsTable(props: AssetsTableProps) {
           {(innerProps) => (
             <div
               {...mergeProps<JSX.IntrinsicElements['div']>()(innerProps, {
-                ref: (value) => {
-                  rootRef.current = value
-                  cleanupRootRef.current()
-                  if (value) {
-                    updateClipPathObserver.observe(value)
-                    cleanupRootRef.current = () => {
-                      updateClipPathObserver.unobserve(value)
-                    }
-                  } else {
-                    cleanupRootRef.current = () => {}
-                  }
-                },
                 className: 'flex-1 overflow-auto container-size w-full h-full',
                 onKeyDown,
-                onScroll: updateClipPath,
                 onBlur: (event) => {
                   if (
                     event.relatedTarget instanceof HTMLElement &&
@@ -2840,6 +2801,7 @@ export default function AssetsTable(props: AssetsTableProps) {
                 onDragEnd: () => {
                   setIsDraggingFiles(false)
                 },
+                ref: rootRef,
               })}
             >
               {!hidden && hiddenContextMenu}
