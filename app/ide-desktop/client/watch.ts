@@ -91,7 +91,9 @@ const exit = (code = 0) => {
   })
 }
 
-process.on('SIGINT', exit)
+process.on('SIGINT', () => {
+  exit()
+})
 
 /** Starts the electron process with the IDE. */
 function startElectronProcess() {
