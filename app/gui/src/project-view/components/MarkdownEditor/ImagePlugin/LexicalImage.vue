@@ -4,7 +4,7 @@ import {
   type TransformUrlResult,
 } from '@/components/MarkdownEditor/imageUrlTransformer'
 import { computedAsync } from '@vueuse/core'
-import { computed, onUnmounted, watch, type Ref } from 'vue'
+import { computed, onUnmounted, type Ref } from 'vue'
 import { Ok } from 'ydoc-shared/util/data/result'
 
 const DEFAULT_ALT_TEXT = 'Image'
