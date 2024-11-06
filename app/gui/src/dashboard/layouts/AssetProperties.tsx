@@ -42,10 +42,6 @@ import { mapNonNullish } from '#/utilities/nullable'
 import * as permissions from '#/utilities/permissions'
 import { tv } from '#/utilities/tailwindVariants'
 
-// =======================
-// === AssetProperties ===
-// =======================
-
 const ASSET_PROPERTIES_VARIANTS = tv({
   base: '',
   slots: {

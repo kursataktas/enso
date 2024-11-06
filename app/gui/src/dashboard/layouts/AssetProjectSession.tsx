@@ -8,10 +8,6 @@ import type Backend from '#/services/Backend'
 import type { ProjectAsset, ProjectSession } from '#/services/Backend'
 import { formatDateTime } from '#/utilities/dateTime'
 
-// ===========================
-// === AssetProjectSession ===
-// ===========================
-
 /** Props for a {@link AssetProjectSession}. */
 export interface AssetProjectSessionProps {
   readonly backend: Backend
@@ -26,7 +22,7 @@ export default function AssetProjectSession(props: AssetProjectSessionProps) {
   const { getText } = useText()
 
   return (
-    <div className="flex w-full flex-1 shrink-0 select-none flex-row gap-4 rounded-2xl p-2">
+    <div className="flex flex-row gap-4 rounded-2xl p-2">
       <div className="flex flex-1 flex-col">
         <time className="text-xs">{formatDateTime(new Date(projectSession.createdAt))}</time>
       </div>

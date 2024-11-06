@@ -1,8 +1,4 @@
-/**
- * @file
- *
- * Tabs for the asset panel. Contains the visual state for the tabs and animations.
- */
+/** @file Tabs for the asset panel. Contains the visual state for the tabs and animations. */
 import { AnimatedBackground } from '#/components/AnimatedBackground'
 import type { TabListProps, TabPanelProps, TabProps } from '#/components/aria'
 import { Tab, TabList, TabPanel, Tabs, type TabsProps } from '#/components/aria'
@@ -14,18 +10,14 @@ import type { Spring } from 'framer-motion'
 import { AnimatePresence, motion } from 'framer-motion'
 import { memo, useRef } from 'react'
 
-/**
- * Display a set of tabs.
- */
+/** Display a set of tabs. */
 export function AssetPanelTabs(props: TabsProps) {
   const { children } = props
 
   return <Tabs {...props}>{children}</Tabs>
 }
 
-/**
- * Display a list of tabs.
- */
+/** Display a list of tabs. */
 export function AssetPanelTabList<T extends object>(props: TabListProps<T>) {
   return (
     <AnimatedBackground>
@@ -34,9 +26,7 @@ export function AssetPanelTabList<T extends object>(props: TabListProps<T>) {
   )
 }
 
-/**
- * Props for a {@link AssetPanelTab}.
- */
+/** Props for a {@link AssetPanelTab}. */
 export interface AssetPanelTabProps extends TabProps {
   readonly id: string
   readonly icon: string
@@ -53,9 +43,7 @@ const UNDERLAY_ELEMENT = (
   </>
 )
 
-/**
- * Display a tab.
- */
+/** Display a tab. */
 export const AssetPanelTab = memo(function AssetPanelTab(props: AssetPanelTabProps) {
   const { id, icon, label, isExpanded } = props
 
@@ -112,16 +100,12 @@ const DEFAULT_TRANSITION_OPTIONS: Spring = {
   mass: 0.8,
 }
 
-/**
- *
- */
+/** Props for a {@link AssetPanelTabPanel}. */
 export interface AssetPanelTabPanelProps extends TabPanelProps {
   readonly resetKeys?: unknown[]
 }
 
-/**
- * Display a tab panel.
- */
+/** Display a tab panel. */
 export function AssetPanelTabPanel(props: AssetPanelTabPanelProps) {
   const { children, id = '', resetKeys = [] } = props
 

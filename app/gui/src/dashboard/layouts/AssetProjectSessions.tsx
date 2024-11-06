@@ -9,10 +9,6 @@ import { Result } from '#/components/Result'
 import { useText } from '#/providers/TextProvider'
 import { AssetType, BackendType, type AnyAsset, type ProjectAsset } from '#/services/Backend'
 
-// ============================
-// === AssetProjectSessions ===
-// ============================
-
 /** Props for a {@link AssetProjectSessions}. */
 export interface AssetProjectSessionsProps {
   readonly backend: Backend
@@ -40,10 +36,6 @@ export default function AssetProjectSessions(props: AssetProjectSessionsProps) {
   return <AssetProjectSessionsInternal {...props} item={item} />
 }
 
-// ====================================
-// === AssetProjectSessionsInternal ===
-// ====================================
-
 /** Props for a {@link AssetProjectSessionsInternal}. */
 interface AssetProjectSessionsInternalProps extends AssetProjectSessionsProps {
   readonly item: ProjectAsset
@@ -62,7 +54,7 @@ function AssetProjectSessionsInternal(props: AssetProjectSessionsInternalProps) 
   })
 
   return (
-    <div className="flex flex-col items-center">
+    <div className="flex w-full flex-col justify-start">
       {projectSessionsQuery.data.map((session) => (
         <AssetProjectSession
           key={session.projectSessionId}
