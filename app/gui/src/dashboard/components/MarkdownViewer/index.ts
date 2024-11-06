@@ -1,6 +1,2 @@
-/**
- * @file
- *
- * Barrel export for the Wysiwyg component.
- */
+/** @file Barrel exports for {@link MarkdownViewer}. */
 export { MarkdownViewer } from './MarkdownViewer'
