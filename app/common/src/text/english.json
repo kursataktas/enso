@@ -952,11 +952,11 @@
 
   "assetDocs.notProject": "Please select a project to view its docs.",
   "assetDocs.noDocs": "No docs available for this asset.",
-  "assetProperties.notSelected": "Select an asset to view its properties.",
+  "assetProperties.notSelected": "Select a single asset to view its properties.",
   "assetVersions.localAssetsDoNotHaveVersions": "Local assets do not have versions.",
-  "assetVersions.notSelected": "Select an asset to view its versions.",
+  "assetVersions.notSelected": "Select a single asset to view its versions.",
   "assetProjectSessions.noSessions": "No sessions yet! Open the project to start a session.",
-  "assetProjectSessions.notSelected": "Select a project to view its sessions.",
+  "assetProjectSessions.notSelected": "Select a single project to view its sessions.",
   "assetProjectSessions.localBackend": "Sessions are not available for local projects.",
-  "assetProjectSessions.notProjectAsset": "Please select a project to view its sessions."
+  "assetProjectSessions.notProjectAsset": "Select a single project to view its sessions."
 }
