@@ -55,12 +55,13 @@ function AssetProjectSessionsInternal(props: AssetProjectSessionsInternalProps) 
 
   return (
     <div className="flex w-full flex-col justify-start">
-      {projectSessionsQuery.data.map((session) => (
+      {projectSessionsQuery.data.map((session, i) => (
         <AssetProjectSession
           key={session.projectSessionId}
           backend={backend}
           project={item}
           projectSession={session}
+          index={projectSessionsQuery.data.length - i}
         />
       ))}
     </div>

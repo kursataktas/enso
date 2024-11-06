@@ -60,6 +60,7 @@ interface PlaceholderOverrides {
   readonly chromeVersionX: [chromeVersion: string]
   readonly userAgentX: [userAgent: string]
   readonly compareVersionXWithLatest: [versionNumber: number]
+  readonly projectSessionX: [count: number]
   readonly onDateX: [dateString: string]
   readonly xUsersAndGroupsSelected: [usersAndGroupsCount: number]
   readonly removeTheLocalDirectoryXFromFavorites: [directoryName: string]

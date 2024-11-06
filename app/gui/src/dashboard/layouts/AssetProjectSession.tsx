@@ -13,18 +13,22 @@ export interface AssetProjectSessionProps {
   readonly backend: Backend
   readonly project: ProjectAsset
   readonly projectSession: ProjectSession
+  readonly index: number
 }
 
 /** Displays information describing a specific version of an asset. */
 export default function AssetProjectSession(props: AssetProjectSessionProps) {
-  const { backend, project, projectSession } = props
+  const { backend, project, projectSession, index } = props
 
   const { getText } = useText()
 
   return (
     <div className="flex flex-row gap-4 rounded-2xl p-2">
       <div className="flex flex-1 flex-col">
-        <time className="text-xs">{formatDateTime(new Date(projectSession.createdAt))}</time>
+        {getText('projectSessionX', index)}
+        <time className="text-xs">
+          {getText('onDateX', formatDateTime(new Date(projectSession.createdAt)))}
+        </time>
       </div>
       <div className="flex items-center gap-1">
         <DialogTrigger>
