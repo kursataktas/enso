@@ -2,11 +2,7 @@
  * @file A spinning arc that animates using the `dasharray-<percentage>` custom Tailwind
  * classes.
  */
-import * as tailwindMerge from '#/utilities/tailwindMerge'
-
-// ===============
-// === Spinner ===
-// ===============
+import { twMerge } from '#/utilities/tailwindMerge'
 
 /** The state of the spinner. It should go from `initial`, to `loading`, to `done`. */
 export type SpinnerState = 'done' | 'initial' | 'loading-fast' | 'loading-medium' | 'loading-slow'
@@ -54,7 +50,7 @@ export default function Spinner(props: SpinnerProps) {
         stroke="currentColor"
         strokeLinecap="round"
         strokeWidth={3}
-        className={tailwindMerge.twMerge(
+        className={twMerge(
           'pointer-events-none origin-center !animate-spin-ease transition-stroke-dasharray [transition-duration:var(--spinner-slow-transition-duration)]',
           SPINNER_CSS_CLASSES[state],
         )}

@@ -1,14 +1,8 @@
 /** @file A spinner that does not expose its {@link SpinnerState}. */
-import * as React from 'react'
+import { startTransition, useEffect, useState } from 'react'
 
 import type { SpinnerProps, SpinnerState } from '#/components/Spinner'
 import Spinner from '#/components/Spinner'
-
-// ========================
-// === StatelessSpinner ===
-// ========================
-
-export { SpinnerState } from './Spinner'
 
 /** Props for a {@link StatelessSpinner}. */
 export type StatelessSpinnerProps = SpinnerProps
@@ -20,12 +14,12 @@ export type StatelessSpinnerProps = SpinnerProps
 export default function StatelessSpinner(props: StatelessSpinnerProps) {
   const { state: rawState, ...spinnerProps } = props
 
-  const [state, setState] = React.useState<SpinnerState>('initial')
+  const [state, setState] = useState<SpinnerState>('initial')
 
-  React.useEffect(() => {
+  useEffect(() => {
     const id = requestAnimationFrame(() => {
       // consider this as a low-priority update
-      React.startTransition(() => {
+      startTransition(() => {
         setState(rawState)
       })
     })
