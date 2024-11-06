@@ -45,8 +45,7 @@ export function useLocalStorage() {
 
 export function useLocalStorageState<K extends LocalStorageKey>(
   key: K,
-  defaultValue?: undefined,
-): [
+): readonly [
   value: LocalStorageData[K] | undefined,
   setValue: (newValue: LocalStorageData[K] | undefined) => void,
 ]
@@ -54,13 +53,16 @@ export function useLocalStorageState<K extends LocalStorageKey>(
 export function useLocalStorageState<K extends LocalStorageKey>(
   key: K,
   defaultValue: LocalStorageData[K],
-): [value: LocalStorageData[K], setValue: (newValue: LocalStorageData[K] | undefined) => void]
+): readonly [
+  value: LocalStorageData[K],
+  setValue: (newValue: LocalStorageData[K] | undefined) => void,
+]
 
 /** Subscribe to Local Storage updates for a specific key. */
 export function useLocalStorageState<K extends LocalStorageKey>(
   key: K,
   defaultValue?: LocalStorageData[K],
-): [
+): readonly [
   value: LocalStorageData[K] | undefined,
   setValue: (newValue: LocalStorageData[K] | undefined) => void,
 ] {
