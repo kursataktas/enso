@@ -1,7 +1,4 @@
-/**
- * @file
- * Display the docs for an asset.
- */
+/** @file Documentation display for an asset. */
 import { MarkdownViewer } from '#/components/MarkdownViewer'
 import { Result } from '#/components/Result'
 import { useEventCallback } from '#/hooks/eventCallbackHooks'
@@ -14,42 +11,31 @@ import * as ast from 'ydoc-shared/ast'
 import { splitFileContents } from 'ydoc-shared/ensoFile'
 import { versionContentQueryOptions } from '../AssetDiffView/useFetchVersionContent'
 
-/**
- * Props for a {@link AssetDocs}.
- */
+/** Props for a {@link AssetDocs}. */
 export interface AssetDocsProps {
   readonly backend: Backend
   readonly item: AnyAsset | null
 }
 
-/**
- * Display the docs for an asset.
- */
+/** Documentation display for an asset. */
 export function AssetDocs(props: AssetDocsProps) {
   const { backend, item } = props
-
   const { getText } = useText()
 
   if (item?.type !== AssetType.project) {
     return <Result status="info" title={getText('assetDocs.notProject')} centered />
   }
 
-  // This is safe because we already checked that the item is a project above.
-
   return <AssetDocsContent backend={backend} item={item} />
 }
 
-/**
- * Props for {@link AssetDocsContent}.
- */
+/** Props for an {@link AssetDocsContent}. */
 interface AssetDocsContentProps {
   readonly backend: Backend
   readonly item: Asset<AssetType.project>
 }
 
-/**
- * Display the docs for an asset.
- */
+/** Documentation display for an asset. */
 export function AssetDocsContent(props: AssetDocsContentProps) {
   const { backend, item } = props
   const { getText } = useText()
