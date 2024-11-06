@@ -17,7 +17,7 @@ import SharedWithColumn from '#/components/dashboard/column/SharedWithColumn'
 import { DatalinkFormInput } from '#/components/dashboard/DatalinkInput'
 import Label from '#/components/dashboard/Label'
 import { Result } from '#/components/Result'
-import StatelessSpinner, * as statelessSpinner from '#/components/StatelessSpinner'
+import StatelessSpinner from '#/components/StatelessSpinner'
 import { validateDatalink } from '#/data/datalinkValidator'
 import {
   backendMutationOptions,
@@ -361,7 +361,7 @@ function AssetPropertiesInternal(props: AssetPropertiesInternalProps) {
           </Heading>
           {datalinkQuery.isLoading ?
             <div className="grid place-items-center self-stretch">
-              <StatelessSpinner size={48} state={statelessSpinner.SpinnerState.loadingMedium} />
+              <StatelessSpinner size={48} state="loading-medium" />
             </div>
           : <Form form={editDatalinkForm} className="w-full">
               <DatalinkFormInput

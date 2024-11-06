@@ -1,13 +1,11 @@
 /** @file Diff view comparing `Main.enso` of two versions for a specific project. */
-import * as monacoReact from '@monaco-editor/react'
+import { DiffEditor } from '@monaco-editor/react'
+import { useSuspenseQueries } from '@tanstack/react-query'
 
-import Spinner, * as spinnerModule from '#/components/Spinner'
-
+import Spinner from '#/components/Spinner'
+import { versionContentQueryOptions } from '#/layouts/AssetDiffView/useFetchVersionContent'
 import type * as backendService from '#/services/Backend'
 import type Backend from '#/services/Backend'
-
-import { useSuspenseQueries } from '@tanstack/react-query'
-import { versionContentQueryOptions } from './useFetchVersionContent'
 
 // =====================
 // === AssetDiffView ===
@@ -42,12 +40,12 @@ export function AssetDiffView(props: AssetDiffViewProps) {
 
   const loader = (
     <div className="flex h-full w-full items-center justify-center">
-      <Spinner size={32} state={spinnerModule.SpinnerState.loadingMedium} />
+      <Spinner size={32} state="loading-medium" />
     </div>
   )
 
   return (
-    <monacoReact.DiffEditor
+    <DiffEditor
       beforeMount={(monaco) => {
         monaco.editor.defineTheme('myTheme', {
           base: 'vs',

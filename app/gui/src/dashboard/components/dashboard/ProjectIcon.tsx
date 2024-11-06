@@ -12,7 +12,7 @@ import * as textProvider from '#/providers/TextProvider'
 
 import * as ariaComponents from '#/components/AriaComponents'
 import Spinner from '#/components/Spinner'
-import StatelessSpinner, * as spinner from '#/components/StatelessSpinner'
+import StatelessSpinner, { type SpinnerState } from '#/components/StatelessSpinner'
 
 import type Backend from '#/services/Backend'
 import * as backendModule from '#/services/Backend'
@@ -28,34 +28,34 @@ import { useMemo } from 'react'
 export const CLOSED_PROJECT_STATE = { type: backendModule.ProjectState.closed } as const
 
 /**
- * The corresponding {@link spinner.SpinnerState} for each {@link backendModule.ProjectState},
+ * The corresponding {@link SpinnerState} for each {@link backendModule.ProjectState},
  * when using the remote backend.
  */
-const REMOTE_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, spinner.SpinnerState>> = {
-  [backendModule.ProjectState.closed]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.closing]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.created]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.new]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.placeholder]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.openInProgress]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.provisioned]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.scheduled]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.opened]: spinner.SpinnerState.done,
+const REMOTE_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, SpinnerState>> = {
+  [backendModule.ProjectState.closed]: 'loading-slow',
+  [backendModule.ProjectState.closing]: 'loading-medium',
+  [backendModule.ProjectState.created]: 'loading-slow',
+  [backendModule.ProjectState.new]: 'loading-slow',
+  [backendModule.ProjectState.placeholder]: 'loading-slow',
+  [backendModule.ProjectState.openInProgress]: 'loading-slow',
+  [backendModule.ProjectState.provisioned]: 'loading-slow',
+  [backendModule.ProjectState.scheduled]: 'loading-slow',
+  [backendModule.ProjectState.opened]: 'done',
 }
 /**
- * The corresponding {@link spinner.SpinnerState} for each {@link backendModule.ProjectState},
+ * The corresponding {@link SpinnerState} for each {@link backendModule.ProjectState},
  * when using the local backend.
  */
-const LOCAL_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, spinner.SpinnerState>> = {
-  [backendModule.ProjectState.closed]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.closing]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.created]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.new]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.placeholder]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.openInProgress]: spinner.SpinnerState.loadingSlow,
-  [backendModule.ProjectState.provisioned]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.scheduled]: spinner.SpinnerState.loadingMedium,
-  [backendModule.ProjectState.opened]: spinner.SpinnerState.done,
+const LOCAL_SPINNER_STATE: Readonly<Record<backendModule.ProjectState, SpinnerState>> = {
+  [backendModule.ProjectState.closed]: 'loading-slow',
+  [backendModule.ProjectState.closing]: 'loading-medium',
+  [backendModule.ProjectState.created]: 'loading-slow',
+  [backendModule.ProjectState.new]: 'loading-slow',
+  [backendModule.ProjectState.placeholder]: 'loading-medium',
+  [backendModule.ProjectState.openInProgress]: 'loading-slow',
+  [backendModule.ProjectState.provisioned]: 'loading-medium',
+  [backendModule.ProjectState.scheduled]: 'loading-medium',
+  [backendModule.ProjectState.opened]: 'done',
 }
 
 // ===================
@@ -123,13 +123,13 @@ export default function ProjectIcon(props: ProjectIconProps) {
     }
   })()
 
-  const spinnerState = (() => {
+  const spinnerState = ((): SpinnerState => {
     if (!isOpened) {
-      return spinner.SpinnerState.initial
+      return 'initial'
     } else if (isError) {
-      return spinner.SpinnerState.initial
+      return 'initial'
     } else if (status == null) {
-      return spinner.SpinnerState.loadingSlow
+      return 'loading-slow'
     } else {
       return backend.type === backendModule.BackendType.remote ?
           REMOTE_SPINNER_STATE[status]
@@ -207,7 +207,7 @@ export default function ProjectIcon(props: ProjectIconProps) {
               onPress={doCloseProject}
             />
             <Spinner
-              state={spinner.SpinnerState.done}
+              state="done"
               className={tailwindMerge.twMerge(
                 'pointer-events-none absolute inset-0',
                 isRunningInBackground && 'text-green',

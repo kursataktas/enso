@@ -16,7 +16,7 @@ import * as textProvider from '#/providers/TextProvider'
 import * as assetRowUtils from '#/components/dashboard/AssetRow/assetRowUtils'
 import * as columnModule from '#/components/dashboard/column'
 import * as columnUtils from '#/components/dashboard/column/columnUtils'
-import StatelessSpinner, * as statelessSpinner from '#/components/StatelessSpinner'
+import StatelessSpinner from '#/components/StatelessSpinner'
 import FocusRing from '#/components/styled/FocusRing'
 import AssetEventType from '#/events/AssetEventType'
 import AssetListEventType from '#/events/AssetListEventType'
@@ -728,7 +728,7 @@ export const AssetRow = React.memo(function AssetRow(props: AssetRowProps) {
                   indent.indentClass(depth),
                 )}
               >
-                <StatelessSpinner size={24} state={statelessSpinner.SpinnerState.loadingMedium} />
+                <StatelessSpinner size={24} state="loading-medium" />
               </div>
             </td>
           </tr>

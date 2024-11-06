@@ -14,7 +14,7 @@ import * as textProvider from '#/providers/TextProvider'
 
 import * as aria from '#/components/aria'
 import * as ariaComponents from '#/components/AriaComponents'
-import StatelessSpinner, * as spinnerModule from '#/components/StatelessSpinner'
+import StatelessSpinner from '#/components/StatelessSpinner'
 import FocusArea from '#/components/styled/FocusArea'
 import SvgMask from '#/components/SvgMask'
 
@@ -252,7 +252,7 @@ export function Tab(props: InternalTabProps) {
       {icon != null &&
         (isLoading ?
           <StatelessSpinner
-            state={spinnerModule.SpinnerState.loadingMedium}
+            state="loading-medium"
             size={16}
             className={tailwindMerge.twMerge(onClose && 'group-hover:hidden focus-visible:hidden')}
           />

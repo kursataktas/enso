@@ -8,29 +8,10 @@ import * as tailwindMerge from '#/utilities/tailwindMerge'
 // === Spinner ===
 // ===============
 
-/**
- * The state of the spinner. It should go from initial, to loading, to done.
- * @deprecated Use {@link SpinnerStateLiteral} instead.
- */
-export enum SpinnerState {
-  initial = 'initial',
-  loadingSlow = 'loading-slow',
-  loadingMedium = 'loading-medium',
-  loadingFast = 'loading-fast',
-  done = 'done',
-}
+/** The state of the spinner. It should go from `initial`, to `loading`, to `done`. */
+export type SpinnerState = 'done' | 'initial' | 'loading-fast' | 'loading-medium' | 'loading-slow'
 
-/**
- * A literal type for the {@link SpinnerState} enum.
- */
-export type SpinnerStateLiteral =
-  | 'done'
-  | 'initial'
-  | 'loading-fast'
-  | 'loading-medium'
-  | 'loading-slow'
-
-export const SPINNER_CSS_CLASSES: Readonly<Record<SpinnerStateLiteral, string>> = {
+export const SPINNER_CSS_CLASSES: Readonly<Record<SpinnerState, string>> = {
   initial: 'dasharray-5 ease-linear',
   /* eslint-disable-next-line @typescript-eslint/naming-convention */
   'loading-slow': 'dasharray-75 duration-spinner-slow ease-linear',
@@ -46,7 +27,7 @@ export interface SpinnerProps {
   readonly size?: number
   readonly padding?: number
   readonly className?: string
-  readonly state: SpinnerState | SpinnerStateLiteral
+  readonly state: SpinnerState
 }
 
 /** A spinning arc that animates using the `dasharray-<percentage>` custom Tailwind classes. */

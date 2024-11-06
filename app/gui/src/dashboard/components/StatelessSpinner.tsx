@@ -1,7 +1,7 @@
-/** @file A spinner that does not expose its {@link spinner.SpinnerState}. */
+/** @file A spinner that does not expose its {@link SpinnerState}. */
 import * as React from 'react'
 
-import type * as spinner from '#/components/Spinner'
+import type { SpinnerProps, SpinnerState } from '#/components/Spinner'
 import Spinner from '#/components/Spinner'
 
 // ========================
@@ -11,16 +11,16 @@ import Spinner from '#/components/Spinner'
 export { SpinnerState } from './Spinner'
 
 /** Props for a {@link StatelessSpinner}. */
-export type StatelessSpinnerProps = spinner.SpinnerProps
+export type StatelessSpinnerProps = SpinnerProps
 
 /**
- * A spinner that does not expose its {@link spinner.SpinnerState}. Instead, it begins at
- * {@link spinner.SpinnerState.initial} and immediately changes to the given state.
+ * A spinner that does not expose its {@link SpinnerState}. Instead, it begins at
+ * {@link SpinnerState.initial} and immediately changes to the given state.
  */
 export default function StatelessSpinner(props: StatelessSpinnerProps) {
   const { state: rawState, ...spinnerProps } = props
 
-  const [state, setState] = React.useState<spinner.SpinnerStateLiteral>('initial')
+  const [state, setState] = React.useState<SpinnerState>('initial')
 
   React.useEffect(() => {
     const id = requestAnimationFrame(() => {
